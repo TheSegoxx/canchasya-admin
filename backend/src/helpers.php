@@ -59,9 +59,35 @@ function textoRequerido(array $datos, string $campo, int $maximo, string $nombre
         responder(400, ['error' => "Falta $nombreVisible"]);
     }
     if (mb_strlen($valor) > $maximo) {
-        responder(400, ['error' => "$nombreVisible no puede superar los $maximo caracteres"]);
+        responder(400, ['error' => ucfirst("$nombreVisible no puede superar los $maximo caracteres")]);
     }
     return $valor;
+}
+
+// Valida una hora "HH:MM" y la devuelve como "HH:MM:00" (comparable como texto).
+// 24:00 solo se acepta como hora de fin (medianoche)
+function horaRequerida(array $datos, string $campo, string $nombreVisible, bool $admiteMedianoche = false): string
+{
+    $valor = (string) ($datos[$campo] ?? '');
+    $valida = preg_match('/^([01]\d|2[0-3]):[0-5]\d$/', $valor)
+        || ($admiteMedianoche && $valor === '24:00');
+    if (!$valida) {
+        responder(400, ['error' => "Falta $nombreVisible o no tiene el formato HH:MM"]);
+    }
+    return "$valor:00";
+}
+
+// Valida un importe en pesos (mayor o igual a 0, con hasta 2 decimales)
+function precioRequerido(array $datos, string $campo, string $nombreVisible): float
+{
+    $valor = $datos[$campo] ?? null;
+    if (!is_int($valor) && !is_float($valor)) {
+        responder(400, ['error' => "Falta $nombreVisible"]);
+    }
+    if ($valor < 0 || $valor > 99999999) {
+        responder(400, ['error' => ucfirst("$nombreVisible no es válido")]);
+    }
+    return round((float) $valor, 2);
 }
 
 // IP de quien hace la petición (para el límite de intentos)

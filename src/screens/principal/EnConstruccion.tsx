@@ -24,10 +24,6 @@ export const AgendaScreen = () => (
   <EnConstruccion titulo="Agenda" descripcion="Acá vas a ver y cargar los turnos de cada cancha." />
 );
 
-export const CanchasScreen = () => (
-  <EnConstruccion titulo="Canchas" descripcion="Acá vas a publicar tus canchas de pádel y fútbol 5." />
-);
-
 const estilos = StyleSheet.create({
   titulo: { fontSize: 22, fontWeight: '700', textAlign: 'center' },
   texto: { fontSize: 16, textAlign: 'center', marginTop: espaciado.s },

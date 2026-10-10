@@ -41,8 +41,8 @@ final class ComplejoController extends Controlador
         }
 
         // El cierre puede ser 24:00 (medianoche); la apertura no
-        $apertura = $this->hora($datos, 'horaApertura', 'la hora de apertura', false);
-        $cierre = $this->hora($datos, 'horaCierre', 'la hora de cierre', true);
+        $apertura = horaRequerida($datos, 'horaApertura', 'la hora de apertura');
+        $cierre = horaRequerida($datos, 'horaCierre', 'la hora de cierre', true);
         if ($apertura >= $cierre) {
             responder(400, ['error' => 'La hora de cierre tiene que ser posterior a la de apertura']);
         }
@@ -63,17 +63,5 @@ final class ComplejoController extends Controlador
 
         $complejo = $this->complejos->buscarPorUsuario($usuarioId);
         responder($creado ? 201 : 200, ['complejo' => $this->complejos->publico($complejo)]);
-    }
-
-    // Valida una hora "HH:MM" y la devuelve como "HH:MM:00" (comparable como texto)
-    private function hora(array $datos, string $campo, string $nombreVisible, bool $admiteMedianoche): string
-    {
-        $valor = (string) ($datos[$campo] ?? '');
-        $valida = preg_match('/^([01]\d|2[0-3]):[0-5]\d$/', $valor)
-            || ($admiteMedianoche && $valor === '24:00');
-        if (!$valida) {
-            responder(400, ['error' => "Falta $nombreVisible o no tiene el formato HH:MM"]);
-        }
-        return "$valor:00";
     }
 }

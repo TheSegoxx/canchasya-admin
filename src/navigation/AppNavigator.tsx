@@ -6,8 +6,10 @@ import { Icono, NombreIcono } from '../components/Icono';
 import { useSesion } from '../context/SesionContext';
 import { LoginScreen } from '../screens/auth/LoginScreen';
 import { RegistroScreen } from '../screens/auth/RegistroScreen';
+import { CanchaScreen } from '../screens/canchas/CanchaScreen';
+import { CanchasScreen } from '../screens/canchas/CanchasScreen';
 import { ComplejoScreen } from '../screens/complejo/ComplejoScreen';
-import { AgendaScreen, CanchasScreen, InicioScreen } from '../screens/principal/EnConstruccion';
+import { AgendaScreen, InicioScreen } from '../screens/principal/EnConstruccion';
 import { MasScreen } from '../screens/principal/MasScreen';
 import { useTema } from '../theme/tema';
 
@@ -21,6 +23,8 @@ export type RutasApp = {
   ConfigurarComplejo: undefined;
   Pestanas: undefined;
   Complejo: undefined;
+  // Sin id: nueva cancha; con id: editar
+  Cancha: { id?: number } | undefined;
 };
 
 export type RutasPestanas = {
@@ -71,6 +75,7 @@ function Aplicacion({ tieneComplejo }: { tieneComplejo: boolean }) {
         <>
           <PilaApp.Screen name="Pestanas" component={Principal} options={{ headerShown: false }} />
           <PilaApp.Screen name="Complejo" component={ComplejoScreen} options={{ title: 'Datos del complejo' }} />
+          <PilaApp.Screen name="Cancha" component={CanchaScreen} />
         </>
       ) : (
         <PilaApp.Screen

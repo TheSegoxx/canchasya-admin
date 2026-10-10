@@ -9,6 +9,7 @@ declare(strict_types=1);
  */
 
 use App\Controllers\AuthController;
+use App\Controllers\CanchaController;
 use App\Controllers\ComplejoController;
 
 // Prueba de conexión desde la app
@@ -23,3 +24,14 @@ $router->agregar('GET', '/auth/yo', fn () => (new AuthController())->yo());
 // Complejo del dueño
 $router->agregar('GET', '/complejo', fn () => (new ComplejoController())->obtener());
 $router->agregar('PUT', '/complejo', fn () => (new ComplejoController())->guardar());
+
+// Canchas y precios por franja horaria
+$router->agregar('GET', '/canchas', fn () => (new CanchaController())->listar());
+$router->agregar('POST', '/canchas', fn () => (new CanchaController())->crear());
+$router->agregar('GET', '/canchas/:id', fn (array $p) => (new CanchaController())->obtener($p['id']));
+$router->agregar('PUT', '/canchas/:id', fn (array $p) => (new CanchaController())->editar($p['id']));
+$router->agregar('PATCH', '/canchas/:id/estado', fn (array $p) => (new CanchaController())->cambiarEstado($p['id']));
+$router->agregar('PATCH', '/canchas/:id/habilitada', fn (array $p) => (new CanchaController())->cambiarHabilitada($p['id']));
+$router->agregar('GET', '/canchas/:id/franjas', fn (array $p) => (new CanchaController())->listarFranjas($p['id']));
+$router->agregar('POST', '/canchas/:id/franjas', fn (array $p) => (new CanchaController())->crearFranja($p['id']));
+$router->agregar('DELETE', '/franjas/:id', fn (array $p) => (new CanchaController())->borrarFranja($p['id']));
