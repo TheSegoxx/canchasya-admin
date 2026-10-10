@@ -1,0 +1,9 @@
+# Todas las peticiones van al router (public/index.php).
+# Así .env, src/, vendor/ y database/ nunca se pueden descargar desde el navegador.
+Options -Indexes
+RewriteEngine On
+
+# Apache en XAMPP puede descartar el header Authorization: se lo pasamos a PHP
+RewriteRule .* - [E=HTTP_AUTHORIZATION:%{HTTP:Authorization}]
+
+RewriteRule ^ public/index.php [END]
