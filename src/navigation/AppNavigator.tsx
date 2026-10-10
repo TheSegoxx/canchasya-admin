@@ -6,6 +6,7 @@ import { Icono, NombreIcono } from '../components/Icono';
 import { useSesion } from '../context/SesionContext';
 import { LoginScreen } from '../screens/auth/LoginScreen';
 import { RegistroScreen } from '../screens/auth/RegistroScreen';
+import { ComplejoScreen } from '../screens/complejo/ComplejoScreen';
 import { AgendaScreen, CanchasScreen, InicioScreen } from '../screens/principal/EnConstruccion';
 import { MasScreen } from '../screens/principal/MasScreen';
 import { useTema } from '../theme/tema';
@@ -13,6 +14,13 @@ import { useTema } from '../theme/tema';
 export type RutasAuth = {
   Login: undefined;
   Registro: undefined;
+};
+
+// Con sesión: primero ConfigurarComplejo (si falta) y después las pestañas
+export type RutasApp = {
+  ConfigurarComplejo: undefined;
+  Pestanas: undefined;
+  Complejo: undefined;
 };
 
 export type RutasPestanas = {
@@ -23,6 +31,7 @@ export type RutasPestanas = {
 };
 
 const Pila = createNativeStackNavigator<RutasAuth>();
+const PilaApp = createNativeStackNavigator<RutasApp>();
 const Pestanas = createBottomTabNavigator<RutasPestanas>();
 
 const iconos: Record<keyof RutasPestanas, NombreIcono> = {
@@ -55,6 +64,25 @@ function Principal() {
   );
 }
 
+function Aplicacion({ tieneComplejo }: { tieneComplejo: boolean }) {
+  return (
+    <PilaApp.Navigator>
+      {tieneComplejo ? (
+        <>
+          <PilaApp.Screen name="Pestanas" component={Principal} options={{ headerShown: false }} />
+          <PilaApp.Screen name="Complejo" component={ComplejoScreen} options={{ title: 'Datos del complejo' }} />
+        </>
+      ) : (
+        <PilaApp.Screen
+          name="ConfigurarComplejo"
+          component={ComplejoScreen}
+          options={{ title: 'Configurá tu complejo' }}
+        />
+      )}
+    </PilaApp.Navigator>
+  );
+}
+
 function Autenticacion() {
   return (
     <Pila.Navigator>
@@ -77,7 +105,7 @@ export function AppNavigator() {
     );
   }
 
-  return usuario ? <Principal /> : <Autenticacion />;
+  return usuario ? <Aplicacion tieneComplejo={usuario.tieneComplejo} /> : <Autenticacion />;
 }
 
 const estilos = StyleSheet.create({

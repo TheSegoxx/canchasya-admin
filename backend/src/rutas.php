@@ -9,6 +9,7 @@ declare(strict_types=1);
  */
 
 use App\Controllers\AuthController;
+use App\Controllers\ComplejoController;
 
 // Prueba de conexión desde la app
 $router->agregar('GET', '/salud', fn () => responder(200, ['ok' => true, 'api' => "Canchero's", 'hora' => date('c')]));
@@ -18,3 +19,7 @@ $router->agregar('POST', '/auth/register', fn () => (new AuthController())->regi
 $router->agregar('POST', '/auth/login', fn () => (new AuthController())->login());
 $router->agregar('POST', '/auth/google', fn () => (new AuthController())->google());
 $router->agregar('GET', '/auth/yo', fn () => (new AuthController())->yo());
+
+// Complejo del dueño
+$router->agregar('GET', '/complejo', fn () => (new ComplejoController())->obtener());
+$router->agregar('PUT', '/complejo', fn () => (new ComplejoController())->guardar());

@@ -1,12 +1,16 @@
 import React, { useState } from 'react';
 import { Alert, Image, StyleSheet, Text, View } from 'react-native';
+import { useNavigation } from '@react-navigation/native';
+import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { Boton } from '../../components/Boton';
 import { Pantalla } from '../../components/Pantalla';
 import { useSesion } from '../../context/SesionContext';
+import type { RutasApp } from '../../navigation/AppNavigator';
 import { espaciado, radio, useTema } from '../../theme/tema';
 
 export function MasScreen() {
   const { colores } = useTema();
+  const navigation = useNavigation<NativeStackNavigationProp<RutasApp>>();
   const { usuario, cerrarSesion } = useSesion();
   const [saliendo, setSaliendo] = useState(false);
 
@@ -45,7 +49,9 @@ export function MasScreen() {
         </View>
       </View>
 
-      <Boton titulo="Cerrar sesión" variante="secundario" onPress={confirmarSalida} cargando={saliendo} />
+      <Boton titulo="Datos del complejo" variante="secundario" onPress={() => navigation.navigate('Complejo')} />
+      <View style={estilos.espacio} />
+      <Boton titulo="Cerrar sesión" variante="texto" onPress={confirmarSalida} cargando={saliendo} />
     </Pantalla>
   );
 }
@@ -65,4 +71,5 @@ const estilos = StyleSheet.create({
   datos: { flex: 1, marginLeft: espaciado.m },
   nombre: { fontSize: 18, fontWeight: '700' },
   email: { fontSize: 14, marginTop: 2 },
+  espacio: { height: espaciado.s },
 });
