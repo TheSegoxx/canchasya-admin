@@ -1,6 +1,6 @@
 {
-    "name": "cancheros/api",
-    "description": "API REST de Canchero's: gestión de canchas, turnos y cobros para dueños de complejos",
+    "name": "canchasya/api",
+    "description": "API REST de CanchasYa Admin: gestión de canchas, turnos y cobros para dueños de complejos",
     "type": "project",
     "require": {
         "php": ">=8.2",

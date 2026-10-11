@@ -7,6 +7,7 @@ namespace App\Services;
 use App\Models\Usuario;
 use Firebase\JWT\JWK;
 use Firebase\JWT\JWT;
+use PDOException;
 use RuntimeException;
 use Throwable;
 
@@ -17,6 +18,8 @@ final class AuthService
 {
     private const EMISORES_GOOGLE = ['accounts.google.com', 'https://accounts.google.com'];
     private const URL_CLAVES_GOOGLE = 'https://www.googleapis.com/oauth2/v3/certs';
+    // Hash bcrypt de una clave cualquiera, solo para igualar tiempos en el login
+    private const HASH_DE_RELLENO = '$2y$10$tBLTWsR8IjLO/RgcGIw2E.HnFzoiwvUrWyX5g1he.Zv99TNqFpnkm';
 
     public function __construct(private Usuario $usuarios)
     {
@@ -30,7 +33,15 @@ final class AuthService
 
         // bcrypt genera la sal sola y la guarda dentro del hash
         $hash = password_hash($password, PASSWORD_BCRYPT, ['cost' => 10]);
-        $id = $this->usuarios->crear($nombre, $email, $hash);
+        try {
+            $id = $this->usuarios->crear($nombre, $email, $hash);
+        } catch (PDOException $e) {
+            // Dos registros con el mismo email al mismo tiempo: el índice UNIQUE frena al segundo
+            if ($e->getCode() === '23000') {
+                responder(409, ['error' => 'Ya existe una cuenta con ese email']);
+            }
+            throw $e;
+        }
 
         return $this->usuarios->buscarPorId($id);
     }
@@ -39,10 +50,12 @@ final class AuthService
     public function login(string $email, string $password): ?array
     {
         $usuario = $this->usuarios->buscarPorEmail($email);
-        if ($usuario === null || !$this->usuarios->verificarPassword($usuario, $password)) {
+        if ($usuario === null) {
+            // Se calcula un hash igual: así la respuesta tarda lo mismo y no delata qué emails existen
+            password_verify($password, self::HASH_DE_RELLENO);
             return null;
         }
-        return $usuario;
+        return $this->usuarios->verificarPassword($usuario, $password) ? $usuario : null;
     }
 
     /**
@@ -58,11 +71,13 @@ final class AuthService
         }
 
         $email = mb_strtolower($datos->email);
-        $foto = $datos->picture ?? null;
+        // Se respetan los largos de las columnas (nombre 100, foto_url 255)
+        $nombre = mb_substr(trim((string) ($datos->name ?? '')) ?: strtok($email, '@'), 0, 100);
+        $foto = isset($datos->picture) && strlen($datos->picture) <= 255 ? $datos->picture : null;
 
         $usuario = $this->usuarios->buscarPorGoogleId($datos->sub) ?? $this->usuarios->buscarPorEmail($email);
         if ($usuario === null) {
-            $id = $this->usuarios->crear($datos->name ?? $email, $email, null, $datos->sub, $foto);
+            $id = $this->usuarios->crear($nombre, $email, null, $datos->sub, $foto);
             return [$this->usuarios->buscarPorId($id), true];
         }
 
@@ -90,7 +105,7 @@ final class AuthService
                 // Google rota sus claves: si falló con las guardadas, se descargan de nuevo
                 $datos = JWT::decode($idToken, JWK::parseKeySet($this->clavesGoogle(true)));
             } catch (Throwable $e) {
-                error_log('[Canchero API] Token de Google rechazado: ' . $e->getMessage());
+                error_log('[CanchasYa API] Token de Google rechazado: ' . $e->getMessage());
                 return null;
             }
         }
@@ -126,7 +141,8 @@ final class AuthService
             throw new RuntimeException('No se pudieron descargar las claves públicas de Google');
         }
 
-        file_put_contents($archivo, $crudo);
+        // Si la carpeta storage no se puede escribir, se sigue sin guardar copia
+        @file_put_contents($archivo, $crudo);
         return $claves;
     }
 }

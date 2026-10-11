@@ -45,7 +45,7 @@ final class Router
         responder(404, ['error' => 'Ruta no encontrada']);
     }
 
-    // "/canchero/api/auth/login?x=1" -> "/auth/login"
+    // "/canchasya/api/auth/login?x=1" -> "/auth/login"
     private function rutaRelativa(string $uri): string
     {
         $ruta = parse_url($uri, PHP_URL_PATH) ?: '/';

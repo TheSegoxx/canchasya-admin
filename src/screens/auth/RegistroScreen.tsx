@@ -17,6 +17,9 @@ function validar(nombre: string, email: string, password: string, repetir: strin
   if (password.length < 8) {
     return 'La contraseña debe tener al menos 8 caracteres.';
   }
+  if (password.length > 72) {
+    return 'La contraseña no puede superar los 72 caracteres.';
+  }
   if (password !== repetir) {
     return 'Las contraseñas no coinciden.';
   }
@@ -34,6 +37,10 @@ export function RegistroScreen() {
   const [enviando, setEnviando] = useState(false);
 
   const crear = async () => {
+    // La tecla "Ir" del teclado no pasa por el botón deshabilitado
+    if (enviando) {
+      return;
+    }
     const problema = validar(nombre, email, password, repetir);
     setError(problema);
     if (problema) {

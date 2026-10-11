@@ -20,6 +20,10 @@ export function LoginScreen({ navigation }: Props) {
   const [enviando, setEnviando] = useState<'email' | 'google' | null>(null);
 
   const entrar = async () => {
+    // La tecla "Ir" del teclado no pasa por el botón deshabilitado
+    if (enviando) {
+      return;
+    }
     if (!email.trim() || !password) {
       setError('Completá el email y la contraseña.');
       return;
@@ -47,7 +51,7 @@ export function LoginScreen({ navigation }: Props) {
 
   return (
     <Pantalla conMargenSuperior centrado>
-      <Text style={[estilos.titulo, { color: colores.primario }]}>Canchero's</Text>
+      <Text style={[estilos.titulo, { color: colores.primario }]}>CanchasYa Admin</Text>
       <Text style={[estilos.subtitulo, { color: colores.textoSecundario }]}>
         Administrá tu complejo: canchas, turnos y cobros.
       </Text>

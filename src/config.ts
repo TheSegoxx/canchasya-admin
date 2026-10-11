@@ -4,7 +4,7 @@
 
 // Con el celular por USB, "adb reverse tcp:8080 tcp:80" hace que localhost:8080
 // del celular llegue al Apache (XAMPP) de la computadora.
-export const API_URL = 'http://localhost:8080/canchero/api';
+export const API_URL = 'http://localhost:8080/canchasya/api';
 
 // ID de cliente "Aplicación web" de Google Cloud. No es un secreto:
 // sirve para que Google emita un idToken que nuestra API pueda verificar.

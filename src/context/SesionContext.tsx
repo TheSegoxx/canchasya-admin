@@ -15,6 +15,9 @@ GoogleSignin.configure({ webClientId: GOOGLE_WEB_CLIENT_ID });
 type Sesion = {
   cargando: boolean;
   usuario: Usuario | null;
+  // Hay sesión guardada pero el servidor no respondió al abrir la app
+  sinConexion: boolean;
+  reintentar: () => void;
   entrarConEmail: (email: string, password: string) => Promise<void>;
   registrarse: (nombre: string, email: string, password: string) => Promise<void>;
   // Devuelve false si el dueño cerró la ventana de Google sin elegir cuenta
@@ -28,23 +31,32 @@ const SesionContext = createContext<Sesion | null>(null);
 export function SesionProvider({ children }: { children: React.ReactNode }) {
   const [cargando, setCargando] = useState(true);
   const [usuario, setUsuario] = useState<Usuario | null>(null);
+  const [sinConexion, setSinConexion] = useState(false);
 
-  // Al abrir la app: si hay un token guardado, se recupera la sesión
+  // Si hay un token guardado, se recupera la sesión
+  const recuperarSesion = useCallback(async () => {
+    setCargando(true);
+    setSinConexion(false);
+    try {
+      if (await leerToken()) {
+        const respuesta = await authApi.yo();
+        setUsuario(respuesta.usuario);
+      }
+    } catch (e) {
+      // Token vencido (401): el cliente ya lo borró y se muestra el login.
+      // Servidor apagado o con error: se conserva la sesión y se ofrece reintentar.
+      if (!(e instanceof ErrorApi) || e.status !== 401) {
+        setSinConexion(true);
+      }
+    } finally {
+      setCargando(false);
+    }
+  }, []);
+
   useEffect(() => {
     siVenceLaSesion(() => setUsuario(null));
-    (async () => {
-      try {
-        if (await leerToken()) {
-          const respuesta = await authApi.yo();
-          setUsuario(respuesta.usuario);
-        }
-      } catch {
-        // Sin conexión o token vencido: se muestra el login
-      } finally {
-        setCargando(false);
-      }
-    })();
-  }, []);
+    recuperarSesion();
+  }, [recuperarSesion]);
 
   const iniciar = useCallback(async (respuesta: RespuestaSesion) => {
     await guardarToken(respuesta.token);
@@ -68,37 +80,46 @@ export function SesionProvider({ children }: { children: React.ReactNode }) {
     if (!isSuccessResponse(respuesta)) {
       return false;
     }
-    const { idToken } = respuesta.data;
-    if (!idToken) {
-      throw new Error('Google no devolvió el token. Revisá el ID de cliente web en config.ts.');
+    try {
+      const { idToken } = respuesta.data;
+      if (!idToken) {
+        throw new Error('Google no devolvió el token. Revisá el ID de cliente web en config.ts.');
+      }
+      // La API verifica el token con Google y devuelve nuestra propia sesión (JWT)
+      await iniciar(await authApi.google(idToken));
+      return true;
+    } catch (e) {
+      // Si nuestra API rechazó la cuenta, se cierra también en Google
+      // para que el próximo intento deje elegir otra
+      await GoogleSignin.signOut().catch(() => undefined);
+      throw e;
     }
-    // La API verifica el token con Google y devuelve nuestra propia sesión (JWT)
-    await iniciar(await authApi.google(idToken));
-    return true;
   }, [iniciar]);
 
   const cerrarSesion = useCallback(async () => {
-    await borrarToken();
     try {
+      await borrarToken();
       // Así la próxima vez Google vuelve a preguntar qué cuenta usar
-      await GoogleSignin.signOut();
-    } catch {
-      // No había sesión de Google: no importa
+      await GoogleSignin.signOut().catch(() => undefined);
+    } finally {
+      setSinConexion(false);
+      setUsuario(null);
     }
-    setUsuario(null);
   }, []);
 
   const valor = useMemo(
     () => ({
       cargando,
       usuario,
+      sinConexion,
+      reintentar: recuperarSesion,
       entrarConEmail,
       registrarse,
       entrarConGoogle,
       cerrarSesion,
       actualizarUsuario: setUsuario,
     }),
-    [cargando, usuario, entrarConEmail, registrarse, entrarConGoogle, cerrarSesion],
+    [cargando, usuario, sinConexion, recuperarSesion, entrarConEmail, registrarse, entrarConGoogle, cerrarSesion],
   );
 
   return <SesionContext.Provider value={valor}>{children}</SesionContext.Provider>;

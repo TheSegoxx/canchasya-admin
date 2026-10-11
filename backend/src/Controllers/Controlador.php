@@ -14,15 +14,17 @@ use PDO;
 abstract class Controlador
 {
     protected PDO $pdo;
+    private ?int $usuarioId = null;
 
     public function __construct()
     {
         $this->pdo = Database::conexion();
     }
 
-    // Id del dueño identificado por el token; responde 401 si no hay sesión válida
+    // Id del dueño identificado por el token; responde 401 si no hay sesión válida.
+    // El token se verifica una sola vez por petición.
     protected function usuarioActual(): int
     {
-        return autenticar();
+        return $this->usuarioId ??= autenticar();
     }
 }

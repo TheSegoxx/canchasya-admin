@@ -35,7 +35,7 @@ final class AuthController extends Controlador
 
         $nombre = textoRequerido($datos, 'nombre', 100, 'el nombre');
         $email = $this->emailValido($datos);
-        $password = (string) ($datos['password'] ?? '');
+        $password = textoDe($datos, 'password');
 
         if (mb_strlen($password) < 8) {
             responder(400, ['error' => 'La contraseña debe tener al menos 8 caracteres']);
@@ -59,7 +59,7 @@ final class AuthController extends Controlador
         $datos = leerJson();
 
         $email = $this->emailValido($datos);
-        $usuario = $this->auth->login($email, (string) ($datos['password'] ?? ''));
+        $usuario = $this->auth->login($email, textoDe($datos, 'password'));
 
         if ($usuario === null) {
             // Solo cuentan los intentos fallidos. Mismo mensaje si falla el email
@@ -80,7 +80,7 @@ final class AuthController extends Controlador
         $this->limite->verificar(ipCliente());
         $datos = leerJson();
 
-        $idToken = (string) ($datos['idToken'] ?? '');
+        $idToken = textoDe($datos, 'idToken');
         if ($idToken === '') {
             responder(400, ['error' => 'Falta el token de Google']);
         }

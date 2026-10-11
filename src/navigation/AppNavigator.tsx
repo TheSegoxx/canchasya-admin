@@ -2,6 +2,7 @@ import React from 'react';
 import { ActivityIndicator, StyleSheet, View } from 'react-native';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
+import { ErrorCarga } from '../components/ErrorCarga';
 import { Icono, NombreIcono } from '../components/Icono';
 import { useSesion } from '../context/SesionContext';
 import { LoginScreen } from '../screens/auth/LoginScreen';
@@ -99,7 +100,7 @@ function Autenticacion() {
 
 // Con sesión se ve la app; sin sesión, el login. Al cambiar la sesión se cambia solo.
 export function AppNavigator() {
-  const { cargando, usuario } = useSesion();
+  const { cargando, usuario, sinConexion, reintentar, cerrarSesion } = useSesion();
   const { colores } = useTema();
 
   if (cargando) {
@@ -107,6 +108,17 @@ export function AppNavigator() {
       <View style={[estilos.cargando, { backgroundColor: colores.fondo }]}>
         <ActivityIndicator size="large" color={colores.primario} />
       </View>
+    );
+  }
+
+  // Sesión guardada pero sin servidor: no se manda al login como si se hubiera cerrado
+  if (sinConexion && !usuario) {
+    return (
+      <ErrorCarga
+        mensaje="No se pudo conectar con el servidor. Revisá que XAMPP esté encendido y el celular conectado."
+        onReintentar={reintentar}
+        accion={{ titulo: 'Cerrar sesión', onPress: cerrarSesion }}
+      />
     );
   }
 

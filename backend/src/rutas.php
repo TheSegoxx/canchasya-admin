@@ -3,7 +3,7 @@
 declare(strict_types=1);
 
 /**
- * Tabla de rutas de la API. Base: http://<servidor>/canchero/api
+ * Tabla de rutas de la API. Base: http://<servidor>/canchasya/api
  *
  * @var App\Router $router
  */
@@ -13,7 +13,7 @@ use App\Controllers\CanchaController;
 use App\Controllers\ComplejoController;
 
 // Prueba de conexión desde la app
-$router->agregar('GET', '/salud', fn () => responder(200, ['ok' => true, 'api' => "Canchero's", 'hora' => date('c')]));
+$router->agregar('GET', '/salud', fn () => responder(200, ['ok' => true, 'api' => 'CanchasYa Admin', 'hora' => date('c')]));
 
 // Autenticación
 $router->agregar('POST', '/auth/register', fn () => (new AuthController())->registrar());

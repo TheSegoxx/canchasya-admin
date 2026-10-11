@@ -6,7 +6,7 @@ import { API_URL, TIEMPO_ESPERA_MS } from '../config';
  * JSON y transforma los errores en mensajes claros para el dueño.
  */
 
-const SERVICIO_TOKEN = 'canchero.sesion';
+const SERVICIO_TOKEN = 'canchasya.sesion';
 
 export class ErrorApi extends Error {
   constructor(mensaje: string, public status: number) {

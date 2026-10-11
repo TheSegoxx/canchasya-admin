@@ -1,14 +1,14 @@
 -- =============================================================
--- Canchero's: esquema de la base de datos
+-- CanchasYa Admin: esquema de la base de datos
 -- Motor: MariaDB 10.4 (XAMPP) / MySQL 8, InnoDB, utf8mb4
 -- Uso: importar desde phpMyAdmin o con
 --      mysql -u root < database/schema.sql
--- ATENCIÓN: borra y vuelve a crear la base "canchero".
+-- ATENCIÓN: borra y vuelve a crear la base "canchasya".
 -- =============================================================
 
-DROP DATABASE IF EXISTS canchero;
-CREATE DATABASE canchero CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
-USE canchero;
+DROP DATABASE IF EXISTS canchasya;
+CREATE DATABASE canchasya CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+USE canchasya;
 
 -- Dueños de complejos (único tipo de usuario de la app)
 CREATE TABLE usuarios (

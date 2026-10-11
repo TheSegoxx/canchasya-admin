@@ -1,5 +1,5 @@
 /**
- * Canchero's — app para el dueño del complejo
+ * CanchasYa Admin — app para que el dueño administre su complejo
  *
  * @format
  */

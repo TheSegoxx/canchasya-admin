@@ -21,6 +21,7 @@ export function CanchasScreen() {
   const [filtro, setFiltro] = useState<Filtro>('todas');
   const [cargando, setCargando] = useState(true);
   const [error, setError] = useState('');
+  const [guardandoEstado, setGuardandoEstado] = useState<number[]>([]);
 
   const cargar = useCallback(async () => {
     try {
@@ -43,13 +44,17 @@ export function CanchasScreen() {
 
   const alternarEstado = async (cancha: Cancha) => {
     const nuevo = cancha.estado === 'libre' ? 'ocupada' : 'libre';
-    // Se muestra el cambio al instante y se revierte si la API falla
+    // Se muestra el cambio al instante y se revierte si la API falla.
+    // Mientras se guarda, el interruptor de esa cancha queda bloqueado.
+    setGuardandoEstado(ids => [...ids, cancha.id]);
     setCanchas(lista => lista.map(c => (c.id === cancha.id ? { ...c, estado: nuevo } : c)));
     try {
       await canchasApi.cambiarEstado(cancha.id, nuevo);
     } catch (e) {
       setCanchas(lista => lista.map(c => (c.id === cancha.id ? { ...c, estado: cancha.estado } : c)));
       Alert.alert('No se pudo cambiar el estado', mensajeDeError(e));
+    } finally {
+      setGuardandoEstado(ids => ids.filter(i => i !== cancha.id));
     }
   };
 
@@ -96,7 +101,7 @@ export function CanchasScreen() {
             accessibilityLabel={`${item.nombre}: ${libre ? 'libre' : 'ocupada'}`}
             value={libre}
             onValueChange={() => alternarEstado(item)}
-            disabled={!item.habilitada}
+            disabled={!item.habilitada || guardandoEstado.includes(item.id)}
             trackColor={{ true: colores.libre, false: colores.ocupada }}
             thumbColor="#FFFFFF"
           />
@@ -120,6 +125,13 @@ export function CanchasScreen() {
           />
         ))}
       </View>
+
+      {/* Si falla una recarga con canchas ya en pantalla, se avisa sin esconder la lista */}
+      {!!error && canchas.length > 0 && (
+        <Text accessibilityLiveRegion="polite" style={[estilos.aviso, { color: colores.error }]}>
+          {error}
+        </Text>
+      )}
 
       <FlatList
         data={visibles}
@@ -173,6 +185,7 @@ export function CanchasScreen() {
 const estilos = StyleSheet.create({
   pantalla: { flex: 1 },
   filtros: { flexDirection: 'row', flexWrap: 'wrap', paddingHorizontal: espaciado.m, paddingTop: espaciado.m },
+  aviso: { fontSize: 14, paddingHorizontal: espaciado.m, marginBottom: espaciado.s },
   lista: { paddingHorizontal: espaciado.m, paddingBottom: 96 },
   tarjeta: {
     flexDirection: 'row',

@@ -44,16 +44,20 @@ final class CanchaController extends Controlador
     // POST /canchas  {nombre, deporte, superficie, techada, duracionMin, precioBase}
     public function crear(): void
     {
-        $complejo = $this->complejoDelDueno();
-        $id = $this->canchas->crear((int) $complejo['id'], $this->datosValidos(leerJson()));
+        $complejoId = (int) $this->complejoDelDueno()['id'];
+        $datos = $this->datosValidos(leerJson());
+        $this->verificarNombreLibre($complejoId, $datos['nombre']);
+        $id = $this->canchas->crear($complejoId, $datos);
         responder(201, ['cancha' => $this->canchas->publico($this->canchas->buscarPorId($id))]);
     }
 
     // PUT /canchas/:id  (mismos campos que al crear)
     public function editar(int $id): void
     {
-        $this->canchaPropia($id);
-        $this->canchas->editar($id, $this->datosValidos(leerJson()));
+        $cancha = $this->canchaPropia($id);
+        $datos = $this->datosValidos(leerJson());
+        $this->verificarNombreLibre((int) $cancha['complejo_id'], $datos['nombre'], $id);
+        $this->canchas->editar($id, $datos);
         responder(200, ['cancha' => $this->canchas->publico($this->canchas->buscarPorId($id))]);
     }
 
@@ -125,6 +129,14 @@ final class CanchaController extends Controlador
         return $complejo;
     }
 
+    // Dos canchas con el mismo nombre se confundirían en la agenda
+    private function verificarNombreLibre(int $complejoId, string $nombre, ?int $exceptoId = null): void
+    {
+        if ($this->canchas->nombreEnUso($complejoId, $nombre, $exceptoId)) {
+            responder(409, ['error' => "Ya tenés una cancha llamada \"$nombre\""]);
+        }
+    }
+
     private function canchaPropia(int $id): array
     {
         return $this->verificarDueno($this->canchas->buscarConDueno($id), 'La cancha');
@@ -153,16 +165,21 @@ final class CanchaController extends Controlador
             responder(400, ['error' => 'La duración del turno tiene que ser de 60 o 90 minutos']);
         }
 
-        $superficie = trim((string) ($datos['superficie'] ?? ''));
+        $superficie = trim(textoDe($datos, 'superficie'));
         if (mb_strlen($superficie) > 50) {
             responder(400, ['error' => 'La superficie no puede superar los 50 caracteres']);
+        }
+        // (bool) "false" daría true: se exige un booleano de verdad
+        $techada = $datos['techada'] ?? false;
+        if (!is_bool($techada)) {
+            responder(400, ['error' => 'Falta indicar si la cancha es techada']);
         }
 
         return [
             'nombre' => textoRequerido($datos, 'nombre', 50, 'el nombre de la cancha'),
             'deporte' => $deporte,
             'superficie' => $superficie !== '' ? $superficie : null,
-            'techada' => (bool) ($datos['techada'] ?? false),
+            'techada' => $techada,
             'duracionMin' => $duracion,
             'precioBase' => precioRequerido($datos, 'precioBase', 'el precio del turno'),
         ];

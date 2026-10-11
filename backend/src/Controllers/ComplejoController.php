@@ -35,9 +35,12 @@ final class ComplejoController extends Controlador
         $usuarioId = $this->usuarioActual();
         $datos = leerJson();
 
-        $telefono = trim((string) ($datos['telefono'] ?? ''));
+        $telefono = trim(textoDe($datos, 'telefono'));
         if ($telefono !== '' && !preg_match('/^\+?[0-9 ()-]{6,30}$/', $telefono)) {
             responder(400, ['error' => 'El teléfono solo puede tener números, espacios, guiones y +']);
+        }
+        if ($telefono !== '' && strlen(preg_replace('/\D/', '', $telefono)) < 6) {
+            responder(400, ['error' => 'El teléfono tiene que tener al menos 6 números']);
         }
 
         // El cierre puede ser 24:00 (medianoche); la apertura no
@@ -48,7 +51,8 @@ final class ComplejoController extends Controlador
         }
 
         $servicios = $datos['servicios'] ?? [];
-        if (!is_array($servicios) || array_diff($servicios, Complejo::SERVICIOS) !== []) {
+        $sonTextos = is_array($servicios) && array_filter($servicios, 'is_string') === $servicios;
+        if (!$sonTextos || array_diff($servicios, Complejo::SERVICIOS) !== []) {
             responder(400, ['error' => 'Hay servicios que no son válidos']);
         }
 

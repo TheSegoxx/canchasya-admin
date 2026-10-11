@@ -51,10 +51,17 @@ function enviarCabecerasSeguridad(): void
     }
 }
 
+// Valor de un campo como texto; si mandaron una lista u objeto se toma como vacío
+function textoDe(array $datos, string $campo): string
+{
+    $valor = $datos[$campo] ?? '';
+    return is_scalar($valor) ? (string) $valor : '';
+}
+
 // Devuelve un texto sin espacios sobrantes o responde 400 si falta o es muy largo
 function textoRequerido(array $datos, string $campo, int $maximo, string $nombreVisible): string
 {
-    $valor = trim((string) ($datos[$campo] ?? ''));
+    $valor = trim(textoDe($datos, $campo));
     if ($valor === '') {
         responder(400, ['error' => "Falta $nombreVisible"]);
     }
@@ -68,7 +75,7 @@ function textoRequerido(array $datos, string $campo, int $maximo, string $nombre
 // 24:00 solo se acepta como hora de fin (medianoche)
 function horaRequerida(array $datos, string $campo, string $nombreVisible, bool $admiteMedianoche = false): string
 {
-    $valor = (string) ($datos[$campo] ?? '');
+    $valor = textoDe($datos, $campo);
     $valida = preg_match('/^([01]\d|2[0-3]):[0-5]\d$/', $valor)
         || ($admiteMedianoche && $valor === '24:00');
     if (!$valida) {

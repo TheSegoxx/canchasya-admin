@@ -1,10 +1,11 @@
-import React, { useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import { ActivityIndicator, Alert, StyleSheet, Text, View } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { complejoApi, Servicio, SERVICIOS } from '../../api/complejo';
 import { Boton } from '../../components/Boton';
 import { CampoTexto } from '../../components/CampoTexto';
 import { Chip } from '../../components/Chip';
+import { ErrorCarga } from '../../components/ErrorCarga';
 import { Pantalla } from '../../components/Pantalla';
 import { SelectorHora, sumarMinutos } from '../../components/SelectorHora';
 import { mensajeDeError, useSesion } from '../../context/SesionContext';
@@ -27,27 +28,34 @@ export function ComplejoScreen() {
   const [cierre, setCierre] = useState('24:00');
   const [servicios, setServicios] = useState<Servicio[]>([]);
   const [cargando, setCargando] = useState(editando);
+  const [errorCarga, setErrorCarga] = useState('');
   const [guardando, setGuardando] = useState(false);
   const [error, setError] = useState('');
 
   // Al editar, se completan los campos con lo que ya está guardado
-  useEffect(() => {
-    if (!editando) {
-      return;
+  const cargar = useCallback(async () => {
+    setCargando(true);
+    setErrorCarga('');
+    try {
+      const { complejo } = await complejoApi.obtener();
+      setNombre(complejo.nombre);
+      setDireccion(complejo.direccion);
+      setTelefono(complejo.telefono ?? '');
+      setApertura(complejo.horaApertura);
+      setCierre(complejo.horaCierre);
+      setServicios(complejo.servicios);
+    } catch (e) {
+      setErrorCarga(mensajeDeError(e));
+    } finally {
+      setCargando(false);
     }
-    complejoApi
-      .obtener()
-      .then(({ complejo }) => {
-        setNombre(complejo.nombre);
-        setDireccion(complejo.direccion);
-        setTelefono(complejo.telefono ?? '');
-        setApertura(complejo.horaApertura);
-        setCierre(complejo.horaCierre);
-        setServicios(complejo.servicios);
-      })
-      .catch(e => setError(mensajeDeError(e)))
-      .finally(() => setCargando(false));
-  }, [editando]);
+  }, []);
+
+  useEffect(() => {
+    if (editando) {
+      cargar();
+    }
+  }, [editando, cargar]);
 
   const alternarServicio = (clave: Servicio) =>
     setServicios(actuales =>
@@ -55,6 +63,9 @@ export function ComplejoScreen() {
     );
 
   const guardar = async () => {
+    if (guardando) {
+      return;
+    }
     if (!nombre.trim() || !direccion.trim()) {
       setError('Completá el nombre y la dirección del complejo.');
       return;
@@ -90,6 +101,10 @@ export function ComplejoScreen() {
         <ActivityIndicator size="large" color={colores.primario} />
       </View>
     );
+  }
+
+  if (errorCarga) {
+    return <ErrorCarga mensaje={errorCarga} onReintentar={cargar} />;
   }
 
   return (

@@ -32,6 +32,14 @@ final class Cancha extends Modelo
         return $stmt->fetch() ?: null;
     }
 
+    // La comparación de la base no distingue mayúsculas ni tildes ("Pádel 1" = "padel 1")
+    public function nombreEnUso(int $complejoId, string $nombre, ?int $exceptoId = null): bool
+    {
+        $stmt = $this->pdo->prepare('SELECT 1 FROM canchas WHERE complejo_id = ? AND nombre = ? AND id <> ?');
+        $stmt->execute([$complejoId, $nombre, $exceptoId ?? 0]);
+        return (bool) $stmt->fetchColumn();
+    }
+
     public function crear(int $complejoId, array $datos): int
     {
         return $this->insertar(['complejo_id' => $complejoId, ...$this->columnas($datos)]);

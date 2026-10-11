@@ -1,10 +1,11 @@
-import React, { useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import { ActivityIndicator, Alert, Pressable, StyleSheet, Text, View } from 'react-native';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { canchasApi, Deporte, Franja, NOMBRE_DEPORTE } from '../../api/canchas';
 import { Boton } from '../../components/Boton';
 import { CampoTexto } from '../../components/CampoTexto';
 import { Chip } from '../../components/Chip';
+import { ErrorCarga } from '../../components/ErrorCarga';
 import { FilaInterruptor } from '../../components/FilaInterruptor';
 import { Icono } from '../../components/Icono';
 import { Pantalla } from '../../components/Pantalla';
@@ -31,31 +32,41 @@ export function CanchaScreen({ route, navigation }: Props) {
   const [franjas, setFranjas] = useState<Franja[]>([]);
 
   const [cargando, setCargando] = useState(id !== undefined);
+  const [errorCarga, setErrorCarga] = useState('');
   const [guardando, setGuardando] = useState(false);
   const [error, setError] = useState('');
 
+  const cargar = useCallback(async (canchaId: number) => {
+    setCargando(true);
+    setErrorCarga('');
+    try {
+      const { cancha, franjas: lista } = await canchasApi.obtener(canchaId);
+      setDeporte(cancha.deporte);
+      setNombre(cancha.nombre);
+      setSuperficie(cancha.superficie ?? '');
+      setTechada(cancha.techada);
+      setDuracion(cancha.duracionMin);
+      setPrecio(pesosParaEditar(cancha.precioBase));
+      setHabilitada(cancha.habilitada);
+      setFranjas(lista);
+    } catch (e) {
+      setErrorCarga(mensajeDeError(e));
+    } finally {
+      setCargando(false);
+    }
+  }, []);
+
   useEffect(() => {
     navigation.setOptions({ title: id === undefined ? 'Nueva cancha' : 'Editar cancha' });
-    if (id === undefined) {
-      return;
+    if (id !== undefined) {
+      cargar(id);
     }
-    canchasApi
-      .obtener(id)
-      .then(({ cancha, franjas: lista }) => {
-        setDeporte(cancha.deporte);
-        setNombre(cancha.nombre);
-        setSuperficie(cancha.superficie ?? '');
-        setTechada(cancha.techada);
-        setDuracion(cancha.duracionMin);
-        setPrecio(pesosParaEditar(cancha.precioBase));
-        setHabilitada(cancha.habilitada);
-        setFranjas(lista);
-      })
-      .catch(e => setError(mensajeDeError(e)))
-      .finally(() => setCargando(false));
-  }, [id, navigation]);
+  }, [id, navigation, cargar]);
 
   const guardar = async () => {
+    if (guardando) {
+      return;
+    }
     const precioBase = leerPesos(precio);
     if (!nombre.trim()) {
       setError('Poné un nombre para la cancha (por ejemplo, "Pádel 1").');
@@ -108,6 +119,10 @@ export function CanchaScreen({ route, navigation }: Props) {
         <ActivityIndicator size="large" color={colores.primario} />
       </View>
     );
+  }
+
+  if (errorCarga && id !== undefined) {
+    return <ErrorCarga mensaje={errorCarga} onReintentar={() => cargar(id)} />;
   }
 
   return (
@@ -171,7 +186,12 @@ export function CanchaScreen({ route, navigation }: Props) {
   );
 }
 
-type PropsFranjas = { canchaId: number; franjas: Franja[]; onCambio: (franjas: Franja[]) => void };
+type PropsFranjas = {
+  canchaId: number;
+  franjas: Franja[];
+  // Recibe una función para partir siempre de la lista más reciente
+  onCambio: (cambio: (actuales: Franja[]) => Franja[]) => void;
+};
 
 // Precios distintos según el horario (por ejemplo, más caro a la noche)
 function FranjasPrecio({ canchaId, franjas, onCambio }: PropsFranjas) {
@@ -183,6 +203,9 @@ function FranjasPrecio({ canchaId, franjas, onCambio }: PropsFranjas) {
   const [error, setError] = useState('');
 
   const agregar = async () => {
+    if (agregando) {
+      return;
+    }
     const monto = leerPesos(precio);
     if (monto === null) {
       setError('Escribí el precio de la franja solo con números.');
@@ -192,7 +215,7 @@ function FranjasPrecio({ canchaId, franjas, onCambio }: PropsFranjas) {
     setAgregando(true);
     try {
       const { franja } = await canchasApi.crearFranja(canchaId, { horaDesde: desde, horaHasta: hasta, precio: monto });
-      onCambio([...franjas, franja].sort((a, b) => a.horaDesde.localeCompare(b.horaDesde)));
+      onCambio(actuales => [...actuales, franja].sort((a, b) => a.horaDesde.localeCompare(b.horaDesde)));
       setPrecio('');
     } catch (e) {
       setError(mensajeDeError(e));
@@ -210,7 +233,7 @@ function FranjasPrecio({ canchaId, franjas, onCambio }: PropsFranjas) {
         onPress: async () => {
           try {
             await canchasApi.borrarFranja(franja.id);
-            onCambio(franjas.filter(f => f.id !== franja.id));
+            onCambio(actuales => actuales.filter(f => f.id !== franja.id));
           } catch (e) {
             Alert.alert('No se pudo borrar', mensajeDeError(e));
           }
