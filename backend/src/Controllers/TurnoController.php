@@ -11,6 +11,7 @@ use App\Models\Turno;
 use App\Models\TurnoFijo;
 use App\Services\AgendaService;
 use App\Services\CobroService;
+use App\Services\LinksDePago;
 use App\Services\VistaTurno;
 
 /**
@@ -171,6 +172,9 @@ final class TurnoController extends Controlador
             });
         } elseif ($estado !== $actual) {
             $this->turnos->cambiarEstado($id, $estado);
+            if ($estado === 'cancelado') {
+                (new LinksDePago($this->pdo))->anularDeTurnosCancelados([$id]);
+            }
         }
         responder(200, ['turno' => $this->detalle($id)]);
     }
@@ -201,6 +205,7 @@ final class TurnoController extends Controlador
             $this->fijos->terminar($id, sumarDias($desde, -1));
             return $this->turnos->cancelarDelFijo($id, $desde);
         });
+        (new LinksDePago($this->pdo))->anularDeTurnosCancelados($this->turnos->idsDelFijoDesde($id, $desde));
 
         $respuesta = ['ok' => true];
         if ($conPago > 0) {
@@ -278,8 +283,20 @@ final class TurnoController extends Controlador
             return $cliente['id'];
         }
         $existente = $this->clientes->buscarPorTelefono($complejoId, $cliente['telefono']);
-        return $existente !== null
-            ? (int) $existente['id']
-            : $this->clientes->crear($complejoId, $cliente['nombre'], $cliente['telefono']);
+        if ($existente !== null) {
+            return (int) $existente['id'];
+        }
+        try {
+            return $this->clientes->crear($complejoId, $cliente['nombre'], $cliente['telefono']);
+        } catch (\PDOException $e) {
+            // Otra reserva creó el mismo cliente en ese instante (teléfono único): se usa ese
+            $otro = $e->getCode() === '23000'
+                ? $this->clientes->buscarPorTelefono($complejoId, $cliente['telefono'])
+                : null;
+            if ($otro === null) {
+                throw $e;
+            }
+            return (int) $otro['id'];
+        }
     }
 }

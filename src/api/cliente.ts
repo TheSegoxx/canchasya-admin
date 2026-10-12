@@ -35,6 +35,12 @@ export function siVenceLaSesion(accion: () => void): void {
   alVencerLaSesion = accion;
 }
 
+// ...y cuando la cuenta se quedó sin complejo (por ejemplo, al encargado le quitaron el acceso)
+let alPerderElComplejo: (() => void) | null = null;
+export function siPierdeElComplejo(accion: () => void): void {
+  alPerderElComplejo = accion;
+}
+
 // Las fotos las sirve Apache directo; la API devuelve la ruta relativa ("fotos/abc.jpg")
 export const urlDeFoto = (ruta: string) => `${SERVIDOR_URL}/${ruta}`;
 
@@ -73,6 +79,10 @@ export async function api<T>(ruta: string, metodo = 'GET', cuerpo?: unknown): Pr
   if (respuesta.status === 401 && token) {
     await borrarToken();
     alVencerLaSesion?.();
+  }
+
+  if (respuesta.status === 409 && datos?.codigo === 'sin_complejo') {
+    alPerderElComplejo?.();
   }
 
   if (!respuesta.ok) {

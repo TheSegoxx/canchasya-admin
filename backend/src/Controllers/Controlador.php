@@ -68,7 +68,9 @@ abstract class Controlador
                 ? ($usuario['complejo_id'] !== null ? $complejos->buscarPorId((int) $usuario['complejo_id']) : null)
                 : $complejos->buscarPorUsuario((int) $usuario['id']);
             if ($this->complejo === null) {
-                responder(409, ['error' => 'Primero configurá los datos de tu complejo']);
+                // Con el código la app sabe que tiene que volver a Configurar complejo
+                // (por ejemplo, a un encargado al que le acaban de quitar el acceso)
+                responder(409, ['error' => 'Primero configurá los datos de tu complejo', 'codigo' => 'sin_complejo']);
             }
         }
         return $this->complejo;

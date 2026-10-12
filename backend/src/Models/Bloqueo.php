@@ -53,6 +53,17 @@ final class Bloqueo extends Modelo
         return $this->insertar(['cancha_id' => $canchaId, 'desde' => $desde, 'hasta' => $hasta, 'motivo' => $motivo]);
     }
 
+    // Nombre del torneo si el bloqueo reserva la cancha para uno de sus partidos; null si no
+    public function torneoQueLoUsa(int $id): ?string
+    {
+        $stmt = $this->pdo->prepare(
+            'SELECT t.nombre FROM partidos p JOIN torneos t ON t.id = p.torneo_id WHERE p.bloqueo_id = ?'
+        );
+        $stmt->execute([$id]);
+        $nombre = $stmt->fetchColumn();
+        return $nombre !== false ? $nombre : null;
+    }
+
     public function borrar(int $id): void
     {
         $this->pdo->prepare('DELETE FROM bloqueos WHERE id = ?')->execute([$id]);

@@ -108,6 +108,14 @@ final class Turno extends Modelo
         ];
     }
 
+    /** @return list<int> Turnos del fijo desde esa fecha (para anular sus links de pago al darlo de baja) */
+    public function idsDelFijoDesde(int $turnoFijoId, string $desde): array
+    {
+        $stmt = $this->pdo->prepare('SELECT id FROM turnos WHERE turno_fijo_id = ? AND fecha >= ?');
+        $stmt->execute([$turnoFijoId, $desde]);
+        return array_map('intval', $stmt->fetchAll(\PDO::FETCH_COLUMN));
+    }
+
     public function existeDelFijo(int $turnoFijoId, string $fecha): bool
     {
         $stmt = $this->pdo->prepare('SELECT 1 FROM turnos WHERE turno_fijo_id = ? AND fecha = ?');

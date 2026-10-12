@@ -9,6 +9,7 @@ use App\Models\Bloqueo;
 use App\Models\Cancha;
 use App\Models\Turno;
 use App\Services\AgendaService;
+use App\Services\LinksDePago;
 
 /**
  * Endpoints /bloqueos: cerrar una o varias canchas un rato (lluvia, mantenimiento, evento).
@@ -95,6 +96,8 @@ final class BloqueoController extends Controlador
             return $afectados;
         });
 
+        (new LinksDePago($this->pdo))->anularDeTurnosCancelados(array_map(fn (array $t) => (int) $t['id'], $cancelados));
+
         // Los cancelados vuelven para que la app ofrezca avisarles por WhatsApp
         responder(201, [
             'cancelados' => array_map(
@@ -108,6 +111,12 @@ final class BloqueoController extends Controlador
     public function borrar(int $id): void
     {
         $this->verificarDelComplejo($this->bloqueos->buscarConDueno($id), 'El bloqueo');
+        // Si reserva la cancha para un partido, se cambia desde el torneo (si no, el partido
+        // seguiría figurando programado con la cancha libre para otro turno)
+        $torneo = $this->bloqueos->torneoQueLoUsa($id);
+        if ($torneo !== null) {
+            responder(409, ['error' => "Es un partido de \"$torneo\": cambialo o quitalo de la agenda desde el torneo"]);
+        }
         $this->bloqueos->borrar($id);
         responder(204);
     }

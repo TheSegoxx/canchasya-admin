@@ -6,7 +6,7 @@ import {
   statusCodes,
 } from '@react-native-google-signin/google-signin';
 import { authApi, RespuestaSesion, Usuario } from '../api/auth';
-import { borrarToken, ErrorApi, guardarToken, leerToken, siVenceLaSesion } from '../api/cliente';
+import { borrarToken, ErrorApi, guardarToken, leerToken, siPierdeElComplejo, siVenceLaSesion } from '../api/cliente';
 import { GOOGLE_WEB_CLIENT_ID } from '../config';
 
 // webClientId hace que Google entregue un idToken firmado para nuestra API
@@ -55,6 +55,13 @@ export function SesionProvider({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     siVenceLaSesion(() => setUsuario(null));
+    // Se vuelven a pedir los datos de la cuenta: la navegación pasa sola a Configurar complejo
+    siPierdeElComplejo(() => {
+      authApi
+        .yo()
+        .then(respuesta => setUsuario(respuesta.usuario))
+        .catch(() => undefined);
+    });
     recuperarSesion();
   }, [recuperarSesion]);
 

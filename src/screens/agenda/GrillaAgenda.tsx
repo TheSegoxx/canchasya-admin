@@ -39,13 +39,24 @@ export function GrillaAgenda({ agenda, esHoy, esPasado, onLibre, onTurno, onBloq
   const cabecera = useRef<ScrollViewInstance>(null);
   const [ahora, setAhora] = useState(minutosAhora);
 
-  const canchas = agenda.canchas.filter(c => c.habilitada);
+  // Las deshabilitadas se muestran solo si ese día tienen algo (para no esconder turnos ya reservados)
+  const canchas = agenda.canchas.filter(
+    c =>
+      c.habilitada ||
+      agenda.turnos.some(t => t.canchaId === c.id && turnoActivo(t)) ||
+      agenda.bloqueos.some(b => b.canchaId === c.id),
+  );
   const apertura = aMinutos(agenda.complejo.horaApertura);
   const cierre = aMinutos(agenda.complejo.horaCierre);
   const filas = Math.ceil((cierre - apertura) / PASO_MINUTOS);
   const alto = filas * ALTO_CASILLERO;
   const anchoColumna = Math.max(ANCHO_MINIMO_COLUMNA, Math.floor((width - ANCHO_HORAS) / Math.max(canchas.length, 1)));
   const posicion = (hora: string) => (aMinutos(hora) - apertura) * PX_POR_MINUTO;
+  // Un turno o bloqueo que quedó fuera del horario (si se cambió el horario del complejo) se recorta a la grilla
+  const ubicar = (desde: string, hasta: string) => {
+    const top = Math.min(Math.max(0, posicion(desde)), alto - ALTO_CASILLERO);
+    return { top, height: Math.max(ALTO_CASILLERO / 2, Math.min(alto, posicion(hasta)) - top - 2) };
+  };
 
   // La línea de "ahora" se mueve sola cada minuto
   useEffect(() => {
@@ -87,8 +98,8 @@ export function GrillaAgenda({ agenda, esHoy, esPasado, onLibre, onTurno, onBloq
           {canchas.map(c => (
             <View key={c.id} style={[estilos.nombreCancha, { width: anchoColumna }]}>
               <Icono nombre={c.deporte} color={colores.primario} tamano={18} />
-              <Text numberOfLines={1} style={[estilos.textoCancha, { color: colores.texto }]}>
-                {c.nombre}
+              <Text numberOfLines={1} style={[estilos.textoCancha, { color: c.habilitada ? colores.texto : colores.inactivo }]}>
+                {c.habilitada ? c.nombre : `${c.nombre} (deshab.)`}
               </Text>
             </View>
           ))}
@@ -125,7 +136,7 @@ export function GrillaAgenda({ agenda, esHoy, esPasado, onLibre, onTurno, onBloq
                         key={hora}
                         accessibilityRole="button"
                         accessibilityLabel={`${cancha.nombre}, ${hora}, libre`}
-                        disabled={esPasado}
+                        disabled={esPasado || !cancha.habilitada}
                         onPress={() => onLibre(cancha.id, hora)}
                         style={({ pressed }) => [
                           estilos.casillero,
@@ -150,8 +161,7 @@ export function GrillaAgenda({ agenda, esHoy, esPasado, onLibre, onTurno, onBloq
                         style={[
                           estilos.bloque,
                           {
-                            top: Math.max(0, posicion(b.horaDesde)),
-                            height: Math.min(alto, posicion(b.horaHasta)) - Math.max(0, posicion(b.horaDesde)) - 2,
+                            ...ubicar(b.horaDesde, b.horaHasta),
                             backgroundColor: colores.inactivo + '40',
                             borderLeftColor: colores.inactivo,
                           },
@@ -169,7 +179,8 @@ export function GrillaAgenda({ agenda, esHoy, esPasado, onLibre, onTurno, onBloq
                     .filter(t => t.canchaId === cancha.id && turnoActivo(t))
                     .map(t => {
                       const color = colorDeTurno(t, colores);
-                      const altoTurno = posicion(t.horaFin) - posicion(t.horaInicio) - 2;
+                      const lugar = ubicar(t.horaInicio, t.horaFin);
+                      const altoTurno = lugar.height;
                       return (
                         <Pressable
                           key={t.id}
@@ -179,8 +190,7 @@ export function GrillaAgenda({ agenda, esHoy, esPasado, onLibre, onTurno, onBloq
                           style={({ pressed }) => [
                             estilos.bloque,
                             {
-                              top: posicion(t.horaInicio),
-                              height: altoTurno,
+                              ...lugar,
                               backgroundColor: color + '2E',
                               borderLeftColor: color,
                               opacity: pressed ? 0.7 : t.estado === 'jugado' ? 0.55 : 1,
