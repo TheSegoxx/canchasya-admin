@@ -5,6 +5,7 @@ import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { ErrorCarga } from '../components/ErrorCarga';
 import { Icono, NombreIcono } from '../components/Icono';
 import type { Cliente } from '../api/agenda';
+import type { Producto } from '../api/cobros';
 import { useSesion } from '../context/SesionContext';
 import { LoginScreen } from '../screens/auth/LoginScreen';
 import { AgendaScreen } from '../screens/agenda/AgendaScreen';
@@ -16,9 +17,13 @@ import { RegistroScreen } from '../screens/auth/RegistroScreen';
 import { CanchaScreen } from '../screens/canchas/CanchaScreen';
 import { CanchasScreen } from '../screens/canchas/CanchasScreen';
 import { ClienteScreen } from '../screens/clientes/ClienteScreen';
+import { AgregarExtraScreen } from '../screens/cobros/AgregarExtraScreen';
+import { CajaScreen } from '../screens/cobros/CajaScreen';
+import { CobrarScreen } from '../screens/cobros/CobrarScreen';
+import { ProductoScreen } from '../screens/cobros/ProductoScreen';
+import { ProductosScreen } from '../screens/cobros/ProductosScreen';
 import { ClientesScreen } from '../screens/clientes/ClientesScreen';
 import { ComplejoScreen } from '../screens/complejo/ComplejoScreen';
-import { InicioScreen } from '../screens/principal/EnConstruccion';
 import { MasScreen } from '../screens/principal/MasScreen';
 import { useTema } from '../theme/tema';
 
@@ -41,6 +46,11 @@ export type RutasApp = {
   TurnosFijos: undefined;
   Clientes: undefined;
   Cliente: { cliente: Cliente };
+  Cobrar: { turnoId: number };
+  AgregarExtra: { turnoId: number };
+  Productos: undefined;
+  // Sin producto: nuevo; con producto: editar
+  Producto: { producto?: Producto };
 };
 
 export type RutasPestanas = {
@@ -76,7 +86,7 @@ function Principal() {
         tabBarInactiveTintColor: colores.textoSecundario,
         tabBarIcon: iconoDe(route.name),
       })}>
-      <Pestanas.Screen name="Inicio" component={InicioScreen} options={{ title: 'Ingresos', tabBarLabel: 'Inicio' }} />
+      <Pestanas.Screen name="Inicio" component={CajaScreen} options={{ title: 'Caja del día', tabBarLabel: 'Inicio' }} />
       <Pestanas.Screen name="Agenda" component={AgendaScreen} />
       <Pestanas.Screen name="Canchas" component={CanchasScreen} />
       <Pestanas.Screen name="Mas" component={MasScreen} options={{ title: 'Más' }} />
@@ -98,6 +108,10 @@ function Aplicacion({ tieneComplejo }: { tieneComplejo: boolean }) {
           <PilaApp.Screen name="TurnosFijos" component={TurnosFijosScreen} options={{ title: 'Turnos fijos' }} />
           <PilaApp.Screen name="Clientes" component={ClientesScreen} />
           <PilaApp.Screen name="Cliente" component={ClienteScreen} options={{ title: 'Cliente' }} />
+          <PilaApp.Screen name="Cobrar" component={CobrarScreen} options={{ title: 'Cobrar' }} />
+          <PilaApp.Screen name="AgregarExtra" component={AgregarExtraScreen} options={{ title: 'Agregar extra' }} />
+          <PilaApp.Screen name="Productos" component={ProductosScreen} options={{ title: 'Productos y extras' }} />
+          <PilaApp.Screen name="Producto" component={ProductoScreen} />
         </>
       ) : (
         <PilaApp.Screen

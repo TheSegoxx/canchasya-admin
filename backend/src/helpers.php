@@ -217,3 +217,24 @@ function booleanoOpcional(array $datos, string $campo, string $nombreVisible): b
     }
     return $valor;
 }
+
+// "$ 24.000" o "$ 24.000,50" para los mensajes (igual que en la app)
+function pesos(float $monto): string
+{
+    $decimales = fmod($monto, 1.0) == 0.0 ? 0 : 2;
+    return '$ ' . number_format($monto, $decimales, ',', '.');
+}
+
+// Valida {monto, metodo} de un pago; responde 400 si algo no está bien
+function pagoValido(array $datos): array
+{
+    $monto = precioRequerido($datos, 'monto', 'el monto');
+    if ($monto <= 0) {
+        responder(400, ['error' => 'El monto tiene que ser mayor a cero']);
+    }
+    $metodo = textoDe($datos, 'metodo');
+    if (!in_array($metodo, App\Models\Pago::METODOS, true)) {
+        responder(400, ['error' => 'El medio de pago tiene que ser efectivo o transferencia']);
+    }
+    return ['monto' => $monto, 'metodo' => $metodo];
+}

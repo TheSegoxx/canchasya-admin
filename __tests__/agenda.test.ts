@@ -25,6 +25,8 @@ const turno = (horaInicio: string, horaFin: string, estado: Turno['estado'] = 'c
   precio: 20000,
   estado,
   estadoPago: 'pendiente',
+  total: 20000,
+  pagado: 0,
   turnoFijoId: null,
   cliente: { id: 1, nombre: 'Juan Pérez', telefono: '1155551234' },
 });

@@ -10,6 +10,8 @@ use App\Models\Cliente;
 use App\Models\Turno;
 use App\Models\TurnoFijo;
 use App\Services\AgendaService;
+use App\Services\CobroService;
+use App\Services\VistaTurno;
 
 /**
  * Endpoints /turnos y /turnos-fijos: reservar, ver, cancelar y dar de baja turnos fijos.
@@ -41,8 +43,9 @@ final class TurnoController extends Controlador
 
     /**
      * POST /turnos
-     * {canchaId, fecha, horaInicio, clienteId | cliente: {nombre, telefono}, precio?, fijo?}
+     * {canchaId, fecha, horaInicio, clienteId | cliente: {nombre, telefono}, precio?, fijo?, sena?: {monto, metodo}}
      * Sin precio se usa el de la franja horaria. Con fijo = true se repite todas las semanas.
+     * Con sena se registra el primer pago en el mismo momento.
      */
     public function crear(): void
     {
@@ -68,9 +71,10 @@ final class TurnoController extends Controlador
         $precio = ($datos['precio'] ?? null) !== null ? precioRequerido($datos, 'precio', 'el precio') : null;
         $esFijo = booleanoOpcional($datos, 'fijo', 'fijo');
         $cliente = $this->clienteDeLaPeticion($datos);
+        $sena = $this->senaDeLaPeticion($datos);
 
         [$turnoId, $ocupadas] = $this->transaccion(function () use (
-            $complejoId, $cancha, $canchaId, $fecha, $inicio, $fin, $precio, $esFijo, $cliente
+            $complejoId, $cancha, $canchaId, $fecha, $inicio, $fin, $precio, $esFijo, $cliente, $sena
         ) {
             $this->agenda->trabarCancha($canchaId);
             // Así un turno fijo de ese día cuenta como ocupado aunque nadie haya abierto la agenda
@@ -113,6 +117,13 @@ final class TurnoController extends Controlador
                 'horaFin' => $fin,
                 'precio' => $precio ?? $this->agenda->precio($cancha, $inicio),
             ]);
+            $cobros = new CobroService($this->pdo);
+            if ($sena !== null) {
+                $cobros->registrarPago($id, $sena['monto'], $sena['metodo']);
+            } else {
+                // Un turno sin cargo queda pagado desde el principio
+                $cobros->actualizarEstadoPago($id);
+            }
             return [$id, $ocupadas];
         });
 
@@ -197,21 +208,10 @@ final class TurnoController extends Controlador
         responder(200, $respuesta);
     }
 
-    // El turno con su cancha, complejo y turno fijo, como lo muestra la app
+    // El turno con su cancha, complejo, turno fijo y cuenta, como lo muestra la app
     private function detalle(int $id): array
     {
-        $fila = $this->turnos->buscarDetalle($id);
-        $fijo = $fila['turno_fijo_id'] !== null ? $this->fijos->buscarPorId((int) $fila['turno_fijo_id']) : null;
-        return [
-            ...$this->turnos->publico($fila),
-            'cancha' => ['id' => (int) $fila['cancha_id'], 'nombre' => $fila['cancha_nombre'], 'deporte' => $fila['cancha_deporte']],
-            'complejo' => ['nombre' => $fila['complejo_nombre'], 'direccion' => $fila['complejo_direccion']],
-            'fijo' => $fijo !== null ? [
-                'id' => (int) $fijo['id'],
-                'diaSemana' => (int) $fijo['dia_semana'],
-                'fechaHasta' => $fijo['fecha_hasta'],
-            ] : null,
-        ];
+        return (new VistaTurno($this->pdo))->detalle($id);
     }
 
     // El turno dura lo que la cancha y tiene que entrar en el horario del complejo
@@ -253,6 +253,19 @@ final class TurnoController extends Controlador
             responder(400, ['error' => 'El teléfono del cliente no es válido. Escribilo con el código de área (por ejemplo, 11 5555 1234).']);
         }
         return ['nombre' => textoRequerido($nuevo, 'nombre', 100, 'el nombre del cliente'), 'telefono' => $telefono];
+    }
+
+    /** @return array{monto: float, metodo: string}|null */
+    private function senaDeLaPeticion(array $datos): ?array
+    {
+        $sena = $datos['sena'] ?? null;
+        if ($sena === null) {
+            return null;
+        }
+        if (!is_array($sena)) {
+            responder(400, ['error' => 'La seña no tiene el formato correcto']);
+        }
+        return pagoValido($sena);
     }
 
     // Si ya hay un cliente con ese teléfono se usa ese (no se duplica la persona)

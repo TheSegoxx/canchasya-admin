@@ -14,16 +14,24 @@ final class Turno extends Modelo
 
     public const ESTADOS = ['confirmado', 'cancelado', 'jugado'];
 
+    public const ESTADOS_PAGO = ['pendiente', 'senado', 'pagado'];
+
+    // Lo que suman los extras y lo que ya se pagó de la cuenta del turno
+    private const TOTALES =
+        '(SELECT COALESCE(SUM(co.cantidad * co.precio_unitario), 0) FROM consumos co WHERE co.turno_id = t.id) AS extras,
+         (SELECT COALESCE(SUM(p.monto), 0) FROM pagos p WHERE p.turno_id = t.id) AS pagado';
+
     // El turno con los datos de su cliente
     private const CON_CLIENTE =
-        'SELECT t.*, cl.nombre AS cliente_nombre, cl.telefono AS cliente_telefono
+        'SELECT t.*, cl.nombre AS cliente_nombre, cl.telefono AS cliente_telefono, ' . self::TOTALES . '
          FROM turnos t JOIN clientes cl ON cl.id = t.cliente_id';
 
     // Todos los turnos del día, incluidos los cancelados (la app decide cuáles mostrar)
     public function listarPorFecha(int $complejoId, string $fecha): array
     {
         $stmt = $this->pdo->prepare(
-            self::CON_CLIENTE . ' JOIN canchas c ON c.id = t.cancha_id
+            str_replace(' FROM turnos t', ', c.nombre AS cancha_nombre FROM turnos t', self::CON_CLIENTE)
+            . ' JOIN canchas c ON c.id = t.cancha_id
              WHERE c.complejo_id = ? AND t.fecha = ?
              ORDER BY t.hora_inicio, c.nombre'
         );
@@ -35,7 +43,7 @@ final class Turno extends Modelo
     public function buscarDetalle(int $id): ?array
     {
         $stmt = $this->pdo->prepare(
-            'SELECT t.*, cl.nombre AS cliente_nombre, cl.telefono AS cliente_telefono,
+            'SELECT t.*, cl.nombre AS cliente_nombre, cl.telefono AS cliente_telefono, ' . self::TOTALES . ',
                     c.nombre AS cancha_nombre, c.deporte AS cancha_deporte,
                     x.nombre AS complejo_nombre, x.direccion AS complejo_direccion, x.usuario_id
              FROM turnos t
@@ -101,6 +109,22 @@ final class Turno extends Modelo
         $this->actualizar($id, ['estado' => $estado]);
     }
 
+    public function cambiarEstadoPago(int $id, string $estadoPago): void
+    {
+        $this->actualizar($id, ['estado_pago' => $estadoPago]);
+    }
+
+    /**
+     * Traba el turno hasta que termine la transacción: dos cobros a la vez
+     * no pueden pasarse del saldo. Devuelve el precio y el estado.
+     */
+    public function trabar(int $id): array
+    {
+        $stmt = $this->pdo->prepare('SELECT precio, estado FROM turnos WHERE id = ? FOR UPDATE');
+        $stmt->execute([$id]);
+        return $stmt->fetch();
+    }
+
     /**
      * Cancela los turnos de un fijo desde una fecha. Los que ya tienen un pago
      * no se tocan (hay plata de por medio): devuelve cuántos quedaron así.
@@ -122,6 +146,7 @@ final class Turno extends Modelo
 
     public function publico(array $turno): array
     {
+        $total = round((float) $turno['precio'] + (float) $turno['extras'], 2);
         return [
             'id' => (int) $turno['id'],
             'canchaId' => (int) $turno['cancha_id'],
@@ -131,6 +156,9 @@ final class Turno extends Modelo
             'precio' => (float) $turno['precio'],
             'estado' => $turno['estado'],
             'estadoPago' => $turno['estado_pago'],
+            // Cuenta: precio del turno + extras; saldo = total - pagado
+            'total' => $total,
+            'pagado' => (float) $turno['pagado'],
             'turnoFijoId' => $turno['turno_fijo_id'] !== null ? (int) $turno['turno_fijo_id'] : null,
             'cliente' => [
                 'id' => (int) $turno['cliente_id'],

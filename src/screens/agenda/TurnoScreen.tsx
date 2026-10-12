@@ -1,5 +1,6 @@
 import React, { useCallback, useEffect, useState } from 'react';
 import { ActivityIndicator, Alert, StyleSheet, Text, View } from 'react-native';
+import { useFocusEffect } from '@react-navigation/native';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { agendaApi, EstadoTurno, NOMBRE_ESTADO, NOMBRE_PAGO, TurnoDetalle } from '../../api/agenda';
 import { NOMBRE_DEPORTE } from '../../api/canchas';
@@ -13,13 +14,13 @@ import { espaciado, radio, useTema } from '../../theme/tema';
 import { abrirWhatsApp, llamar } from '../../utils/acciones';
 import { mensajeDeTurno } from '../../utils/agenda';
 import { diaEnPlural, fechaCorta, fechaRelativa, hoyISO } from '../../utils/fechas';
-import { formatearPesos } from '../../utils/formato';
 import { formatearTelefono } from '../../utils/telefono';
+import { CuentaTurno } from '../cobros/CuentaTurno';
 import { colorDeTurno } from './GrillaAgenda';
 
 type Props = NativeStackScreenProps<RutasApp, 'Turno'>;
 
-// Detalle de un turno: avisar por WhatsApp, llamar, cancelar o marcar como jugado
+// Detalle de un turno: avisar por WhatsApp, llamar, cobrar, cancelar o marcar como jugado
 export function TurnoScreen({ route, navigation }: Props) {
   const { colores } = useTema();
   const { id, recienCreado } = route.params;
@@ -38,8 +39,14 @@ export function TurnoScreen({ route, navigation }: Props) {
 
   useEffect(() => {
     navigation.setOptions({ title: recienCreado ? 'Turno reservado' : 'Turno' });
-    cargar();
-  }, [cargar, navigation, recienCreado]);
+  }, [navigation, recienCreado]);
+
+  // También al volver de cobrar o de agregar un extra
+  useFocusEffect(
+    useCallback(() => {
+      cargar();
+    }, [cargar]),
+  );
 
   if (!turno) {
     return errorCarga ? (
@@ -146,7 +153,6 @@ export function TurnoScreen({ route, navigation }: Props) {
       {fila('Día', `${fechaRelativa(turno.fecha)} (${fechaCorta(turno.fecha)})`)}
       {fila('Horario', `${turno.horaInicio} a ${turno.horaFin}`)}
       {fila('Cancha', `${turno.cancha.nombre} · ${NOMBRE_DEPORTE[turno.cancha.deporte]}`)}
-      {fila('Precio', formatearPesos(turno.precio))}
       {fila('Estado', NOMBRE_ESTADO[turno.estado], cancelado ? colores.error : colores.texto)}
       {fila('Pago', NOMBRE_PAGO[turno.estadoPago], color)}
       {turno.fijo &&
@@ -156,6 +162,13 @@ export function TurnoScreen({ route, navigation }: Props) {
             ? `Dado de baja (último: ${fechaCorta(turno.fijo.fechaHasta)})`
             : `Todos los ${diaEnPlural(turno.fijo.diaSemana)}`,
         )}
+
+      <CuentaTurno
+        turno={turno}
+        onCambio={setTurno}
+        onCobrar={() => navigation.navigate('Cobrar', { turnoId: turno.id })}
+        onAgregarExtra={() => navigation.navigate('AgregarExtra', { turnoId: turno.id })}
+      />
 
       <View style={estilos.acciones}>
         {turno.estado === 'confirmado' && (

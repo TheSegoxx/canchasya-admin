@@ -13,7 +13,9 @@ use App\Controllers\AuthController;
 use App\Controllers\BloqueoController;
 use App\Controllers\CanchaController;
 use App\Controllers\ClienteController;
+use App\Controllers\CobroController;
 use App\Controllers\ComplejoController;
+use App\Controllers\ProductoController;
 use App\Controllers\TurnoController;
 
 // Prueba de conexión desde la app
@@ -51,3 +53,13 @@ $router->agregar('GET', '/clientes', fn () => (new ClienteController())->listar(
 $router->agregar('PUT', '/clientes/:id', fn (array $p) => (new ClienteController())->editar($p['id']));
 $router->agregar('POST', '/bloqueos', fn () => (new BloqueoController())->crear());
 $router->agregar('DELETE', '/bloqueos/:id', fn (array $p) => (new BloqueoController())->borrar($p['id']));
+
+// Cobros: pagos y extras de cada turno, catálogo de productos y caja del día
+$router->agregar('POST', '/turnos/:id/pagos', fn (array $p) => (new CobroController())->registrarPago($p['id']));
+$router->agregar('DELETE', '/pagos/:id', fn (array $p) => (new CobroController())->borrarPago($p['id']));
+$router->agregar('POST', '/turnos/:id/consumos', fn (array $p) => (new CobroController())->agregarConsumo($p['id']));
+$router->agregar('DELETE', '/consumos/:id', fn (array $p) => (new CobroController())->borrarConsumo($p['id']));
+$router->agregar('GET', '/caja', fn () => (new CobroController())->caja());
+$router->agregar('GET', '/productos', fn () => (new ProductoController())->listar());
+$router->agregar('POST', '/productos', fn () => (new ProductoController())->crear());
+$router->agregar('PUT', '/productos/:id', fn (array $p) => (new ProductoController())->editar($p['id']));

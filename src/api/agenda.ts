@@ -1,5 +1,6 @@
 import { api } from './cliente';
 import type { Cancha, Deporte, Franja } from './canchas';
+import type { Consumo, MetodoPago, Pago } from './cobros';
 
 export type EstadoTurno = 'confirmado' | 'cancelado' | 'jugado';
 export type EstadoPago = 'pendiente' | 'senado' | 'pagado';
@@ -15,6 +16,9 @@ export type Turno = {
   precio: number;
   estado: EstadoTurno;
   estadoPago: EstadoPago;
+  // Cuenta: precio + extras; lo que falta cobrar es total - pagado
+  total: number;
+  pagado: number;
   turnoFijoId: number | null;
   cliente: Cliente;
 };
@@ -24,6 +28,8 @@ export type TurnoDetalle = Turno & {
   cancha: { id: number; nombre: string; deporte: Deporte };
   complejo: { nombre: string; direccion: string };
   fijo: { id: number; diaSemana: number; fechaHasta: string | null } | null;
+  consumos: Consumo[];
+  pagos: Pago[];
 };
 
 export type Bloqueo = {
@@ -64,6 +70,8 @@ export type NuevoTurno = {
   // Sin precio, la API usa el de la franja horaria
   precio?: number;
   fijo: boolean;
+  // Seña cobrada al reservar
+  sena?: { monto: number; metodo: MetodoPago };
 } & ({ clienteId: number } | { cliente: { nombre: string; telefono: string } });
 
 export type NuevoBloqueo = {

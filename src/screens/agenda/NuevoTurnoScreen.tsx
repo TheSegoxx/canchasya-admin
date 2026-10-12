@@ -3,6 +3,7 @@ import { ActivityIndicator, Alert, Pressable, StyleSheet, Text, View } from 'rea
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { Agenda, agendaApi, Cliente, NuevoTurno } from '../../api/agenda';
 import { NOMBRE_DEPORTE } from '../../api/canchas';
+import { MetodoPago, NOMBRE_METODO } from '../../api/cobros';
 import { Boton } from '../../components/Boton';
 import { CampoTexto } from '../../components/CampoTexto';
 import { Chip } from '../../components/Chip';
@@ -43,6 +44,9 @@ export function NuevoTurnoScreen({ route, navigation }: Props) {
   const [precio, setPrecio] = useState('');
   const [precioEditado, setPrecioEditado] = useState(false);
   const [fijo, setFijo] = useState(false);
+  const [conSena, setConSena] = useState(false);
+  const [sena, setSena] = useState('');
+  const [metodoSena, setMetodoSena] = useState<MetodoPago>('transferencia');
   const [guardando, setGuardando] = useState(false);
   const [error, setError] = useState('');
   const pedida = useRef(fecha);
@@ -146,6 +150,11 @@ export function NuevoTurnoScreen({ route, navigation }: Props) {
       setError('Escribí el precio solo con números (por ejemplo, 24000).');
       return;
     }
+    const montoSena = conSena ? leerPesos(sena) : null;
+    if (conSena && (montoSena === null || montoSena <= 0 || montoSena > monto)) {
+      setError('La seña tiene que ser un número mayor a cero y no puede superar el precio.');
+      return;
+    }
     setError('');
     setGuardando(true);
 
@@ -156,6 +165,7 @@ export function NuevoTurnoScreen({ route, navigation }: Props) {
       fijo,
       // Solo se manda si el dueño lo cambió: si no, la API usa el de la franja
       ...(monto !== precioCalculado ? { precio: monto } : {}),
+      ...(montoSena !== null ? { sena: { monto: montoSena, metodo: metodoSena } } : {}),
       ...(cliente ? { clienteId: cliente.id } : { cliente: { nombre: nombre.trim(), telefono } }),
     };
     try {
@@ -317,6 +327,30 @@ export function NuevoTurnoScreen({ route, navigation }: Props) {
           variante="texto"
           onPress={() => setPrecioEditado(false)}
         />
+      )}
+
+      <FilaInterruptor
+        titulo="Recibí una seña"
+        descripcion={conSena ? 'Queda registrada en la caja de hoy' : 'Si ya te pagó una parte'}
+        valor={conSena}
+        onCambiar={setConSena}
+      />
+      {conSena && (
+        <>
+          <CampoTexto
+            etiqueta="Monto de la seña ($)"
+            value={sena}
+            onChangeText={setSena}
+            keyboardType="numeric"
+            placeholder={precioCalculado ? String(Math.round(precioCalculado / 2)) : '10000'}
+          />
+          <View style={estilos.chips}>
+            {(['transferencia', 'efectivo'] as MetodoPago[]).map(m => (
+              <Chip key={m} texto={NOMBRE_METODO[m]} seleccionado={metodoSena === m} onPress={() => setMetodoSena(m)} />
+            ))}
+          </View>
+          <View style={estilos.espacio} />
+        </>
       )}
 
       <FilaInterruptor
