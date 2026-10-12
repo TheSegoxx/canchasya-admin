@@ -7,6 +7,7 @@ declare(strict_types=1);
  * Apache envía acá todas las peticiones (ver .htaccess en la raíz del backend).
  */
 
+use App\ErrorHttp;
 use App\Router;
 use Dotenv\Dotenv;
 
@@ -19,6 +20,10 @@ date_default_timezone_set('America/Argentina/Buenos_Aires');
 
 // Cualquier error no previsto: se registra en el log de Apache y el cliente recibe un mensaje genérico
 set_exception_handler(function (Throwable $e): void {
+    // Errores previstos (horario ocupado, etc.): se le explican al cliente
+    if ($e instanceof ErrorHttp) {
+        responder($e->codigo, ['error' => $e->getMessage(), ...$e->extra]);
+    }
     error_log('[CanchasYa API] ' . $e);
     $respuesta = ['error' => 'Error interno del servidor'];
     if (($_ENV['APP_ENV'] ?? '') === 'desarrollo') {

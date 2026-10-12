@@ -9,11 +9,12 @@ import { ErrorCarga } from '../../components/ErrorCarga';
 import { FilaInterruptor } from '../../components/FilaInterruptor';
 import { Icono } from '../../components/Icono';
 import { Pantalla } from '../../components/Pantalla';
-import { SelectorHora, sumarMinutos } from '../../components/SelectorHora';
+import { SelectorHora } from '../../components/SelectorHora';
 import { mensajeDeError } from '../../context/SesionContext';
 import type { RutasApp } from '../../navigation/AppNavigator';
 import { espaciado, radio, useTema } from '../../theme/tema';
 import { formatearPesos, leerPesos, pesosParaEditar } from '../../utils/formato';
+import { sumarMinutos } from '../../utils/horas';
 
 type Props = NativeStackScreenProps<RutasApp, 'Cancha'>;
 

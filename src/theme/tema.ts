@@ -19,6 +19,7 @@ const claro = {
   senado: '#B7791F',
   pagado: '#1565C0',
   inactivo: '#8A8F8A',
+  whatsapp: '#0B7A5E',
 };
 
 export type Colores = typeof claro;
@@ -37,6 +38,7 @@ const oscuro: Colores = {
   senado: '#FFCA28',
   pagado: '#64B5F6',
   inactivo: '#7A817A',
+  whatsapp: '#25D366',
 };
 
 export const espaciado = { xs: 4, s: 8, m: 16, l: 24, xl: 32 };

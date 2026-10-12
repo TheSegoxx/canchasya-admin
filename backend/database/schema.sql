@@ -76,22 +76,46 @@ CREATE TABLE clientes (
     CONSTRAINT fk_clientes_complejo FOREIGN KEY (complejo_id) REFERENCES complejos (id) ON DELETE CASCADE
 ) ENGINE=InnoDB;
 
--- Turnos cargados por el dueño. La superposición se controla en la API (transacción).
-CREATE TABLE turnos (
+-- Turno que un cliente tiene todas las semanas (mismo día, hora y cancha).
+-- La API crea el turno de cada fecha la primera vez que se consulta ese día.
+CREATE TABLE turnos_fijos (
     id          INT AUTO_INCREMENT PRIMARY KEY,
     cancha_id   INT NOT NULL,
     cliente_id  INT NOT NULL,
-    fecha       DATE NOT NULL,
+    dia_semana  TINYINT NOT NULL COMMENT '1 = lunes ... 7 = domingo',
     hora_inicio TIME NOT NULL,
     hora_fin    TIME NOT NULL,
-    precio      DECIMAL(10, 2) NOT NULL COMMENT 'Se copia al crear el turno',
-    estado      ENUM('confirmado', 'cancelado', 'jugado') NOT NULL DEFAULT 'confirmado',
-    estado_pago ENUM('pendiente', 'senado', 'pagado') NOT NULL DEFAULT 'pendiente',
+    precio      DECIMAL(10, 2) NULL COMMENT 'NULL = el precio vigente de la cancha',
+    fecha_desde DATE NOT NULL,
+    fecha_hasta DATE NULL COMMENT 'NULL = sin fecha de fin',
     creado_en   TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    KEY idx_fijos_cancha_dia (cancha_id, dia_semana),
+    CONSTRAINT chk_fijos_dia CHECK (dia_semana BETWEEN 1 AND 7),
+    CONSTRAINT chk_fijos_horas CHECK (hora_inicio < hora_fin),
+    CONSTRAINT fk_fijos_cancha FOREIGN KEY (cancha_id) REFERENCES canchas (id) ON DELETE CASCADE,
+    CONSTRAINT fk_fijos_cliente FOREIGN KEY (cliente_id) REFERENCES clientes (id)
+) ENGINE=InnoDB;
+
+-- Turnos cargados por el dueño. La superposición se controla en la API (transacción).
+CREATE TABLE turnos (
+    id            INT AUTO_INCREMENT PRIMARY KEY,
+    cancha_id     INT NOT NULL,
+    cliente_id    INT NOT NULL,
+    turno_fijo_id INT NULL COMMENT 'Si salió de un turno fijo',
+    fecha         DATE NOT NULL,
+    hora_inicio   TIME NOT NULL,
+    hora_fin      TIME NOT NULL,
+    precio        DECIMAL(10, 2) NOT NULL COMMENT 'Se copia al crear el turno',
+    estado        ENUM('confirmado', 'cancelado', 'jugado') NOT NULL DEFAULT 'confirmado',
+    estado_pago   ENUM('pendiente', 'senado', 'pagado') NOT NULL DEFAULT 'pendiente',
+    creado_en     TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     KEY idx_turnos_cancha_fecha (cancha_id, fecha),
+    -- Un turno fijo genera un solo turno por fecha
+    UNIQUE KEY uq_turnos_fijo_fecha (turno_fijo_id, fecha),
     CONSTRAINT chk_turnos_horas CHECK (hora_inicio < hora_fin),
     CONSTRAINT fk_turnos_cancha FOREIGN KEY (cancha_id) REFERENCES canchas (id) ON DELETE CASCADE,
-    CONSTRAINT fk_turnos_cliente FOREIGN KEY (cliente_id) REFERENCES clientes (id)
+    CONSTRAINT fk_turnos_cliente FOREIGN KEY (cliente_id) REFERENCES clientes (id),
+    CONSTRAINT fk_turnos_fijo FOREIGN KEY (turno_fijo_id) REFERENCES turnos_fijos (id) ON DELETE SET NULL
 ) ENGINE=InnoDB;
 
 -- Cobros de un turno (seña + saldo, o pago total)

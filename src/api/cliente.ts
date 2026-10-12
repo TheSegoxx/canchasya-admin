@@ -9,7 +9,8 @@ import { API_URL, TIEMPO_ESPERA_MS } from '../config';
 const SERVICIO_TOKEN = 'canchasya.sesion';
 
 export class ErrorApi extends Error {
-  constructor(mensaje: string, public status: number) {
+  // datos: el JSON completo de la respuesta (algunos 409 traen información extra)
+  constructor(mensaje: string, public status: number, public datos: any = null) {
     super(mensaje);
   }
 }
@@ -69,7 +70,7 @@ export async function api<T>(ruta: string, metodo = 'GET', cuerpo?: unknown): Pr
   }
 
   if (!respuesta.ok) {
-    throw new ErrorApi(datos?.error ?? `Error del servidor (${respuesta.status})`, respuesta.status);
+    throw new ErrorApi(datos?.error ?? `Error del servidor (${respuesta.status})`, respuesta.status, datos);
   }
   return datos as T;
 }

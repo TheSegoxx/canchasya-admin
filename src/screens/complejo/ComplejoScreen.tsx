@@ -7,9 +7,10 @@ import { CampoTexto } from '../../components/CampoTexto';
 import { Chip } from '../../components/Chip';
 import { ErrorCarga } from '../../components/ErrorCarga';
 import { Pantalla } from '../../components/Pantalla';
-import { SelectorHora, sumarMinutos } from '../../components/SelectorHora';
+import { SelectorHora } from '../../components/SelectorHora';
 import { mensajeDeError, useSesion } from '../../context/SesionContext';
 import { espaciado, useTema } from '../../theme/tema';
+import { sumarMinutos } from '../../utils/horas';
 
 /**
  * Datos del complejo. La primera vez que entra el dueño es obligatoria

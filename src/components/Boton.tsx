@@ -1,6 +1,7 @@
 import React from 'react';
-import { ActivityIndicator, Pressable, StyleSheet, Text } from 'react-native';
+import { ActivityIndicator, Pressable, StyleSheet, Text, View } from 'react-native';
 import { espaciado, radio, useTema } from '../theme/tema';
+import { Icono, NombreIcono } from './Icono';
 
 type Props = {
   titulo: string;
@@ -8,16 +9,20 @@ type Props = {
   variante?: 'primario' | 'secundario' | 'texto';
   cargando?: boolean;
   deshabilitado?: boolean;
+  icono?: NombreIcono;
+  // Color propio (por ejemplo, el verde de WhatsApp) en lugar del primario
+  color?: string;
 };
 
 // Botón grande (mínimo 48 dp de alto) para usar con una sola mano
-export function Boton({ titulo, onPress, variante = 'primario', cargando, deshabilitado }: Props) {
+export function Boton({ titulo, onPress, variante = 'primario', cargando, deshabilitado, icono, color }: Props) {
   const { colores } = useTema();
   const inactivo = deshabilitado || cargando;
+  const principal = color ?? colores.primario;
 
-  const fondo = variante === 'primario' ? colores.primario : 'transparent';
-  const colorTexto = variante === 'primario' ? colores.textoSobrePrimario : colores.primario;
-  const borde = variante === 'secundario' ? colores.primario : 'transparent';
+  const fondo = variante === 'primario' ? principal : 'transparent';
+  const colorTexto = variante === 'primario' ? colores.textoSobrePrimario : principal;
+  const borde = variante === 'secundario' ? principal : 'transparent';
 
   return (
     <Pressable
@@ -32,7 +37,10 @@ export function Boton({ titulo, onPress, variante = 'primario', cargando, deshab
       {cargando ? (
         <ActivityIndicator color={colorTexto} />
       ) : (
-        <Text style={[estilos.texto, { color: colorTexto }]}>{titulo}</Text>
+        <View style={estilos.contenido}>
+          {icono && <Icono nombre={icono} color={colorTexto} tamano={20} />}
+          <Text style={[estilos.texto, { color: colorTexto }, icono && estilos.conIcono]}>{titulo}</Text>
+        </View>
       )}
     </Pressable>
   );
@@ -47,5 +55,7 @@ const estilos = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
+  contenido: { flexDirection: 'row', alignItems: 'center' },
   texto: { fontSize: 16, fontWeight: '600' },
+  conIcono: { marginLeft: espaciado.s },
 });

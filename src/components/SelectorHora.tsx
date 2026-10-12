@@ -1,6 +1,7 @@
 import React from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { espaciado, radio, useTema } from '../theme/tema';
+import { aHora, aMinutos } from '../utils/horas';
 
 type Props = {
   etiqueta: string;
@@ -10,16 +11,6 @@ type Props = {
   maximo?: string;
   paso?: number; // minutos
 };
-
-const aMinutos = (hora: string) => {
-  const [h, m] = hora.split(':').map(Number);
-  return h * 60 + m;
-};
-
-const aHora = (minutos: number) =>
-  `${String(Math.floor(minutos / 60)).padStart(2, '0')}:${String(minutos % 60).padStart(2, '0')}`;
-
-export const sumarMinutos = (hora: string, minutos: number) => aHora(aMinutos(hora) + minutos);
 
 // Elige una hora con botones − / + (sin librerías nativas extra)
 export function SelectorHora({ etiqueta, valor, onCambiar, minimo = '00:00', maximo = '24:00', paso = 30 }: Props) {

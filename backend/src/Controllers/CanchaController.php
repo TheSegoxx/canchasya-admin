@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace App\Controllers;
 
 use App\Models\Cancha;
-use App\Models\Complejo;
 use App\Models\FranjaPrecio;
 
 /**
@@ -120,15 +119,6 @@ final class CanchaController extends Controlador
         responder(204);
     }
 
-    private function complejoDelDueno(): array
-    {
-        $complejo = (new Complejo($this->pdo))->buscarPorUsuario($this->usuarioActual());
-        if ($complejo === null) {
-            responder(409, ['error' => 'Primero configurá los datos de tu complejo']);
-        }
-        return $complejo;
-    }
-
     // Dos canchas con el mismo nombre se confundirían en la agenda
     private function verificarNombreLibre(int $complejoId, string $nombre, ?int $exceptoId = null): void
     {
@@ -140,18 +130,6 @@ final class CanchaController extends Controlador
     private function canchaPropia(int $id): array
     {
         return $this->verificarDueno($this->canchas->buscarConDueno($id), 'La cancha');
-    }
-
-    // 404 si no existe; 403 si es de otro dueño
-    private function verificarDueno(?array $fila, string $que): array
-    {
-        if ($fila === null) {
-            responder(404, ['error' => "$que no existe"]);
-        }
-        if ((int) $fila['usuario_id'] !== $this->usuarioActual()) {
-            responder(403, ['error' => "$que no es de tu complejo"]);
-        }
-        return $fila;
     }
 
     private function datosValidos(array $datos): array

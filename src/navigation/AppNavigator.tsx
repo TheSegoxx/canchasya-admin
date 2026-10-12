@@ -4,13 +4,21 @@ import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { ErrorCarga } from '../components/ErrorCarga';
 import { Icono, NombreIcono } from '../components/Icono';
+import type { Cliente } from '../api/agenda';
 import { useSesion } from '../context/SesionContext';
 import { LoginScreen } from '../screens/auth/LoginScreen';
+import { AgendaScreen } from '../screens/agenda/AgendaScreen';
+import { BloqueoScreen } from '../screens/agenda/BloqueoScreen';
+import { NuevoTurnoScreen } from '../screens/agenda/NuevoTurnoScreen';
+import { TurnoScreen } from '../screens/agenda/TurnoScreen';
+import { TurnosFijosScreen } from '../screens/agenda/TurnosFijosScreen';
 import { RegistroScreen } from '../screens/auth/RegistroScreen';
 import { CanchaScreen } from '../screens/canchas/CanchaScreen';
 import { CanchasScreen } from '../screens/canchas/CanchasScreen';
+import { ClienteScreen } from '../screens/clientes/ClienteScreen';
+import { ClientesScreen } from '../screens/clientes/ClientesScreen';
 import { ComplejoScreen } from '../screens/complejo/ComplejoScreen';
-import { AgendaScreen, InicioScreen } from '../screens/principal/EnConstruccion';
+import { InicioScreen } from '../screens/principal/EnConstruccion';
 import { MasScreen } from '../screens/principal/MasScreen';
 import { useTema } from '../theme/tema';
 
@@ -26,6 +34,13 @@ export type RutasApp = {
   Complejo: undefined;
   // Sin id: nueva cancha; con id: editar
   Cancha: { id?: number } | undefined;
+  // Cancha y hora vienen del casillero tocado en la grilla
+  NuevoTurno: { fecha: string; canchaId?: number; hora?: string };
+  Turno: { id: number; recienCreado?: boolean };
+  Bloqueo: { fecha: string; canchaId?: number };
+  TurnosFijos: undefined;
+  Clientes: undefined;
+  Cliente: { cliente: Cliente };
 };
 
 export type RutasPestanas = {
@@ -77,6 +92,12 @@ function Aplicacion({ tieneComplejo }: { tieneComplejo: boolean }) {
           <PilaApp.Screen name="Pestanas" component={Principal} options={{ headerShown: false }} />
           <PilaApp.Screen name="Complejo" component={ComplejoScreen} options={{ title: 'Datos del complejo' }} />
           <PilaApp.Screen name="Cancha" component={CanchaScreen} />
+          <PilaApp.Screen name="NuevoTurno" component={NuevoTurnoScreen} options={{ title: 'Nuevo turno' }} />
+          <PilaApp.Screen name="Turno" component={TurnoScreen} />
+          <PilaApp.Screen name="Bloqueo" component={BloqueoScreen} options={{ title: 'Bloquear horario' }} />
+          <PilaApp.Screen name="TurnosFijos" component={TurnosFijosScreen} options={{ title: 'Turnos fijos' }} />
+          <PilaApp.Screen name="Clientes" component={ClientesScreen} />
+          <PilaApp.Screen name="Cliente" component={ClienteScreen} options={{ title: 'Cliente' }} />
         </>
       ) : (
         <PilaApp.Screen

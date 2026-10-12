@@ -42,6 +42,17 @@ final class FranjaPrecio extends Modelo
         return (bool) $stmt->fetchColumn();
     }
 
+    // Precio de la franja que contiene esa hora de inicio; null si no hay ninguna
+    public function precioEn(int $canchaId, string $hora): ?float
+    {
+        $stmt = $this->pdo->prepare(
+            'SELECT precio FROM franjas_precio WHERE cancha_id = ? AND hora_desde <= ? AND hora_hasta > ? LIMIT 1'
+        );
+        $stmt->execute([$canchaId, $hora, $hora]);
+        $precio = $stmt->fetchColumn();
+        return $precio !== false ? (float) $precio : null;
+    }
+
     public function crear(int $canchaId, string $desde, string $hasta, float $precio): int
     {
         return $this->insertar([

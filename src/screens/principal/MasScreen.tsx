@@ -51,6 +51,10 @@ export function MasScreen() {
 
       <Boton titulo="Datos del complejo" variante="secundario" onPress={() => navigation.navigate('Complejo')} />
       <View style={estilos.espacio} />
+      <Boton titulo="Turnos fijos" icono="repetir" variante="secundario" onPress={() => navigation.navigate('TurnosFijos')} />
+      <View style={estilos.espacio} />
+      <Boton titulo="Clientes" icono="persona" variante="secundario" onPress={() => navigation.navigate('Clientes')} />
+      <View style={estilos.espacio} />
       <Boton titulo="Cerrar sesión" variante="texto" onPress={confirmarSalida} cargando={saliendo} />
     </Pantalla>
   );
