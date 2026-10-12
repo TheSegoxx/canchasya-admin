@@ -1,6 +1,7 @@
 import React, { useCallback, useEffect, useState } from 'react';
 import { ActivityIndicator, Alert, StyleSheet, Text, View } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
+import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { complejoApi, Servicio, SERVICIOS } from '../../api/complejo';
 import { Foto, MAXIMO_FOTOS_COMPLEJO } from '../../api/fotos';
 import { Boton } from '../../components/Boton';
@@ -11,6 +12,7 @@ import { GaleriaFotos } from '../../components/GaleriaFotos';
 import { Pantalla } from '../../components/Pantalla';
 import { SelectorHora } from '../../components/SelectorHora';
 import { mensajeDeError, useSesion } from '../../context/SesionContext';
+import type { RutasApp } from '../../navigation/AppNavigator';
 import { espaciado, useTema } from '../../theme/tema';
 import { sumarMinutos } from '../../utils/horas';
 
@@ -20,7 +22,7 @@ import { sumarMinutos } from '../../utils/horas';
  */
 export function ComplejoScreen() {
   const { colores } = useTema();
-  const navigation = useNavigation();
+  const navigation = useNavigation<NativeStackNavigationProp<RutasApp>>();
   const { usuario, actualizarUsuario, cerrarSesion } = useSesion();
   const editando = !!usuario?.tieneComplejo;
 
@@ -120,6 +122,16 @@ export function ComplejoScreen() {
           cómo es tu complejo. Después lo podés cambiar desde "Más".
         </Text>
       )}
+      {!editando && (
+        <View style={estilos.unirse}>
+          <Boton
+            titulo="Soy encargado: tengo un código"
+            variante="secundario"
+            onPress={() => navigation.navigate('Unirse')}
+            deshabilitado={guardando}
+          />
+        </View>
+      )}
 
       {/* Las fotos se suben al momento; necesitan que el complejo ya exista */}
       {editando && (
@@ -196,4 +208,5 @@ const estilos = StyleSheet.create({
   error: { fontSize: 14, marginBottom: espaciado.m },
   acciones: { marginTop: espaciado.s },
   espacio: { height: espaciado.s },
+  unirse: { marginBottom: espaciado.l },
 });

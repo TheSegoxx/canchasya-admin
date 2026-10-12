@@ -12,7 +12,7 @@ import { FilaInterruptor } from '../../components/FilaInterruptor';
 import { Icono } from '../../components/Icono';
 import { Pantalla } from '../../components/Pantalla';
 import { SelectorDia } from '../../components/SelectorDia';
-import { mensajeDeError } from '../../context/SesionContext';
+import { mensajeDeError, useEsDueno } from '../../context/SesionContext';
 import type { RutasApp } from '../../navigation/AppNavigator';
 import { espaciado, radio, useTema } from '../../theme/tema';
 import { horariosLibres, precioPara } from '../../utils/agenda';
@@ -26,6 +26,7 @@ type Props = NativeStackScreenProps<RutasApp, 'NuevoTurno'>;
 // Reservar un turno: cancha, horario libre, cliente, precio y si se repite cada semana
 export function NuevoTurnoScreen({ route, navigation }: Props) {
   const { colores } = useTema();
+  const esDueno = useEsDueno();
   const hoy = hoyISO();
   const [fecha, setFecha] = useState(route.params.fecha < hoy ? hoy : route.params.fecha);
   const [canchaId, setCanchaId] = useState(route.params.canchaId);
@@ -320,6 +321,8 @@ export function NuevoTurnoScreen({ route, navigation }: Props) {
         }}
         keyboardType="numeric"
         placeholder="Elegí un horario"
+        // El encargado cobra el precio de la cancha: no lo puede cambiar
+        editable={esDueno}
       />
       {precioEditado && precioCalculado !== null && (
         <Boton

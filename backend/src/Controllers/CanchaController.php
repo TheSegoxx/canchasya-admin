@@ -26,7 +26,7 @@ final class CanchaController extends Controlador
     // GET /canchas
     public function listar(): void
     {
-        $complejo = $this->complejoDelDueno();
+        $complejo = $this->complejoActual();
         $lista = $this->canchas->listarPorComplejo((int) $complejo['id']);
         // La primera foto de cada cancha, para mostrarla en la lista
         $portadas = (new Foto($this->pdo))->portadasDeCanchas((int) $complejo['id']);
@@ -54,7 +54,8 @@ final class CanchaController extends Controlador
     // POST /canchas  {nombre, deporte, superficie, techada, duracionMin, precioBase}
     public function crear(): void
     {
-        $complejoId = (int) $this->complejoDelDueno()['id'];
+        $this->soloDueno();
+        $complejoId = (int) $this->complejoActual()['id'];
         $datos = $this->datosValidos(leerJson());
         $this->verificarNombreLibre($complejoId, $datos['nombre']);
         $id = $this->canchas->crear($complejoId, $datos);
@@ -64,6 +65,7 @@ final class CanchaController extends Controlador
     // PUT /canchas/:id  (mismos campos que al crear)
     public function editar(int $id): void
     {
+        $this->soloDueno();
         $cancha = $this->canchaPropia($id);
         $datos = $this->datosValidos(leerJson());
         $this->verificarNombreLibre((int) $cancha['complejo_id'], $datos['nombre'], $id);
@@ -86,6 +88,7 @@ final class CanchaController extends Controlador
     // PATCH /canchas/:id/habilitada  {habilitada: true|false}
     public function cambiarHabilitada(int $id): void
     {
+        $this->soloDueno();
         $this->canchaPropia($id);
         $habilitada = leerJson()['habilitada'] ?? null;
         if (!is_bool($habilitada)) {
@@ -105,6 +108,7 @@ final class CanchaController extends Controlador
     // POST /canchas/:id/franjas  {horaDesde, horaHasta, precio}
     public function crearFranja(int $id): void
     {
+        $this->soloDueno();
         $this->canchaPropia($id);
         $datos = leerJson();
         $desde = horaRequerida($datos, 'horaDesde', 'la hora de inicio');
@@ -125,7 +129,8 @@ final class CanchaController extends Controlador
     // DELETE /franjas/:id
     public function borrarFranja(int $id): void
     {
-        $this->verificarDueno($this->franjas->buscarConDueno($id), 'La franja');
+        $this->soloDueno();
+        $this->verificarDelComplejo($this->franjas->buscarConDueno($id), 'La franja');
         $this->franjas->borrar($id);
         responder(204);
     }
@@ -140,7 +145,7 @@ final class CanchaController extends Controlador
 
     private function canchaPropia(int $id): array
     {
-        return $this->verificarDueno($this->canchas->buscarConDueno($id), 'La cancha');
+        return $this->verificarDelComplejo($this->canchas->buscarConDueno($id), 'La cancha');
     }
 
     private function datosValidos(array $datos): array

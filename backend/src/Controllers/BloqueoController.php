@@ -30,7 +30,7 @@ final class BloqueoController extends Controlador
      */
     public function crear(): void
     {
-        $complejoId = (int) $this->complejoDelDueno()['id'];
+        $complejoId = (int) $this->complejoActual()['id'];
         $datos = leerJson();
 
         $ids = $datos['canchaIds'] ?? null;
@@ -43,7 +43,7 @@ final class BloqueoController extends Controlador
         $canchas = new Cancha($this->pdo);
         $nombres = [];
         foreach ($ids as $id) {
-            $nombres[$id] = $this->verificarDueno($canchas->buscarConDueno($id), 'La cancha')['nombre'];
+            $nombres[$id] = $this->verificarDelComplejo($canchas->buscarConDueno($id), 'La cancha')['nombre'];
         }
 
         $fecha = fechaRequerida($datos, 'fecha', 'la fecha');
@@ -107,7 +107,7 @@ final class BloqueoController extends Controlador
     // DELETE /bloqueos/:id
     public function borrar(int $id): void
     {
-        $this->verificarDueno($this->bloqueos->buscarConDueno($id), 'El bloqueo');
+        $this->verificarDelComplejo($this->bloqueos->buscarConDueno($id), 'El bloqueo');
         $this->bloqueos->borrar($id);
         responder(204);
     }

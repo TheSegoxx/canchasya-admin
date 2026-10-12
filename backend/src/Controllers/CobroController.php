@@ -35,7 +35,7 @@ final class CobroController extends Controlador
     // POST /turnos/:id/pagos  {monto, metodo: "efectivo"|"transferencia"}
     public function registrarPago(int $turnoId): void
     {
-        $this->verificarDueno($this->turnos->buscarDetalle($turnoId), 'El turno');
+        $this->verificarDelComplejo($this->turnos->buscarDetalle($turnoId), 'El turno');
         $pago = pagoValido(leerJson());
         $this->transaccion(fn () => $this->cobros->registrarPago($turnoId, $pago['monto'], $pago['metodo']));
         responder(201, ['turno' => $this->detalle($turnoId)]);
@@ -44,7 +44,8 @@ final class CobroController extends Controlador
     // DELETE /pagos/:id  (para corregir un cobro cargado por error)
     public function borrarPago(int $id): void
     {
-        $pago = $this->verificarDueno($this->pagos->buscarConDueno($id), 'El pago');
+        $this->soloDueno();
+        $pago = $this->verificarDelComplejo($this->pagos->buscarConDueno($id), 'El pago');
         $turnoId = (int) $pago['turno_id'];
         $this->transaccion(function () use ($id, $turnoId) {
             $this->turnos->trabar($turnoId);
@@ -61,7 +62,7 @@ final class CobroController extends Controlador
      */
     public function agregarConsumo(int $turnoId): void
     {
-        $this->verificarDueno($this->turnos->buscarDetalle($turnoId), 'El turno');
+        $this->verificarDelComplejo($this->turnos->buscarDetalle($turnoId), 'El turno');
         $datos = leerJson();
         $cantidad = $datos['cantidad'] ?? 1;
         if (!is_int($cantidad) || $cantidad < 1 || $cantidad > 99) {
@@ -70,7 +71,7 @@ final class CobroController extends Controlador
 
         $productoId = null;
         if (isset($datos['productoId'])) {
-            $producto = $this->verificarDueno(
+            $producto = $this->verificarDelComplejo(
                 (new Producto($this->pdo))->buscarConDueno(idRequerido($datos, 'productoId', 'el producto')),
                 'El producto'
             );
@@ -81,6 +82,10 @@ final class CobroController extends Controlador
             $descripcion = $producto['nombre'];
             $precio = (float) $producto['precio'];
         } else {
+            // Un extra suelto lleva un precio escrito a mano: el encargado solo usa el catálogo
+            if ($this->esEmpleado()) {
+                responder(403, ['error' => 'Elegí un producto de la lista. Los extras con precio a mano los carga el dueño.']);
+            }
             $descripcion = textoRequerido($datos, 'descripcion', Producto::NOMBRE_MAXIMO, 'la descripción del extra');
             $precio = precioRequerido($datos, 'precioUnitario', 'el precio del extra');
         }
@@ -96,7 +101,7 @@ final class CobroController extends Controlador
     // DELETE /consumos/:id
     public function borrarConsumo(int $id): void
     {
-        $consumo = $this->verificarDueno($this->consumos->buscarConDueno($id), 'El extra');
+        $consumo = $this->verificarDelComplejo($this->consumos->buscarConDueno($id), 'El extra');
         $turnoId = (int) $consumo['turno_id'];
         $this->transaccion(function () use ($id, $turnoId) {
             $this->turnos->trabar($turnoId);
@@ -117,7 +122,7 @@ final class CobroController extends Controlador
      */
     public function caja(): void
     {
-        $complejoId = (int) $this->complejoDelDueno()['id'];
+        $complejoId = (int) $this->complejoActual()['id'];
         $fecha = $_GET['fecha'] ?? hoy();
         if (!is_string($fecha) || !fechaValida($fecha)) {
             responder(400, ['error' => 'La fecha tiene que tener el formato AAAA-MM-DD']);

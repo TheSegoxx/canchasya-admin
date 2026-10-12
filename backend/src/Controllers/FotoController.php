@@ -30,7 +30,8 @@ final class FotoController extends Controlador
      */
     public function subir(): void
     {
-        $complejoId = (int) $this->complejoDelDueno()['id'];
+        $this->soloDueno();
+        $complejoId = (int) $this->complejoActual()['id'];
 
         $canchaId = null;
         if (($_POST['canchaId'] ?? '') !== '') {
@@ -38,7 +39,7 @@ final class FotoController extends Controlador
             if ($id === false) {
                 responder(400, ['error' => 'La cancha no es válida']);
             }
-            $canchaId = (int) $this->verificarDueno((new Cancha($this->pdo))->buscarConDueno($id), 'La cancha')['id'];
+            $canchaId = (int) $this->verificarDelComplejo((new Cancha($this->pdo))->buscarConDueno($id), 'La cancha')['id'];
         }
 
         $maximo = $canchaId === null ? Foto::MAXIMO_COMPLEJO : Foto::MAXIMO_CANCHA;
@@ -54,7 +55,8 @@ final class FotoController extends Controlador
     // DELETE /fotos/:id
     public function borrar(int $id): void
     {
-        $foto = $this->verificarDueno($this->fotos->buscarConDueno($id), 'La foto');
+        $this->soloDueno();
+        $foto = $this->verificarDelComplejo($this->fotos->buscarConDueno($id), 'La foto');
         $this->fotos->borrar($id);
         $ruta = Foto::carpeta() . '/' . basename($foto['archivo']);
         if (is_file($ruta)) {

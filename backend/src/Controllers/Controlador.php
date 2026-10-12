@@ -10,42 +10,80 @@ use PDO;
 use Throwable;
 
 /**
- * Base de los controladores: conexión a la base y usuario logueado.
+ * Base de los controladores: conexión a la base, usuario logueado y su complejo.
+ * Un usuario es el dueño de su complejo o un empleado del complejo de otro;
+ * el rol se lee de la base en cada petición, así quitarle el acceso rige al instante.
  * responder() y leerJson() son funciones globales (src/helpers.php).
  */
 abstract class Controlador
 {
     protected PDO $pdo;
     private ?int $usuarioId = null;
+    private ?array $usuario = null;
+    private ?array $complejo = null;
 
     public function __construct()
     {
         $this->pdo = Database::conexion();
     }
 
-    // Id del dueño identificado por el token; responde 401 si no hay sesión válida.
+    // Id del usuario identificado por el token; responde 401 si no hay sesión válida.
     // El token se verifica una sola vez por petición.
     protected function usuarioActual(): int
     {
         return $this->usuarioId ??= autenticar();
     }
 
-    protected function complejoDelDueno(): array
+    // Fila del usuario logueado (con su rol); 401 si la cuenta ya no existe
+    protected function usuario(): array
     {
-        $complejo = (new Complejo($this->pdo))->buscarPorUsuario($this->usuarioActual());
-        if ($complejo === null) {
-            responder(409, ['error' => 'Primero configurá los datos de tu complejo']);
+        if ($this->usuario === null) {
+            $stmt = $this->pdo->prepare('SELECT id, rol, complejo_id FROM usuarios WHERE id = ?');
+            $stmt->execute([$this->usuarioActual()]);
+            $this->usuario = $stmt->fetch() ?: responder(401, ['error' => 'La cuenta ya no existe']);
         }
-        return $complejo;
+        return $this->usuario;
     }
 
-    // 404 si no existe; 403 si es de otro dueño
-    protected function verificarDueno(?array $fila, string $que): array
+    protected function esEmpleado(): bool
+    {
+        return $this->usuario()['rol'] === 'empleado';
+    }
+
+    // Lo que no puede hacer un empleado: precios, dashboard, datos del complejo, borrar cobros...
+    protected function soloDueno(): void
+    {
+        if ($this->esEmpleado()) {
+            responder(403, ['error' => 'Esto solo lo puede hacer el dueño del complejo']);
+        }
+    }
+
+    // El complejo propio (dueño) o en el que trabaja (empleado); 409 si todavía no tiene
+    protected function complejoActual(): array
+    {
+        if ($this->complejo === null) {
+            $complejos = new Complejo($this->pdo);
+            $usuario = $this->usuario();
+            $this->complejo = $usuario['rol'] === 'empleado'
+                ? ($usuario['complejo_id'] !== null ? $complejos->buscarPorId((int) $usuario['complejo_id']) : null)
+                : $complejos->buscarPorUsuario((int) $usuario['id']);
+            if ($this->complejo === null) {
+                responder(409, ['error' => 'Primero configurá los datos de tu complejo']);
+            }
+        }
+        return $this->complejo;
+    }
+
+    /**
+     * Controla que una fila (cancha, turno, cliente...) sea del complejo del usuario.
+     * $fila['usuario_id'] es el dueño de su complejo. 404 si no existe; 403 si es de otro complejo.
+     */
+    protected function verificarDelComplejo(?array $fila, string $que): array
     {
         if ($fila === null) {
             responder(404, ['error' => "$que no existe"]);
         }
-        if ((int) $fila['usuario_id'] !== $this->usuarioActual()) {
+        if ((int) $fila['usuario_id'] !== (int) $this->complejoActual()['usuario_id']) {
             responder(403, ['error' => "$que no es de tu complejo"]);
         }
         return $fila;

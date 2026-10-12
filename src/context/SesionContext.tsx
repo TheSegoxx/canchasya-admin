@@ -133,6 +133,11 @@ export function useSesion(): Sesion {
   return sesion;
 }
 
+// El dueño puede todo; el empleado no ve el dashboard ni cambia precios
+export function useEsDueno(): boolean {
+  return useSesion().usuario?.rol !== 'empleado';
+}
+
 // Convierte cualquier error en un mensaje entendible para el dueño
 export function mensajeDeError(error: unknown): string {
   if (error instanceof ErrorApi) {

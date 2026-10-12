@@ -10,7 +10,7 @@ DROP DATABASE IF EXISTS canchasya;
 CREATE DATABASE canchasya CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 USE canchasya;
 
--- Dueños de complejos (único tipo de usuario de la app)
+-- Dueños de complejos y sus empleados
 CREATE TABLE usuarios (
     id            INT AUTO_INCREMENT PRIMARY KEY,
     nombre        VARCHAR(100) NOT NULL,
@@ -18,6 +18,8 @@ CREATE TABLE usuarios (
     password_hash VARCHAR(255) NULL COMMENT 'NULL si solo entra con Google',
     google_id     VARCHAR(100) NULL COMMENT 'NULL si solo usa contraseña',
     foto_url      VARCHAR(255) NULL,
+    rol           ENUM('dueno', 'empleado') NOT NULL DEFAULT 'dueno',
+    complejo_id   INT NULL COMMENT 'Solo empleados: el complejo donde trabaja (FK más abajo)',
     creado_en     TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     UNIQUE KEY uq_usuarios_email (email),
     UNIQUE KEY uq_usuarios_google (google_id)
@@ -36,6 +38,23 @@ CREATE TABLE complejos (
     creado_en     TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     UNIQUE KEY uq_complejos_usuario (usuario_id),
     CONSTRAINT fk_complejos_usuario FOREIGN KEY (usuario_id) REFERENCES usuarios (id) ON DELETE CASCADE
+) ENGINE=InnoDB;
+
+-- La FK de usuarios.complejo_id va acá porque complejos se crea después que usuarios
+ALTER TABLE usuarios
+    ADD CONSTRAINT fk_usuarios_complejo FOREIGN KEY (complejo_id) REFERENCES complejos (id) ON DELETE SET NULL;
+
+-- Código para que un empleado se una a un complejo (se guarda solo su hash)
+CREATE TABLE invitaciones (
+    id          INT AUTO_INCREMENT PRIMARY KEY,
+    complejo_id INT NOT NULL,
+    codigo_hash CHAR(64) NOT NULL COMMENT 'SHA-256 del código',
+    vence_en    DATETIME NOT NULL,
+    usada_por   INT NULL,
+    creado_en   TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    UNIQUE KEY uq_invitaciones_codigo (codigo_hash),
+    CONSTRAINT fk_invitaciones_complejo FOREIGN KEY (complejo_id) REFERENCES complejos (id) ON DELETE CASCADE,
+    CONSTRAINT fk_invitaciones_usuario FOREIGN KEY (usada_por) REFERENCES usuarios (id) ON DELETE SET NULL
 ) ENGINE=InnoDB;
 
 CREATE TABLE canchas (

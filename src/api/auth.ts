@@ -6,7 +6,11 @@ export type Usuario = {
   email: string;
   foto: string | null;
   tienePassword: boolean;
+  // El empleado (encargado) no ve el dashboard ni cambia precios
+  rol: 'dueno' | 'empleado';
   tieneComplejo: boolean;
+  // Nombre del complejo propio o donde trabaja
+  complejo: string | null;
 };
 
 export type RespuestaSesion = {

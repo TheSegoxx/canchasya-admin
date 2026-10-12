@@ -7,7 +7,7 @@ import { Boton } from '../../components/Boton';
 import { CampoTexto } from '../../components/CampoTexto';
 import { ErrorCarga } from '../../components/ErrorCarga';
 import { Pantalla } from '../../components/Pantalla';
-import { mensajeDeError } from '../../context/SesionContext';
+import { mensajeDeError, useEsDueno } from '../../context/SesionContext';
 import type { RutasApp } from '../../navigation/AppNavigator';
 import { espaciado, radio, useTema } from '../../theme/tema';
 import { formatearPesos, leerPesos } from '../../utils/formato';
@@ -20,6 +20,7 @@ type Eleccion = number | 'otro' | null;
 // Sumar a la cuenta del turno algo del catálogo (paletas, pelotas, bebidas) o un extra suelto
 export function AgregarExtraScreen({ route, navigation }: Props) {
   const { colores } = useTema();
+  const esDueno = useEsDueno();
   const { turnoId } = route.params;
   const [productos, setProductos] = useState<Producto[] | null>(null);
   const [errorCarga, setErrorCarga] = useState('');
@@ -126,12 +127,14 @@ export function AgregarExtraScreen({ route, navigation }: Props) {
     <Pantalla>
       {productos.length === 0 && (
         <Text style={[estilos.ayuda, { color: colores.textoSecundario }]}>
-          Todavía no cargaste productos. Agregalos en "Administrar productos" para elegirlos con un toque.
+          {esDueno
+            ? 'Todavía no cargaste productos. Agregalos en "Administrar productos" para elegirlos con un toque.'
+            : 'Todavía no hay productos cargados. Pedile al dueño que los agregue.'}
         </Text>
       )}
       <View style={estilos.opciones}>
         {productos.map(p => opcion(p.id, p.nombre, formatearPesos(p.precio)))}
-        {opcion('otro', 'Otro', 'Escribir a mano')}
+        {esDueno && opcion('otro', 'Otro', 'Escribir a mano')}
       </View>
 
       {eleccion === 'otro' && (
@@ -160,8 +163,12 @@ export function AgregarExtraScreen({ route, navigation }: Props) {
         onPress={guardar}
         cargando={guardando}
       />
-      <View style={estilos.espacio} />
-      <Boton titulo="Administrar productos" variante="texto" onPress={() => navigation.navigate('Productos')} />
+      {esDueno && (
+        <>
+          <View style={estilos.espacio} />
+          <Boton titulo="Administrar productos" variante="texto" onPress={() => navigation.navigate('Productos')} />
+        </>
+      )}
     </Pantalla>
   );
 }

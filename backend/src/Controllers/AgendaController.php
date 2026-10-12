@@ -20,7 +20,7 @@ final class AgendaController extends Controlador
     // GET /agenda?fecha=AAAA-MM-DD  (sin fecha: hoy)
     public function dia(): void
     {
-        $complejo = $this->complejoDelDueno();
+        $complejo = $this->complejoActual();
         $complejoId = (int) $complejo['id'];
         $fecha = $_GET['fecha'] ?? hoy();
         if (!is_string($fecha) || !fechaValida($fecha)) {

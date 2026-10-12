@@ -7,7 +7,7 @@ import { Icono, NombreIcono } from '../components/Icono';
 import type { Cliente } from '../api/agenda';
 import type { Producto } from '../api/cobros';
 import type { TipoMovimiento } from '../api/dashboard';
-import { useSesion } from '../context/SesionContext';
+import { useEsDueno, useSesion } from '../context/SesionContext';
 import { LoginScreen } from '../screens/auth/LoginScreen';
 import { AgendaScreen } from '../screens/agenda/AgendaScreen';
 import { BloqueoScreen } from '../screens/agenda/BloqueoScreen';
@@ -26,6 +26,8 @@ import { ProductosScreen } from '../screens/cobros/ProductosScreen';
 import { ClientesScreen } from '../screens/clientes/ClientesScreen';
 import { ComplejoScreen } from '../screens/complejo/ComplejoScreen';
 import { DashboardScreen } from '../screens/dashboard/DashboardScreen';
+import { EmpleadosScreen } from '../screens/empleados/EmpleadosScreen';
+import { UnirseScreen } from '../screens/empleados/UnirseScreen';
 import { MovimientoScreen } from '../screens/dashboard/MovimientoScreen';
 import { MovimientosScreen } from '../screens/dashboard/MovimientosScreen';
 import { HoyScreen } from '../screens/principal/HoyScreen';
@@ -40,6 +42,9 @@ export type RutasAuth = {
 // Con sesión: primero ConfigurarComplejo (si falta) y después las pestañas
 export type RutasApp = {
   ConfigurarComplejo: undefined;
+  // Un empleado se une al complejo de otro con un código de invitación
+  Unirse: undefined;
+  Empleados: undefined;
   Pestanas: undefined;
   Complejo: undefined;
   // Sin id: nueva cancha; con id: editar
@@ -87,8 +92,10 @@ const iconoDe =
   ({ color, size }: { color: string; size: number }) =>
     <Icono nombre={iconos[ruta]} color={color} tamano={size} />;
 
+// El empleado solo ve Inicio, Agenda y Más (sin canchas ni dashboard)
 function Principal() {
   const { colores } = useTema();
+  const esDueno = useEsDueno();
   return (
     <Pestanas.Navigator
       screenOptions={({ route }) => ({
@@ -98,8 +105,12 @@ function Principal() {
       })}>
       <Pestanas.Screen name="Inicio" component={HoyScreen} options={{ title: 'Hoy', tabBarLabel: 'Inicio' }} />
       <Pestanas.Screen name="Agenda" component={AgendaScreen} />
-      <Pestanas.Screen name="Canchas" component={CanchasScreen} />
-      <Pestanas.Screen name="Dashboard" component={DashboardScreen} />
+      {esDueno && (
+        <>
+          <Pestanas.Screen name="Canchas" component={CanchasScreen} />
+          <Pestanas.Screen name="Dashboard" component={DashboardScreen} />
+        </>
+      )}
       <Pestanas.Screen name="Mas" component={MasScreen} options={{ title: 'Más' }} />
     </Pestanas.Navigator>
   );
@@ -126,13 +137,17 @@ function Aplicacion({ tieneComplejo }: { tieneComplejo: boolean }) {
           <PilaApp.Screen name="Caja" component={CajaScreen} options={{ title: 'Caja del día' }} />
           <PilaApp.Screen name="Movimientos" component={MovimientosScreen} />
           <PilaApp.Screen name="Movimiento" component={MovimientoScreen} options={{ title: 'Cargar gasto o ingreso' }} />
+          <PilaApp.Screen name="Empleados" component={EmpleadosScreen} />
         </>
       ) : (
-        <PilaApp.Screen
-          name="ConfigurarComplejo"
-          component={ComplejoScreen}
-          options={{ title: 'Configurá tu complejo' }}
-        />
+        <>
+          <PilaApp.Screen
+            name="ConfigurarComplejo"
+            component={ComplejoScreen}
+            options={{ title: 'Configurá tu complejo' }}
+          />
+          <PilaApp.Screen name="Unirse" component={UnirseScreen} options={{ title: 'Unirme a un complejo' }} />
+        </>
       )}
     </PilaApp.Navigator>
   );

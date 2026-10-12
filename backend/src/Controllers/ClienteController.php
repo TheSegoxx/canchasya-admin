@@ -23,7 +23,7 @@ final class ClienteController extends Controlador
     // GET /clientes?buscar=texto  (por nombre o teléfono)
     public function listar(): void
     {
-        $complejoId = (int) $this->complejoDelDueno()['id'];
+        $complejoId = (int) $this->complejoActual()['id'];
         $buscar = $_GET['buscar'] ?? '';
         $texto = is_string($buscar) ? mb_substr(trim($buscar), 0, 100) : '';
         responder(200, [
@@ -34,7 +34,7 @@ final class ClienteController extends Controlador
     // PUT /clientes/:id  {nombre, telefono}
     public function editar(int $id): void
     {
-        $cliente = $this->verificarDueno($this->clientes->buscarConDueno($id), 'El cliente');
+        $cliente = $this->verificarDelComplejo($this->clientes->buscarConDueno($id), 'El cliente');
         $datos = leerJson();
         $nombre = textoRequerido($datos, 'nombre', 100, 'el nombre');
         $telefono = normalizarTelefono(textoDe($datos, 'telefono'));

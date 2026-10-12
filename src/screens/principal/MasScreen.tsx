@@ -5,7 +5,7 @@ import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { Boton } from '../../components/Boton';
 import { Chip } from '../../components/Chip';
 import { Pantalla } from '../../components/Pantalla';
-import { useSesion } from '../../context/SesionContext';
+import { useEsDueno, useSesion } from '../../context/SesionContext';
 import type { RutasApp } from '../../navigation/AppNavigator';
 import {
   guardarPreferenciaTema,
@@ -19,6 +19,7 @@ export function MasScreen() {
   const { colores } = useTema();
   const navigation = useNavigation<NativeStackNavigationProp<RutasApp>>();
   const { usuario, cerrarSesion } = useSesion();
+  const esDueno = useEsDueno();
   const [saliendo, setSaliendo] = useState(false);
   const [tema, setTema] = useState<PreferenciaTema>('sistema');
 
@@ -63,6 +64,11 @@ export function MasScreen() {
         <View style={estilos.datos}>
           <Text style={[estilos.nombre, { color: colores.texto }]}>{usuario.nombre}</Text>
           <Text style={[estilos.email, { color: colores.textoSecundario }]}>{usuario.email}</Text>
+          {!!usuario.complejo && (
+            <Text style={[estilos.email, { color: colores.textoSecundario }]}>
+              {esDueno ? 'Dueño' : 'Encargado'} de {usuario.complejo}
+            </Text>
+          )}
         </View>
       </View>
 
@@ -73,14 +79,24 @@ export function MasScreen() {
         ))}
       </View>
 
-      <Boton titulo="Datos del complejo" variante="secundario" onPress={() => navigation.navigate('Complejo')} />
-      <View style={estilos.espacio} />
+      {esDueno && (
+        <>
+          <Boton titulo="Datos del complejo" variante="secundario" onPress={() => navigation.navigate('Complejo')} />
+          <View style={estilos.espacio} />
+          <Boton titulo="Empleados" variante="secundario" onPress={() => navigation.navigate('Empleados')} />
+          <View style={estilos.espacio} />
+        </>
+      )}
       <Boton titulo="Turnos fijos" icono="repetir" variante="secundario" onPress={() => navigation.navigate('TurnosFijos')} />
       <View style={estilos.espacio} />
       <Boton titulo="Clientes" icono="persona" variante="secundario" onPress={() => navigation.navigate('Clientes')} />
       <View style={estilos.espacio} />
-      <Boton titulo="Productos y extras" variante="secundario" onPress={() => navigation.navigate('Productos')} />
-      <View style={estilos.espacio} />
+      {esDueno && (
+        <>
+          <Boton titulo="Productos y extras" variante="secundario" onPress={() => navigation.navigate('Productos')} />
+          <View style={estilos.espacio} />
+        </>
+      )}
       <Boton titulo="Cerrar sesión" variante="texto" onPress={confirmarSalida} cargando={saliendo} />
     </Pantalla>
   );

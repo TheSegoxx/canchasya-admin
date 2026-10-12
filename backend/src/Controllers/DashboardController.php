@@ -26,7 +26,8 @@ final class DashboardController extends Controlador
     // GET /dashboard?desde=AAAA-MM-DD&hasta=AAAA-MM-DD
     public function resumen(): void
     {
-        $complejo = $this->complejoDelDueno();
+        $this->soloDueno();
+        $complejo = $this->complejoActual();
         $complejoId = (int) $complejo['id'];
         [$desde, $hasta] = rangoDeFechas();
 
@@ -100,7 +101,8 @@ final class DashboardController extends Controlador
     // GET /movimientos?desde=AAAA-MM-DD&hasta=AAAA-MM-DD
     public function listar(): void
     {
-        $complejoId = (int) $this->complejoDelDueno()['id'];
+        $this->soloDueno();
+        $complejoId = (int) $this->complejoActual()['id'];
         [$desde, $hasta] = rangoDeFechas();
         responder(200, [
             'movimientos' => array_map([$this->movimientos, 'publico'], $this->movimientos->listarPorRango($complejoId, $desde, $hasta)),
@@ -110,7 +112,8 @@ final class DashboardController extends Controlador
     // POST /movimientos  {tipo, categoria, descripcion?, monto, metodo, fecha}
     public function crear(): void
     {
-        $complejoId = (int) $this->complejoDelDueno()['id'];
+        $this->soloDueno();
+        $complejoId = (int) $this->complejoActual()['id'];
         $datos = leerJson();
 
         $tipo = textoDe($datos, 'tipo');
@@ -145,7 +148,8 @@ final class DashboardController extends Controlador
     // DELETE /movimientos/:id
     public function borrar(int $id): void
     {
-        $this->verificarDueno($this->movimientos->buscarConDueno($id), 'El movimiento');
+        $this->soloDueno();
+        $this->verificarDelComplejo($this->movimientos->buscarConDueno($id), 'El movimiento');
         $this->movimientos->borrar($id);
         responder(204);
     }

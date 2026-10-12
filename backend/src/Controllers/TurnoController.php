@@ -49,11 +49,11 @@ final class TurnoController extends Controlador
      */
     public function crear(): void
     {
-        $complejo = $this->complejoDelDueno();
+        $complejo = $this->complejoActual();
         $complejoId = (int) $complejo['id'];
         $datos = leerJson();
 
-        $cancha = $this->verificarDueno(
+        $cancha = $this->verificarDelComplejo(
             $this->canchas->buscarConDueno(idRequerido($datos, 'canchaId', 'la cancha')),
             'La cancha'
         );
@@ -69,6 +69,9 @@ final class TurnoController extends Controlador
         $inicio = horaRequerida($datos, 'horaInicio', 'la hora del turno');
         $fin = $this->horaFin($complejo, $cancha, $inicio);
         $precio = ($datos['precio'] ?? null) !== null ? precioRequerido($datos, 'precio', 'el precio') : null;
+        if ($precio !== null && $this->esEmpleado()) {
+            responder(403, ['error' => 'Solo el dueño puede cambiar el precio de un turno']);
+        }
         $esFijo = booleanoOpcional($datos, 'fijo', 'fijo');
         $cliente = $this->clienteDeLaPeticion($datos);
         $sena = $this->senaDeLaPeticion($datos);
@@ -138,14 +141,14 @@ final class TurnoController extends Controlador
     // GET /turnos/:id
     public function obtener(int $id): void
     {
-        $this->verificarDueno($this->turnos->buscarDetalle($id), 'El turno');
+        $this->verificarDelComplejo($this->turnos->buscarDetalle($id), 'El turno');
         responder(200, ['turno' => $this->detalle($id)]);
     }
 
     // PATCH /turnos/:id/estado  {estado: "confirmado"|"cancelado"|"jugado"}
     public function cambiarEstado(int $id): void
     {
-        $turno = $this->verificarDueno($this->turnos->buscarDetalle($id), 'El turno');
+        $turno = $this->verificarDelComplejo($this->turnos->buscarDetalle($id), 'El turno');
         $estado = textoDe(leerJson(), 'estado');
         if (!in_array($estado, Turno::ESTADOS, true)) {
             responder(400, ['error' => 'El estado tiene que ser confirmado, cancelado o jugado']);
@@ -175,7 +178,7 @@ final class TurnoController extends Controlador
     // GET /turnos-fijos  (los vigentes)
     public function listarFijos(): void
     {
-        $complejoId = (int) $this->complejoDelDueno()['id'];
+        $complejoId = (int) $this->complejoActual()['id'];
         responder(200, ['turnosFijos' => array_map([$this->fijos, 'publico'], $this->fijos->listarVigentes($complejoId))]);
     }
 
@@ -185,7 +188,7 @@ final class TurnoController extends Controlador
      */
     public function darDeBajaFijo(int $id): void
     {
-        $fijo = $this->verificarDueno($this->fijos->buscarConDueno($id), 'El turno fijo');
+        $fijo = $this->verificarDelComplejo($this->fijos->buscarConDueno($id), 'El turno fijo');
         $desde = fechaRequerida(leerJson(), 'desde', 'la fecha desde la que se da de baja');
         if ($desde < hoy()) {
             responder(400, ['error' => 'La baja tiene que ser desde hoy en adelante']);
@@ -237,7 +240,7 @@ final class TurnoController extends Controlador
     private function clienteDeLaPeticion(array $datos): array
     {
         if (isset($datos['clienteId'])) {
-            $cliente = $this->verificarDueno(
+            $cliente = $this->verificarDelComplejo(
                 $this->clientes->buscarConDueno(idRequerido($datos, 'clienteId', 'el cliente')),
                 'El cliente'
             );

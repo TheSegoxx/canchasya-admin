@@ -22,14 +22,15 @@ final class ProductoController extends Controlador
     // GET /productos  (activos primero)
     public function listar(): void
     {
-        $complejoId = (int) $this->complejoDelDueno()['id'];
+        $complejoId = (int) $this->complejoActual()['id'];
         responder(200, ['productos' => array_map([$this->productos, 'publico'], $this->productos->listarPorComplejo($complejoId))]);
     }
 
     // POST /productos  {nombre, precio}
     public function crear(): void
     {
-        $complejoId = (int) $this->complejoDelDueno()['id'];
+        $this->soloDueno();
+        $complejoId = (int) $this->complejoActual()['id'];
         $datos = leerJson();
         $nombre = textoRequerido($datos, 'nombre', Producto::NOMBRE_MAXIMO, 'el nombre');
         $precio = precioRequerido($datos, 'precio', 'el precio');
@@ -41,7 +42,8 @@ final class ProductoController extends Controlador
     // PUT /productos/:id  {nombre, precio, activo}
     public function editar(int $id): void
     {
-        $producto = $this->verificarDueno($this->productos->buscarConDueno($id), 'El producto');
+        $this->soloDueno();
+        $producto = $this->verificarDelComplejo($this->productos->buscarConDueno($id), 'El producto');
         $datos = leerJson();
         $nombre = textoRequerido($datos, 'nombre', Producto::NOMBRE_MAXIMO, 'el nombre');
         $precio = precioRequerido($datos, 'precio', 'el precio');

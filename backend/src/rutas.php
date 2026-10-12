@@ -16,6 +16,7 @@ use App\Controllers\ClienteController;
 use App\Controllers\CobroController;
 use App\Controllers\ComplejoController;
 use App\Controllers\DashboardController;
+use App\Controllers\EmpleadoController;
 use App\Controllers\FotoController;
 use App\Controllers\ProductoController;
 use App\Controllers\TurnoController;
@@ -75,3 +76,10 @@ $router->agregar('DELETE', '/movimientos/:id', fn (array $p) => (new DashboardCo
 // Fotos del complejo y de las canchas (los archivos los sirve Apache desde /fotos)
 $router->agregar('POST', '/fotos', fn () => (new FotoController())->subir());
 $router->agregar('DELETE', '/fotos/:id', fn (array $p) => (new FotoController())->borrar($p['id']));
+
+// Empleados: invitaciones con código y quitar el acceso (solo el dueño); unirse a un complejo
+$router->agregar('GET', '/empleados', fn () => (new EmpleadoController())->listar());
+$router->agregar('DELETE', '/empleados/:id', fn (array $p) => (new EmpleadoController())->quitar($p['id']));
+$router->agregar('POST', '/invitaciones', fn () => (new EmpleadoController())->invitar());
+$router->agregar('POST', '/invitaciones/aceptar', fn () => (new EmpleadoController())->aceptar());
+$router->agregar('DELETE', '/invitaciones/:id', fn (array $p) => (new EmpleadoController())->anularInvitacion($p['id']));

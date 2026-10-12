@@ -23,7 +23,10 @@ final class ComplejoController extends Controlador
     // GET /complejo
     public function obtener(): void
     {
-        $complejo = $this->complejos->buscarPorUsuario($this->usuarioActual());
+        // El dueño ve el suyo; el empleado, el complejo donde trabaja
+        $complejo = $this->esEmpleado()
+            ? $this->complejoActual()
+            : $this->complejos->buscarPorUsuario($this->usuarioActual());
         if ($complejo === null) {
             responder(404, ['error' => 'Todavía no configuraste tu complejo']);
         }
@@ -37,6 +40,7 @@ final class ComplejoController extends Controlador
     // PUT /complejo  {nombre, direccion, telefono, horaApertura, horaCierre, servicios[]}
     public function guardar(): void
     {
+        $this->soloDueno();
         $usuarioId = $this->usuarioActual();
         $datos = leerJson();
 

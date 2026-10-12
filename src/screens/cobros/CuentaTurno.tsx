@@ -4,7 +4,7 @@ import type { TurnoDetalle } from '../../api/agenda';
 import { cobrosApi, NOMBRE_METODO } from '../../api/cobros';
 import { Boton } from '../../components/Boton';
 import { Icono } from '../../components/Icono';
-import { mensajeDeError } from '../../context/SesionContext';
+import { mensajeDeError, useEsDueno } from '../../context/SesionContext';
 import { espaciado, radio, useTema } from '../../theme/tema';
 import { fechaCorta } from '../../utils/fechas';
 import { formatearPesos } from '../../utils/formato';
@@ -19,6 +19,7 @@ type Props = {
 // Cuenta del turno: precio + extras, los pagos recibidos y lo que falta cobrar
 export function CuentaTurno({ turno, onCambio, onCobrar, onAgregarExtra }: Props) {
   const { colores } = useTema();
+  const esDueno = useEsDueno();
   const saldo = Math.round((turno.total - turno.pagado) * 100) / 100;
   const cancelado = turno.estado === 'cancelado';
 
@@ -78,7 +79,8 @@ export function CuentaTurno({ turno, onCambio, onCobrar, onAgregarExtra }: Props
           {
             clave: `p${p.id}`,
             color: colores.pagado,
-            extra: botonBorrar(`Borrar pago de ${formatearPesos(p.monto)}`, () =>
+            // Borrar un cobro es solo del dueño (la API también lo controla)
+            extra: !esDueno ? null : botonBorrar(`Borrar pago de ${formatearPesos(p.monto)}`, () =>
               borrar(
                 'Borrar pago',
                 `${NOMBRE_METODO[p.metodo]} de ${formatearPesos(p.monto)}. Solo si se cargó por error: también sale de la caja.`,
