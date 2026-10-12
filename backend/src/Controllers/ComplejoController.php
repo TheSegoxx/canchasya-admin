@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Controllers;
 
 use App\Models\Complejo;
+use App\Models\Foto;
 
 /**
  * Endpoints /complejo: datos del complejo del dueño logueado.
@@ -26,7 +27,11 @@ final class ComplejoController extends Controlador
         if ($complejo === null) {
             responder(404, ['error' => 'Todavía no configuraste tu complejo']);
         }
-        responder(200, ['complejo' => $this->complejos->publico($complejo)]);
+        $fotos = new Foto($this->pdo);
+        responder(200, [
+            'complejo' => $this->complejos->publico($complejo),
+            'fotos' => array_map([$fotos, 'publico'], $fotos->listar((int) $complejo['id'])),
+        ]);
     }
 
     // PUT /complejo  {nombre, direccion, telefono, horaApertura, horaCierre, servicios[]}

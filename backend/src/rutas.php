@@ -16,6 +16,7 @@ use App\Controllers\ClienteController;
 use App\Controllers\CobroController;
 use App\Controllers\ComplejoController;
 use App\Controllers\DashboardController;
+use App\Controllers\FotoController;
 use App\Controllers\ProductoController;
 use App\Controllers\TurnoController;
 
@@ -70,3 +71,7 @@ $router->agregar('GET', '/dashboard', fn () => (new DashboardController())->resu
 $router->agregar('GET', '/movimientos', fn () => (new DashboardController())->listar());
 $router->agregar('POST', '/movimientos', fn () => (new DashboardController())->crear());
 $router->agregar('DELETE', '/movimientos/:id', fn (array $p) => (new DashboardController())->borrar($p['id']));
+
+// Fotos del complejo y de las canchas (los archivos los sirve Apache desde /fotos)
+$router->agregar('POST', '/fotos', fn () => (new FotoController())->subir());
+$router->agregar('DELETE', '/fotos/:id', fn (array $p) => (new FotoController())->borrar($p['id']));

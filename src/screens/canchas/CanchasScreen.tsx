@@ -1,8 +1,9 @@
 import React, { useCallback, useState } from 'react';
-import { Alert, FlatList, Pressable, RefreshControl, StyleSheet, Switch, Text, View } from 'react-native';
+import { Alert, FlatList, Image, Pressable, RefreshControl, StyleSheet, Switch, Text, View } from 'react-native';
 import { useFocusEffect, useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { Cancha, canchasApi, Deporte, NOMBRE_DEPORTE } from '../../api/canchas';
+import { urlDeFoto } from '../../api/cliente';
 import { Boton } from '../../components/Boton';
 import { Chip } from '../../components/Chip';
 import { Icono } from '../../components/Icono';
@@ -84,9 +85,13 @@ export function CanchasScreen() {
             opacity: pressed ? 0.85 : item.habilitada ? 1 : 0.6,
           },
         ]}>
-        <View style={[estilos.icono, { backgroundColor: colores.fondo }]}>
-          <Icono nombre={item.deporte} color={colores.primario} tamano={28} />
-        </View>
+        {item.foto ? (
+          <Image source={{ uri: urlDeFoto(item.foto) }} style={[estilos.icono, { backgroundColor: colores.borde }]} />
+        ) : (
+          <View style={[estilos.icono, { backgroundColor: colores.fondo }]}>
+            <Icono nombre={item.deporte} color={colores.primario} tamano={28} />
+          </View>
+        )}
         <View style={estilos.datos}>
           <Text style={[estilos.nombre, { color: colores.texto }]} numberOfLines={1}>
             {item.nombre}

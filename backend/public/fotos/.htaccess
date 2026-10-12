@@ -1,0 +1,8 @@
+# Carpeta de fotos subidas: nunca se ejecuta código ni se listan los archivos
+Options -Indexes
+<IfModule mod_php.c>
+    php_flag engine off
+</IfModule>
+<IfModule mod_headers.c>
+    Header set X-Content-Type-Options "nosniff"
+</IfModule>

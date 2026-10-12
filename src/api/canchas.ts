@@ -1,4 +1,5 @@
 import { api } from './cliente';
+import type { Foto } from './fotos';
 
 export type Deporte = 'padel' | 'futbol5';
 export type EstadoCancha = 'libre' | 'ocupada';
@@ -18,6 +19,8 @@ export type Cancha = DatosCancha & {
   id: number;
   estado: EstadoCancha;
   habilitada: boolean;
+  // Ruta de la primera foto (solo en la lista de canchas)
+  foto?: string | null;
 };
 
 export type Franja = {
@@ -30,7 +33,7 @@ export type Franja = {
 // Endpoints /canchas y /franjas de la API
 export const canchasApi = {
   listar: () => api<{ canchas: Cancha[] }>('/canchas'),
-  obtener: (id: number) => api<{ cancha: Cancha; franjas: Franja[] }>(`/canchas/${id}`),
+  obtener: (id: number) => api<{ cancha: Cancha; franjas: Franja[]; fotos: Foto[] }>(`/canchas/${id}`),
   crear: (datos: DatosCancha) => api<{ cancha: Cancha }>('/canchas', 'POST', datos),
   editar: (id: number, datos: DatosCancha) => api<{ cancha: Cancha }>(`/canchas/${id}`, 'PUT', datos),
   cambiarEstado: (id: number, estado: EstadoCancha) =>

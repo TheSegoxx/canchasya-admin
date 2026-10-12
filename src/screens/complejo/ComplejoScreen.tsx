@@ -2,10 +2,12 @@ import React, { useCallback, useEffect, useState } from 'react';
 import { ActivityIndicator, Alert, StyleSheet, Text, View } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { complejoApi, Servicio, SERVICIOS } from '../../api/complejo';
+import { Foto, MAXIMO_FOTOS_COMPLEJO } from '../../api/fotos';
 import { Boton } from '../../components/Boton';
 import { CampoTexto } from '../../components/CampoTexto';
 import { Chip } from '../../components/Chip';
 import { ErrorCarga } from '../../components/ErrorCarga';
+import { GaleriaFotos } from '../../components/GaleriaFotos';
 import { Pantalla } from '../../components/Pantalla';
 import { SelectorHora } from '../../components/SelectorHora';
 import { mensajeDeError, useSesion } from '../../context/SesionContext';
@@ -28,6 +30,7 @@ export function ComplejoScreen() {
   const [apertura, setApertura] = useState('08:00');
   const [cierre, setCierre] = useState('24:00');
   const [servicios, setServicios] = useState<Servicio[]>([]);
+  const [fotos, setFotos] = useState<Foto[]>([]);
   const [cargando, setCargando] = useState(editando);
   const [errorCarga, setErrorCarga] = useState('');
   const [guardando, setGuardando] = useState(false);
@@ -38,7 +41,8 @@ export function ComplejoScreen() {
     setCargando(true);
     setErrorCarga('');
     try {
-      const { complejo } = await complejoApi.obtener();
+      const { complejo, fotos: guardadas } = await complejoApi.obtener();
+      setFotos(guardadas);
       setNombre(complejo.nombre);
       setDireccion(complejo.direccion);
       setTelefono(complejo.telefono ?? '');
@@ -115,6 +119,11 @@ export function ComplejoScreen() {
           ¡Hola{usuario ? `, ${usuario.nombre.split(' ')[0]}` : ''}! Antes de cargar canchas, contanos
           cómo es tu complejo. Después lo podés cambiar desde "Más".
         </Text>
+      )}
+
+      {/* Las fotos se suben al momento; necesitan que el complejo ya exista */}
+      {editando && (
+        <GaleriaFotos titulo="Fotos del complejo" fotos={fotos} maximo={MAXIMO_FOTOS_COMPLEJO} onCambio={setFotos} />
       )}
 
       <CampoTexto etiqueta="Nombre del complejo" value={nombre} onChangeText={setNombre} maxLength={150} />

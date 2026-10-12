@@ -1,4 +1,5 @@
 import { api } from './cliente';
+import type { Foto } from './fotos';
 
 export const SERVICIOS = [
   { clave: 'vestuarios', nombre: 'Vestuarios' },
@@ -24,6 +25,6 @@ export type Complejo = DatosComplejo & { id: number };
 
 // Endpoints /complejo de la API
 export const complejoApi = {
-  obtener: () => api<{ complejo: Complejo }>('/complejo'),
+  obtener: () => api<{ complejo: Complejo; fotos: Foto[] }>('/complejo'),
   guardar: (datos: DatosComplejo) => api<{ complejo: Complejo }>('/complejo', 'PUT', datos),
 };

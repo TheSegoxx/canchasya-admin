@@ -1,5 +1,5 @@
 import * as Keychain from 'react-native-keychain';
-import { API_URL, TIEMPO_ESPERA_MS } from '../config';
+import { API_URL, SERVIDOR_URL, TIEMPO_ESPERA_MS } from '../config';
 
 /**
  * Cliente HTTP de la API: agrega el token de sesión, convierte la respuesta
@@ -35,7 +35,12 @@ export function siVenceLaSesion(accion: () => void): void {
   alVencerLaSesion = accion;
 }
 
+// Las fotos las sirve Apache directo; la API devuelve la ruta relativa ("fotos/abc.jpg")
+export const urlDeFoto = (ruta: string) => `${SERVIDOR_URL}/${ruta}`;
+
+// cuerpo: un objeto (se manda como JSON) o un FormData (para subir archivos)
 export async function api<T>(ruta: string, metodo = 'GET', cuerpo?: unknown): Promise<T> {
+  const esFormulario = cuerpo instanceof FormData;
   const token = await leerToken();
   const cancelador = new AbortController();
   const temporizador = setTimeout(() => cancelador.abort(), TIEMPO_ESPERA_MS);
@@ -45,11 +50,12 @@ export async function api<T>(ruta: string, metodo = 'GET', cuerpo?: unknown): Pr
     respuesta = await fetch(`${API_URL}${ruta}`, {
       method: metodo,
       headers: {
-        'Content-Type': 'application/json',
+        // Con FormData el límite multipart lo pone fetch solo
+        ...(esFormulario ? {} : { 'Content-Type': 'application/json' }),
         Accept: 'application/json',
         ...(token ? { Authorization: `Bearer ${token}` } : {}),
       },
-      body: cuerpo === undefined ? undefined : JSON.stringify(cuerpo),
+      body: cuerpo === undefined ? undefined : esFormulario ? cuerpo : JSON.stringify(cuerpo),
       signal: cancelador.signal,
     });
   } catch {

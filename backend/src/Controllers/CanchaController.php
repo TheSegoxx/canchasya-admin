@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Controllers;
 
 use App\Models\Cancha;
+use App\Models\Foto;
 use App\Models\FranjaPrecio;
 
 /**
@@ -27,16 +28,26 @@ final class CanchaController extends Controlador
     {
         $complejo = $this->complejoDelDueno();
         $lista = $this->canchas->listarPorComplejo((int) $complejo['id']);
-        responder(200, ['canchas' => array_map([$this->canchas, 'publico'], $lista)]);
+        // La primera foto de cada cancha, para mostrarla en la lista
+        $portadas = (new Foto($this->pdo))->portadasDeCanchas((int) $complejo['id']);
+        responder(200, ['canchas' => array_map(
+            fn (array $c) => [
+                ...$this->canchas->publico($c),
+                'foto' => isset($portadas[$c['id']]) ? 'fotos/' . $portadas[$c['id']] : null,
+            ],
+            $lista
+        )]);
     }
 
     // GET /canchas/:id  (con sus franjas, para la pantalla de edición)
     public function obtener(int $id): void
     {
         $cancha = $this->canchaPropia($id);
+        $fotos = new Foto($this->pdo);
         responder(200, [
             'cancha' => $this->canchas->publico($cancha),
             'franjas' => array_map([$this->franjas, 'publico'], $this->franjas->listarPorCancha($id)),
+            'fotos' => array_map([$fotos, 'publico'], $fotos->listar((int) $cancha['complejo_id'], $id)),
         ]);
     }
 

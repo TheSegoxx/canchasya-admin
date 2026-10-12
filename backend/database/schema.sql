@@ -66,6 +66,19 @@ CREATE TABLE franjas_precio (
     CONSTRAINT fk_franjas_cancha FOREIGN KEY (cancha_id) REFERENCES canchas (id) ON DELETE CASCADE
 ) ENGINE=InnoDB;
 
+-- Fotos del complejo (cancha_id NULL) y de cada cancha; el archivo está en public/fotos
+CREATE TABLE fotos (
+    id          INT AUTO_INCREMENT PRIMARY KEY,
+    complejo_id INT NOT NULL,
+    cancha_id   INT NULL COMMENT 'NULL = foto del complejo',
+    archivo     VARCHAR(40) NOT NULL COMMENT 'Nombre aleatorio en public/fotos',
+    creado_en   TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    UNIQUE KEY uq_fotos_archivo (archivo),
+    KEY idx_fotos_cancha (complejo_id, cancha_id),
+    CONSTRAINT fk_fotos_complejo FOREIGN KEY (complejo_id) REFERENCES complejos (id) ON DELETE CASCADE,
+    CONSTRAINT fk_fotos_cancha FOREIGN KEY (cancha_id) REFERENCES canchas (id) ON DELETE CASCADE
+) ENGINE=InnoDB;
+
 -- Agenda de clientes del complejo (no usan la app)
 CREATE TABLE clientes (
     id          INT AUTO_INCREMENT PRIMARY KEY,

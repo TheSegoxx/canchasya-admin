@@ -6,4 +6,7 @@ RewriteEngine On
 # Apache en XAMPP puede descartar el header Authorization: se lo pasamos a PHP
 RewriteRule .* - [E=HTTP_AUTHORIZATION:%{HTTP:Authorization}]
 
+# Las fotos subidas se sirven directo: nombres aleatorios de 32 caracteres y solo imágenes
+RewriteRule ^fotos/([a-f0-9]{32}\.(?:jpg|png|webp))$ public/fotos/$1 [END]
+
 RewriteRule ^ public/index.php [END]

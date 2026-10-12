@@ -2,11 +2,13 @@ import React, { useCallback, useEffect, useState } from 'react';
 import { ActivityIndicator, Alert, Pressable, StyleSheet, Text, View } from 'react-native';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { canchasApi, Deporte, Franja, NOMBRE_DEPORTE } from '../../api/canchas';
+import { Foto, MAXIMO_FOTOS_CANCHA } from '../../api/fotos';
 import { Boton } from '../../components/Boton';
 import { CampoTexto } from '../../components/CampoTexto';
 import { Chip } from '../../components/Chip';
 import { ErrorCarga } from '../../components/ErrorCarga';
 import { FilaInterruptor } from '../../components/FilaInterruptor';
+import { GaleriaFotos } from '../../components/GaleriaFotos';
 import { Icono } from '../../components/Icono';
 import { Pantalla } from '../../components/Pantalla';
 import { SelectorHora } from '../../components/SelectorHora';
@@ -31,6 +33,7 @@ export function CanchaScreen({ route, navigation }: Props) {
   const [precio, setPrecio] = useState('');
   const [habilitada, setHabilitada] = useState(true);
   const [franjas, setFranjas] = useState<Franja[]>([]);
+  const [fotos, setFotos] = useState<Foto[]>([]);
 
   const [cargando, setCargando] = useState(id !== undefined);
   const [errorCarga, setErrorCarga] = useState('');
@@ -41,7 +44,8 @@ export function CanchaScreen({ route, navigation }: Props) {
     setCargando(true);
     setErrorCarga('');
     try {
-      const { cancha, franjas: lista } = await canchasApi.obtener(canchaId);
+      const { cancha, franjas: lista, fotos: guardadas } = await canchasApi.obtener(canchaId);
+      setFotos(guardadas);
       setDeporte(cancha.deporte);
       setNombre(cancha.nombre);
       setSuperficie(cancha.superficie ?? '');
@@ -128,6 +132,10 @@ export function CanchaScreen({ route, navigation }: Props) {
 
   return (
     <Pantalla>
+      {id !== undefined && (
+        <GaleriaFotos titulo="Fotos" fotos={fotos} maximo={MAXIMO_FOTOS_CANCHA} canchaId={id} onCambio={setFotos} />
+      )}
+
       <Text style={[estilos.seccion, { color: colores.texto }]}>Deporte</Text>
       <View style={estilos.chips}>
         {(['padel', 'futbol5'] as Deporte[]).map(d => (

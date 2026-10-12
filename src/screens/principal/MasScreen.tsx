@@ -1,11 +1,18 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Alert, Image, StyleSheet, Text, View } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { Boton } from '../../components/Boton';
+import { Chip } from '../../components/Chip';
 import { Pantalla } from '../../components/Pantalla';
 import { useSesion } from '../../context/SesionContext';
 import type { RutasApp } from '../../navigation/AppNavigator';
+import {
+  guardarPreferenciaTema,
+  leerPreferenciaTema,
+  NOMBRE_PREFERENCIA,
+  PreferenciaTema,
+} from '../../theme/preferencia';
 import { espaciado, radio, useTema } from '../../theme/tema';
 
 export function MasScreen() {
@@ -13,6 +20,16 @@ export function MasScreen() {
   const navigation = useNavigation<NativeStackNavigationProp<RutasApp>>();
   const { usuario, cerrarSesion } = useSesion();
   const [saliendo, setSaliendo] = useState(false);
+  const [tema, setTema] = useState<PreferenciaTema>('sistema');
+
+  useEffect(() => {
+    leerPreferenciaTema().then(setTema);
+  }, []);
+
+  const elegirTema = (preferencia: PreferenciaTema) => {
+    setTema(preferencia);
+    guardarPreferenciaTema(preferencia);
+  };
 
   const confirmarSalida = () =>
     Alert.alert('Cerrar sesión', '¿Querés salir de tu cuenta en este celular?', [
@@ -49,6 +66,13 @@ export function MasScreen() {
         </View>
       </View>
 
+      <Text style={[estilos.seccion, { color: colores.texto }]}>Tema</Text>
+      <View style={estilos.chips}>
+        {(['claro', 'oscuro', 'sistema'] as PreferenciaTema[]).map(p => (
+          <Chip key={p} texto={NOMBRE_PREFERENCIA[p]} seleccionado={tema === p} onPress={() => elegirTema(p)} />
+        ))}
+      </View>
+
       <Boton titulo="Datos del complejo" variante="secundario" onPress={() => navigation.navigate('Complejo')} />
       <View style={estilos.espacio} />
       <Boton titulo="Turnos fijos" icono="repetir" variante="secundario" onPress={() => navigation.navigate('TurnosFijos')} />
@@ -78,4 +102,6 @@ const estilos = StyleSheet.create({
   nombre: { fontSize: 18, fontWeight: '700' },
   email: { fontSize: 14, marginTop: 2 },
   espacio: { height: espaciado.s },
+  seccion: { fontSize: 17, fontWeight: '700', marginBottom: espaciado.s },
+  chips: { flexDirection: 'row', flexWrap: 'wrap', marginBottom: espaciado.m },
 });

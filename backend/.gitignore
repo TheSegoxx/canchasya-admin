@@ -2,3 +2,7 @@
 .env
 /storage/*
 !/storage/.gitkeep
+# Fotos subidas desde la app (no van al repositorio)
+/public/fotos/*
+!/public/fotos/.gitkeep
+!/public/fotos/.htaccess
