@@ -31,6 +31,10 @@ import { UnirseScreen } from '../screens/empleados/UnirseScreen';
 import { MovimientoScreen } from '../screens/dashboard/MovimientoScreen';
 import { MovimientosScreen } from '../screens/dashboard/MovimientosScreen';
 import { HoyScreen } from '../screens/principal/HoyScreen';
+import { NuevoTorneoScreen } from '../screens/torneos/NuevoTorneoScreen';
+import { PartidoScreen } from '../screens/torneos/PartidoScreen';
+import { TorneoScreen } from '../screens/torneos/TorneoScreen';
+import { TorneosScreen } from '../screens/torneos/TorneosScreen';
 import { MasScreen } from '../screens/principal/MasScreen';
 import { useTema } from '../theme/tema';
 
@@ -64,6 +68,10 @@ export type RutasApp = {
   Caja: undefined;
   Movimientos: { desde: string; hasta: string; titulo: string };
   Movimiento: { tipo?: TipoMovimiento };
+  Torneos: undefined;
+  NuevoTorneo: undefined;
+  Torneo: { id: number };
+  Partido: { torneoId: number; partidoId: number };
 };
 
 export type RutasPestanas = {
@@ -138,6 +146,10 @@ function Aplicacion({ tieneComplejo }: { tieneComplejo: boolean }) {
           <PilaApp.Screen name="Movimientos" component={MovimientosScreen} />
           <PilaApp.Screen name="Movimiento" component={MovimientoScreen} options={{ title: 'Cargar gasto o ingreso' }} />
           <PilaApp.Screen name="Empleados" component={EmpleadosScreen} />
+          <PilaApp.Screen name="Torneos" component={TorneosScreen} options={{ title: 'Torneos y ligas' }} />
+          <PilaApp.Screen name="NuevoTorneo" component={NuevoTorneoScreen} options={{ title: 'Nuevo torneo' }} />
+          <PilaApp.Screen name="Torneo" component={TorneoScreen} options={{ title: 'Torneo' }} />
+          <PilaApp.Screen name="Partido" component={PartidoScreen} options={{ title: 'Partido' }} />
         </>
       ) : (
         <>

@@ -87,6 +87,8 @@ export function MasScreen() {
           <View style={estilos.espacio} />
         </>
       )}
+      <Boton titulo="Torneos y ligas" variante="secundario" onPress={() => navigation.navigate('Torneos')} />
+      <View style={estilos.espacio} />
       <Boton titulo="Turnos fijos" icono="repetir" variante="secundario" onPress={() => navigation.navigate('TurnosFijos')} />
       <View style={estilos.espacio} />
       <Boton titulo="Clientes" icono="persona" variante="secundario" onPress={() => navigation.navigate('Clientes')} />

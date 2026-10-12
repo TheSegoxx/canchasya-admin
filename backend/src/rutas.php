@@ -19,6 +19,7 @@ use App\Controllers\DashboardController;
 use App\Controllers\EmpleadoController;
 use App\Controllers\FotoController;
 use App\Controllers\ProductoController;
+use App\Controllers\TorneoController;
 use App\Controllers\TurnoController;
 
 // Prueba de conexión desde la app
@@ -83,3 +84,16 @@ $router->agregar('DELETE', '/empleados/:id', fn (array $p) => (new EmpleadoContr
 $router->agregar('POST', '/invitaciones', fn () => (new EmpleadoController())->invitar());
 $router->agregar('POST', '/invitaciones/aceptar', fn () => (new EmpleadoController())->aceptar());
 $router->agregar('DELETE', '/invitaciones/:id', fn (array $p) => (new EmpleadoController())->anularInvitacion($p['id']));
+
+// Torneos y ligas: equipos, sorteo del fixture, resultados y programación en la agenda
+$router->agregar('GET', '/torneos', fn () => (new TorneoController())->listar());
+$router->agregar('POST', '/torneos', fn () => (new TorneoController())->crear());
+$router->agregar('GET', '/torneos/:id', fn (array $p) => (new TorneoController())->obtener($p['id']));
+$router->agregar('DELETE', '/torneos/:id', fn (array $p) => (new TorneoController())->borrar($p['id']));
+$router->agregar('POST', '/torneos/:id/equipos', fn (array $p) => (new TorneoController())->agregarEquipo($p['id']));
+$router->agregar('POST', '/torneos/:id/sorteo', fn (array $p) => (new TorneoController())->sortear($p['id']));
+$router->agregar('DELETE', '/torneo-equipos/:id', fn (array $p) => (new TorneoController())->borrarEquipo($p['id']));
+$router->agregar('PUT', '/partidos/:id/resultado', fn (array $p) => (new TorneoController())->cargarResultado($p['id']));
+$router->agregar('DELETE', '/partidos/:id/resultado', fn (array $p) => (new TorneoController())->borrarResultado($p['id']));
+$router->agregar('PUT', '/partidos/:id/programacion', fn (array $p) => (new TorneoController())->programar($p['id']));
+$router->agregar('DELETE', '/partidos/:id/programacion', fn (array $p) => (new TorneoController())->desprogramar($p['id']));
