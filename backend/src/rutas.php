@@ -30,6 +30,8 @@ $router->agregar('GET', '/salud', fn () => responder(200, ['ok' => true, 'api' =
 $router->agregar('POST', '/auth/register', fn () => (new AuthController())->registrar());
 $router->agregar('POST', '/auth/login', fn () => (new AuthController())->login());
 $router->agregar('POST', '/auth/google', fn () => (new AuthController())->google());
+$router->agregar('POST', '/auth/recuperar', fn () => (new AuthController())->recuperar());
+$router->agregar('POST', '/auth/restablecer', fn () => (new AuthController())->restablecer());
 $router->agregar('GET', '/auth/yo', fn () => (new AuthController())->yo());
 
 // Complejo del dueño

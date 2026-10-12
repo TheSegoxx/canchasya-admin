@@ -20,6 +20,8 @@ type Sesion = {
   reintentar: () => void;
   entrarConEmail: (email: string, password: string) => Promise<void>;
   registrarse: (nombre: string, email: string, password: string) => Promise<void>;
+  // Cambia la contraseña con el código que llegó por email y entra a la app
+  restablecerPassword: (email: string, codigo: string, password: string) => Promise<void>;
   // Devuelve false si el dueño cerró la ventana de Google sin elegir cuenta
   entrarConGoogle: () => Promise<boolean>;
   cerrarSesion: () => Promise<void>;
@@ -81,6 +83,12 @@ export function SesionProvider({ children }: { children: React.ReactNode }) {
     [iniciar],
   );
 
+  const restablecerPassword = useCallback(
+    async (email: string, codigo: string, password: string) =>
+      iniciar(await authApi.restablecer(email, codigo, password)),
+    [iniciar],
+  );
+
   const entrarConGoogle = useCallback(async () => {
     await GoogleSignin.hasPlayServices({ showPlayServicesUpdateDialog: true });
     const respuesta = await GoogleSignin.signIn();
@@ -122,11 +130,22 @@ export function SesionProvider({ children }: { children: React.ReactNode }) {
       reintentar: recuperarSesion,
       entrarConEmail,
       registrarse,
+      restablecerPassword,
       entrarConGoogle,
       cerrarSesion,
       actualizarUsuario: setUsuario,
     }),
-    [cargando, usuario, sinConexion, recuperarSesion, entrarConEmail, registrarse, entrarConGoogle, cerrarSesion],
+    [
+      cargando,
+      usuario,
+      sinConexion,
+      recuperarSesion,
+      entrarConEmail,
+      registrarse,
+      restablecerPassword,
+      entrarConGoogle,
+      cerrarSesion,
+    ],
   );
 
   return <SesionContext.Provider value={valor}>{children}</SesionContext.Provider>;

@@ -10,7 +10,8 @@ App Android para que el dueño de un complejo de pádel y fútbol 5 administre t
 - **Torneos y ligas:** fixture por sorteo, resultados, tabla de posiciones y partidos reservados en la agenda.
 - **Encargados:** el dueño invita empleados con un código; operan la agenda y la caja, sin ver precios
   ni el dashboard.
-- Fotos del complejo y de las canchas, tema claro u oscuro, login con email o Google.
+- Fotos del complejo y de las canchas, tema claro u oscuro, login con email o Google y recuperación
+  de la contraseña con un código por email.
 
 **Tecnologías:** React Native 0.87 (CLI) + TypeScript para Android 7.0 o superior; API en PHP 8.2 +
 MySQL/MariaDB sobre XAMPP (carpeta `backend/`).
@@ -24,6 +25,8 @@ MySQL/MariaDB sobre XAMPP (carpeta `backend/`).
 2. **API:**
    - Copiar `backend/.env.example` como `backend/.env` y completar `JWT_SECRET` y `GOOGLE_WEB_CLIENT_ID`.
    - Opcional: `MP_ACCESS_TOKEN` con el Access Token de Mercado Pago (para los links de pago).
+   - `MAIL_USUARIO` y `MAIL_CLAVE` con la cuenta que manda el código de "¿Olvidaste tu contraseña?"
+     (en desarrollo, si quedan vacíos, los correos se guardan en `backend/storage/correos.log`).
    - Ejecutar `composer install` dentro de `backend/`.
    - Crear el acceso desde XAMPP:
      `mklink /J C:\xampp\htdocs\canchasya <ruta del proyecto>\backend`

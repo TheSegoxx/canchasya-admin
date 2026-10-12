@@ -92,6 +92,14 @@ export function LoginScreen({ navigation }: Props) {
         returnKeyType="go"
         onSubmitEditing={entrar}
       />
+      <View style={estilos.olvide}>
+        <Boton
+          titulo="¿Olvidaste tu contraseña?"
+          variante="texto"
+          onPress={() => navigation.navigate('Recuperar', { email: email.trim() })}
+          deshabilitado={enviando !== null}
+        />
+      </View>
 
       {!!error && (
         <Text accessibilityLiveRegion="polite" style={[estilos.error, { color: colores.error }]}>
@@ -124,6 +132,7 @@ const estilos = StyleSheet.create({
   separador: { flexDirection: 'row', alignItems: 'center', marginVertical: espaciado.l },
   linea: { flex: 1, height: StyleSheet.hairlineWidth },
   o: { marginHorizontal: espaciado.s, fontSize: 14 },
+  olvide: { alignSelf: 'flex-end', marginTop: -espaciado.s, marginBottom: espaciado.s },
   error: { fontSize: 14, marginBottom: espaciado.m },
   espacio: { height: espaciado.s },
 });

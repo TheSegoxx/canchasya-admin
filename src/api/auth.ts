@@ -29,5 +29,12 @@ export const authApi = {
 
   google: (idToken: string) => api<RespuestaSesion>('/auth/google', 'POST', { idToken }),
 
+  // "¿Olvidaste tu contraseña?": manda un código de 6 números al email
+  recuperar: (email: string) => api<{ mensaje: string }>('/auth/recuperar', 'POST', { email }),
+
+  // Con el código correcto cambia la contraseña y devuelve la sesión
+  restablecer: (email: string, codigo: string, password: string) =>
+    api<RespuestaSesion>('/auth/restablecer', 'POST', { email, codigo, password }),
+
   yo: () => api<{ usuario: Usuario }>('/auth/yo'),
 };

@@ -289,7 +289,10 @@ CREATE TABLE codigos_recuperacion (
     usuario_id  INT NOT NULL,
     codigo_hash VARCHAR(255) NOT NULL,
     vence_en    DATETIME NOT NULL,
+    intentos    TINYINT NOT NULL DEFAULT 0 COMMENT 'Fallidos: a los 5 el código deja de servir',
     usado       BOOLEAN NOT NULL DEFAULT 0,
+    creado_en   TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    KEY idx_codigos_usuario (usuario_id, usado, vence_en),
     CONSTRAINT fk_codigos_usuario FOREIGN KEY (usuario_id) REFERENCES usuarios (id) ON DELETE CASCADE
 ) ENGINE=InnoDB;
 

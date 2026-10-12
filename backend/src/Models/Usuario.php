@@ -42,6 +42,11 @@ final class Usuario extends Modelo
         $this->actualizar($id, ['google_id' => $googleId, 'foto_url' => $fotoUrl]);
     }
 
+    public function cambiarPassword(int $id, string $passwordHash): void
+    {
+        $this->actualizar($id, ['password_hash' => $passwordHash]);
+    }
+
     public function verificarPassword(array $usuario, string $password): bool
     {
         return $usuario['password_hash'] !== null && password_verify($password, $usuario['password_hash']);

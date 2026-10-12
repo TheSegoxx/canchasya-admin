@@ -14,7 +14,9 @@ import { BloqueoScreen } from '../screens/agenda/BloqueoScreen';
 import { NuevoTurnoScreen } from '../screens/agenda/NuevoTurnoScreen';
 import { TurnoScreen } from '../screens/agenda/TurnoScreen';
 import { TurnosFijosScreen } from '../screens/agenda/TurnosFijosScreen';
+import { RecuperarScreen } from '../screens/auth/RecuperarScreen';
 import { RegistroScreen } from '../screens/auth/RegistroScreen';
+import { RestablecerScreen } from '../screens/auth/RestablecerScreen';
 import { CanchaScreen } from '../screens/canchas/CanchaScreen';
 import { CanchasScreen } from '../screens/canchas/CanchasScreen';
 import { ClienteScreen } from '../screens/clientes/ClienteScreen';
@@ -42,6 +44,9 @@ import { useTema } from '../theme/tema';
 export type RutasAuth = {
   Login: undefined;
   Registro: undefined;
+  // El email que ya estaba escrito en el login
+  Recuperar: { email?: string } | undefined;
+  Restablecer: { email: string };
 };
 
 // Con sesión: primero ConfigurarComplejo (si falta) y después las pestañas
@@ -173,6 +178,8 @@ function Autenticacion() {
     <Pila.Navigator>
       <Pila.Screen name="Login" component={LoginScreen} options={{ headerShown: false }} />
       <Pila.Screen name="Registro" component={RegistroScreen} options={{ title: 'Crear cuenta' }} />
+      <Pila.Screen name="Recuperar" component={RecuperarScreen} options={{ title: 'Recuperar contraseña' }} />
+      <Pila.Screen name="Restablecer" component={RestablecerScreen} options={{ title: 'Contraseña nueva' }} />
     </Pila.Navigator>
   );
 }
