@@ -168,8 +168,9 @@ const estilos = StyleSheet.create({
   tarjetaGrande: { alignItems: 'center' },
   tarjetaChica: { flex: 1 },
   tituloTarjeta: { fontSize: 14, fontWeight: '600' },
-  montoGrande: { fontSize: 34, fontWeight: '800', fontVariant: ['tabular-nums'], marginTop: espaciado.xs },
-  monto: { fontSize: 20, fontWeight: '700', fontVariant: ['tabular-nums'], marginTop: espaciado.xs },
+  // Números sueltos grandes: cifras proporcionales
+  montoGrande: { fontSize: 34, fontWeight: '800', marginTop: espaciado.xs },
+  monto: { fontSize: 20, fontWeight: '700', marginTop: espaciado.xs },
   seccion: { fontSize: 17, fontWeight: '700', marginTop: espaciado.l, marginBottom: espaciado.s },
   vacio: { fontSize: 15 },
   item: {

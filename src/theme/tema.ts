@@ -20,6 +20,9 @@ const claro = {
   pagado: '#1565C0',
   inactivo: '#8A8F8A',
   whatsapp: '#0B7A5E',
+  // Series de los gráficos (validadas para daltonismo sobre la superficie)
+  serieIngresos: '#2A78D6',
+  serieEgresos: '#EB6834',
 };
 
 export type Colores = typeof claro;
@@ -39,6 +42,8 @@ const oscuro: Colores = {
   pagado: '#64B5F6',
   inactivo: '#7A817A',
   whatsapp: '#25D366',
+  serieIngresos: '#3987E5',
+  serieEgresos: '#D95926',
 };
 
 export const espaciado = { xs: 4, s: 8, m: 16, l: 24, xl: 32 };

@@ -238,3 +238,24 @@ function pagoValido(array $datos): array
     }
     return ['monto' => $monto, 'metodo' => $metodo];
 }
+
+/**
+ * Rango ?desde=AAAA-MM-DD&hasta=AAAA-MM-DD de la consulta (como mucho un año).
+ *
+ * @return array{0: string, 1: string}
+ */
+function rangoDeFechas(): array
+{
+    $desde = $_GET['desde'] ?? '';
+    $hasta = $_GET['hasta'] ?? '';
+    if (!is_string($desde) || !is_string($hasta) || !fechaValida($desde) || !fechaValida($hasta)) {
+        responder(400, ['error' => 'Faltan las fechas desde y hasta (AAAA-MM-DD)']);
+    }
+    if ($desde > $hasta) {
+        responder(400, ['error' => 'La fecha desde tiene que ser anterior a la fecha hasta']);
+    }
+    if (strtotime($hasta) - strtotime($desde) > 366 * 86400) {
+        responder(400, ['error' => 'El período no puede ser de más de un año']);
+    }
+    return [$desde, $hasta];
+}

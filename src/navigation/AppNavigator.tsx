@@ -6,6 +6,7 @@ import { ErrorCarga } from '../components/ErrorCarga';
 import { Icono, NombreIcono } from '../components/Icono';
 import type { Cliente } from '../api/agenda';
 import type { Producto } from '../api/cobros';
+import type { TipoMovimiento } from '../api/dashboard';
 import { useSesion } from '../context/SesionContext';
 import { LoginScreen } from '../screens/auth/LoginScreen';
 import { AgendaScreen } from '../screens/agenda/AgendaScreen';
@@ -24,6 +25,10 @@ import { ProductoScreen } from '../screens/cobros/ProductoScreen';
 import { ProductosScreen } from '../screens/cobros/ProductosScreen';
 import { ClientesScreen } from '../screens/clientes/ClientesScreen';
 import { ComplejoScreen } from '../screens/complejo/ComplejoScreen';
+import { DashboardScreen } from '../screens/dashboard/DashboardScreen';
+import { MovimientoScreen } from '../screens/dashboard/MovimientoScreen';
+import { MovimientosScreen } from '../screens/dashboard/MovimientosScreen';
+import { HoyScreen } from '../screens/principal/HoyScreen';
 import { MasScreen } from '../screens/principal/MasScreen';
 import { useTema } from '../theme/tema';
 
@@ -51,12 +56,16 @@ export type RutasApp = {
   Productos: undefined;
   // Sin producto: nuevo; con producto: editar
   Producto: { producto?: Producto };
+  Caja: undefined;
+  Movimientos: { desde: string; hasta: string; titulo: string };
+  Movimiento: { tipo?: TipoMovimiento };
 };
 
 export type RutasPestanas = {
   Inicio: undefined;
   Agenda: undefined;
   Canchas: undefined;
+  Dashboard: undefined;
   Mas: undefined;
 };
 
@@ -68,6 +77,7 @@ const iconos: Record<keyof RutasPestanas, NombreIcono> = {
   Inicio: 'inicio',
   Agenda: 'agenda',
   Canchas: 'canchas',
+  Dashboard: 'grafico',
   Mas: 'mas',
 };
 
@@ -86,9 +96,10 @@ function Principal() {
         tabBarInactiveTintColor: colores.textoSecundario,
         tabBarIcon: iconoDe(route.name),
       })}>
-      <Pestanas.Screen name="Inicio" component={CajaScreen} options={{ title: 'Caja del día', tabBarLabel: 'Inicio' }} />
+      <Pestanas.Screen name="Inicio" component={HoyScreen} options={{ title: 'Hoy', tabBarLabel: 'Inicio' }} />
       <Pestanas.Screen name="Agenda" component={AgendaScreen} />
       <Pestanas.Screen name="Canchas" component={CanchasScreen} />
+      <Pestanas.Screen name="Dashboard" component={DashboardScreen} />
       <Pestanas.Screen name="Mas" component={MasScreen} options={{ title: 'Más' }} />
     </Pestanas.Navigator>
   );
@@ -112,6 +123,9 @@ function Aplicacion({ tieneComplejo }: { tieneComplejo: boolean }) {
           <PilaApp.Screen name="AgregarExtra" component={AgregarExtraScreen} options={{ title: 'Agregar extra' }} />
           <PilaApp.Screen name="Productos" component={ProductosScreen} options={{ title: 'Productos y extras' }} />
           <PilaApp.Screen name="Producto" component={ProductoScreen} />
+          <PilaApp.Screen name="Caja" component={CajaScreen} options={{ title: 'Caja del día' }} />
+          <PilaApp.Screen name="Movimientos" component={MovimientosScreen} />
+          <PilaApp.Screen name="Movimiento" component={MovimientoScreen} options={{ title: 'Cargar gasto o ingreso' }} />
         </>
       ) : (
         <PilaApp.Screen

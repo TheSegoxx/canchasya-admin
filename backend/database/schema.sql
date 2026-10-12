@@ -157,6 +157,22 @@ CREATE TABLE pagos (
     CONSTRAINT fk_pagos_turno FOREIGN KEY (turno_id) REFERENCES turnos (id) ON DELETE CASCADE
 ) ENGINE=InnoDB;
 
+-- Gastos y otros ingresos que el dueño carga a mano (lo cobrado por turnos sale de pagos)
+CREATE TABLE movimientos (
+    id          INT AUTO_INCREMENT PRIMARY KEY,
+    complejo_id INT NOT NULL,
+    tipo        ENUM('ingreso', 'egreso') NOT NULL,
+    categoria   VARCHAR(30) NOT NULL COMMENT 'Clave fija de la API (sueldos, servicios, ventas...)',
+    descripcion VARCHAR(100) NULL,
+    monto       DECIMAL(10, 2) NOT NULL,
+    metodo      ENUM('efectivo', 'transferencia') NOT NULL,
+    fecha       DATE NOT NULL,
+    creado_en   TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    KEY idx_movimientos_fecha (complejo_id, fecha),
+    CONSTRAINT chk_movimientos_monto CHECK (monto > 0),
+    CONSTRAINT fk_movimientos_complejo FOREIGN KEY (complejo_id) REFERENCES complejos (id) ON DELETE CASCADE
+) ENGINE=InnoDB;
+
 -- Cancha cerrada por mantenimiento, lluvia, etc.
 CREATE TABLE bloqueos (
     id        INT AUTO_INCREMENT PRIMARY KEY,

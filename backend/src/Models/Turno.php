@@ -83,6 +83,31 @@ final class Turno extends Modelo
         return $stmt->fetchAll();
     }
 
+    /**
+     * Turnos reservados (no cancelados) y cancelados entre dos fechas, y los minutos de cancha reservados
+     * (para el dashboard).
+     *
+     * @return array{reservados: int, cancelados: int, minutos: int}
+     */
+    public function estadisticas(int $complejoId, string $desde, string $hasta): array
+    {
+        $stmt = $this->pdo->prepare(
+            "SELECT COALESCE(SUM(t.estado <> 'cancelado'), 0) AS reservados,
+                    COALESCE(SUM(t.estado = 'cancelado'), 0) AS cancelados,
+                    COALESCE(SUM(CASE WHEN t.estado <> 'cancelado'
+                        THEN (TIME_TO_SEC(t.hora_fin) - TIME_TO_SEC(t.hora_inicio)) / 60 END), 0) AS minutos
+             FROM turnos t JOIN canchas c ON c.id = t.cancha_id
+             WHERE c.complejo_id = ? AND t.fecha BETWEEN ? AND ?"
+        );
+        $stmt->execute([$complejoId, $desde, $hasta]);
+        $fila = $stmt->fetch();
+        return [
+            'reservados' => (int) $fila['reservados'],
+            'cancelados' => (int) $fila['cancelados'],
+            'minutos' => (int) $fila['minutos'],
+        ];
+    }
+
     public function existeDelFijo(int $turnoFijoId, string $fecha): bool
     {
         $stmt = $this->pdo->prepare('SELECT 1 FROM turnos WHERE turno_fijo_id = ? AND fecha = ?');

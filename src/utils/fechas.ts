@@ -5,7 +5,7 @@
 
 export const DIAS = ['lunes', 'martes', 'miércoles', 'jueves', 'viernes', 'sábado', 'domingo'];
 export const DIAS_CORTOS = ['lun', 'mar', 'mié', 'jue', 'vie', 'sáb', 'dom'];
-const MESES = [
+export const MESES = [
   'enero',
   'febrero',
   'marzo',
@@ -19,6 +19,8 @@ const MESES = [
   'noviembre',
   'diciembre',
 ];
+
+export const MESES_CORTOS = ['ene', 'feb', 'mar', 'abr', 'may', 'jun', 'jul', 'ago', 'sep', 'oct', 'nov', 'dic'];
 
 const dosCifras = (n: number) => String(n).padStart(2, '0');
 

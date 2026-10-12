@@ -36,6 +36,37 @@ final class Pago extends Modelo
         return $stmt->fetchAll();
     }
 
+    // Lo cobrado por día y medio de pago en un rango (para el dashboard)
+    public function sumasPorDia(int $complejoId, string $desde, string $hasta): array
+    {
+        $stmt = $this->pdo->prepare(
+            'SELECT DATE(p.fecha_pago) AS dia, p.metodo, SUM(p.monto) AS total
+             FROM pagos p
+             JOIN turnos t ON t.id = p.turno_id
+             JOIN canchas c ON c.id = t.cancha_id
+             WHERE c.complejo_id = ? AND p.fecha_pago >= ? AND p.fecha_pago < ?
+             GROUP BY dia, p.metodo'
+        );
+        $stmt->execute([$complejoId, "$desde 00:00:00", sumarDias($hasta, 1) . ' 00:00:00']);
+        return $stmt->fetchAll();
+    }
+
+    // Lo cobrado en el rango, por cancha (de la que más recaudó a la que menos)
+    public function sumasPorCancha(int $complejoId, string $desde, string $hasta): array
+    {
+        $stmt = $this->pdo->prepare(
+            'SELECT c.id, c.nombre, SUM(p.monto) AS total
+             FROM pagos p
+             JOIN turnos t ON t.id = p.turno_id
+             JOIN canchas c ON c.id = t.cancha_id
+             WHERE c.complejo_id = ? AND p.fecha_pago >= ? AND p.fecha_pago < ?
+             GROUP BY c.id, c.nombre
+             ORDER BY total DESC'
+        );
+        $stmt->execute([$complejoId, "$desde 00:00:00", sumarDias($hasta, 1) . ' 00:00:00']);
+        return $stmt->fetchAll();
+    }
+
     public function buscarConDueno(int $id): ?array
     {
         $stmt = $this->pdo->prepare(

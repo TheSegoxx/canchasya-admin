@@ -3,6 +3,7 @@ import Svg, { Circle, G, Path, Rect } from 'react-native-svg';
 
 export type NombreIcono =
   | 'inicio'
+  | 'grafico'
   | 'agenda'
   | 'canchas'
   | 'mas'
@@ -28,6 +29,14 @@ export function Icono({ nombre, color, tamano = 24 }: Props) {
     <Svg width={tamano} height={tamano} viewBox="0 0 24 24">
       <G fill="none" stroke={color} strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
         {nombre === 'inicio' && (
+          <>
+            {/* Casa */}
+            <Path d="M3 10.5 12 3l9 7.5" />
+            <Path d="M5 9v12h14V9" />
+            <Path d="M10 21v-6h4v6" />
+          </>
+        )}
+        {nombre === 'grafico' && (
           <>
             <Path d="M3 3v18h18" />
             <Path d="M8 16v-4" />

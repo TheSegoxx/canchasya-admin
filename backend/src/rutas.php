@@ -15,6 +15,7 @@ use App\Controllers\CanchaController;
 use App\Controllers\ClienteController;
 use App\Controllers\CobroController;
 use App\Controllers\ComplejoController;
+use App\Controllers\DashboardController;
 use App\Controllers\ProductoController;
 use App\Controllers\TurnoController;
 
@@ -63,3 +64,9 @@ $router->agregar('GET', '/caja', fn () => (new CobroController())->caja());
 $router->agregar('GET', '/productos', fn () => (new ProductoController())->listar());
 $router->agregar('POST', '/productos', fn () => (new ProductoController())->crear());
 $router->agregar('PUT', '/productos/:id', fn (array $p) => (new ProductoController())->editar($p['id']));
+
+// Dashboard: ingresos, egresos y balance de un período; gastos y otros ingresos cargados a mano
+$router->agregar('GET', '/dashboard', fn () => (new DashboardController())->resumen());
+$router->agregar('GET', '/movimientos', fn () => (new DashboardController())->listar());
+$router->agregar('POST', '/movimientos', fn () => (new DashboardController())->crear());
+$router->agregar('DELETE', '/movimientos/:id', fn (array $p) => (new DashboardController())->borrar($p['id']));
