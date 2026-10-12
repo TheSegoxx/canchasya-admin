@@ -3,7 +3,7 @@ import { ActivityIndicator, Alert, Pressable, StyleSheet, Text, View } from 'rea
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { Agenda, agendaApi, Cliente, NuevoTurno } from '../../api/agenda';
 import { NOMBRE_DEPORTE } from '../../api/canchas';
-import { MetodoPago, NOMBRE_METODO } from '../../api/cobros';
+import { MetodoManual, NOMBRE_METODO } from '../../api/cobros';
 import { Boton } from '../../components/Boton';
 import { CampoTexto } from '../../components/CampoTexto';
 import { Chip } from '../../components/Chip';
@@ -47,7 +47,7 @@ export function NuevoTurnoScreen({ route, navigation }: Props) {
   const [fijo, setFijo] = useState(false);
   const [conSena, setConSena] = useState(false);
   const [sena, setSena] = useState('');
-  const [metodoSena, setMetodoSena] = useState<MetodoPago>('transferencia');
+  const [metodoSena, setMetodoSena] = useState<MetodoManual>('transferencia');
   const [guardando, setGuardando] = useState(false);
   const [error, setError] = useState('');
   const pedida = useRef(fecha);
@@ -348,7 +348,7 @@ export function NuevoTurnoScreen({ route, navigation }: Props) {
             placeholder={precioCalculado ? String(Math.round(precioCalculado / 2)) : '10000'}
           />
           <View style={estilos.chips}>
-            {(['transferencia', 'efectivo'] as MetodoPago[]).map(m => (
+            {(['transferencia', 'efectivo'] as MetodoManual[]).map(m => (
               <Chip key={m} texto={NOMBRE_METODO[m]} seleccionado={metodoSena === m} onPress={() => setMetodoSena(m)} />
             ))}
           </View>

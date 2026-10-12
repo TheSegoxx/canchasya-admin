@@ -21,6 +21,7 @@ import { ClienteScreen } from '../screens/clientes/ClienteScreen';
 import { AgregarExtraScreen } from '../screens/cobros/AgregarExtraScreen';
 import { CajaScreen } from '../screens/cobros/CajaScreen';
 import { CobrarScreen } from '../screens/cobros/CobrarScreen';
+import { LinkPagoScreen } from '../screens/cobros/LinkPagoScreen';
 import { ProductoScreen } from '../screens/cobros/ProductoScreen';
 import { ProductosScreen } from '../screens/cobros/ProductosScreen';
 import { ClientesScreen } from '../screens/clientes/ClientesScreen';
@@ -62,6 +63,7 @@ export type RutasApp = {
   Cliente: { cliente: Cliente };
   Cobrar: { turnoId: number };
   AgregarExtra: { turnoId: number };
+  LinkPago: { turnoId: number };
   Productos: undefined;
   // Sin producto: nuevo; con producto: editar
   Producto: { producto?: Producto };
@@ -139,6 +141,7 @@ function Aplicacion({ tieneComplejo }: { tieneComplejo: boolean }) {
           <PilaApp.Screen name="Clientes" component={ClientesScreen} />
           <PilaApp.Screen name="Cliente" component={ClienteScreen} options={{ title: 'Cliente' }} />
           <PilaApp.Screen name="Cobrar" component={CobrarScreen} options={{ title: 'Cobrar' }} />
+          <PilaApp.Screen name="LinkPago" component={LinkPagoScreen} options={{ title: 'Link de Mercado Pago' }} />
           <PilaApp.Screen name="AgregarExtra" component={AgregarExtraScreen} options={{ title: 'Agregar extra' }} />
           <PilaApp.Screen name="Productos" component={ProductosScreen} options={{ title: 'Productos y extras' }} />
           <PilaApp.Screen name="Producto" component={ProductoScreen} />

@@ -1,23 +1,26 @@
 import React from 'react';
 import { Alert, Pressable, StyleSheet, Text, View } from 'react-native';
 import type { TurnoDetalle } from '../../api/agenda';
-import { cobrosApi, NOMBRE_METODO } from '../../api/cobros';
+import { cobrosApi, LinkPago, NOMBRE_METODO } from '../../api/cobros';
 import { Boton } from '../../components/Boton';
 import { Icono } from '../../components/Icono';
 import { mensajeDeError, useEsDueno } from '../../context/SesionContext';
 import { espaciado, radio, useTema } from '../../theme/tema';
 import { fechaCorta } from '../../utils/fechas';
+import { abrirWhatsApp } from '../../utils/acciones';
 import { formatearPesos } from '../../utils/formato';
+import { mensajeLinkPago } from './LinkPagoScreen';
 
 type Props = {
   turno: TurnoDetalle;
   onCambio: (turno: TurnoDetalle) => void;
   onCobrar: () => void;
   onAgregarExtra: () => void;
+  onLinkPago: () => void;
 };
 
 // Cuenta del turno: precio + extras, los pagos recibidos y lo que falta cobrar
-export function CuentaTurno({ turno, onCambio, onCobrar, onAgregarExtra }: Props) {
+export function CuentaTurno({ turno, onCambio, onCobrar, onAgregarExtra, onLinkPago }: Props) {
   const { colores } = useTema();
   const esDueno = useEsDueno();
   const saldo = Math.round((turno.total - turno.pagado) * 100) / 100;
@@ -80,7 +83,7 @@ export function CuentaTurno({ turno, onCambio, onCobrar, onAgregarExtra }: Props
             clave: `p${p.id}`,
             color: colores.pagado,
             // Borrar un cobro es solo del dueño (la API también lo controla)
-            extra: !esDueno ? null : botonBorrar(`Borrar pago de ${formatearPesos(p.monto)}`, () =>
+            extra: !esDueno || p.metodo === 'mercadopago' ? null : botonBorrar(`Borrar pago de ${formatearPesos(p.monto)}`, () =>
               borrar(
                 'Borrar pago',
                 `${NOMBRE_METODO[p.metodo]} de ${formatearPesos(p.monto)}. Solo si se cargó por error: también sale de la caja.`,
@@ -95,11 +98,20 @@ export function CuentaTurno({ turno, onCambio, onCobrar, onAgregarExtra }: Props
         ? linea('Falta cobrar', formatearPesos(saldo), { fuerte: true, color: colores.ocupada })
         : linea('Pagado', '✓', { fuerte: true, color: colores.pagado })}
 
+      {/* Links de Mercado Pago sin pagar: se pueden reenviar o anular */}
+      {turno.linksPago
+        .filter(l => l.estado !== 'pagado')
+        .map(l => (
+          <LineaLink key={l.id} link={l} turno={turno} onCambio={onCambio} />
+        ))}
+
       {!cancelado && (
         <View style={estilos.botones}>
           {saldo > 0 && (
             <>
               <Boton titulo={turno.pagado > 0 ? 'Cobrar el saldo' : 'Cobrar'} onPress={onCobrar} />
+              <View style={estilos.espacio} />
+              <Boton titulo="Cobrar con link de Mercado Pago" variante="secundario" onPress={onLinkPago} />
               <View style={estilos.espacio} />
             </>
           )}
@@ -110,7 +122,62 @@ export function CuentaTurno({ turno, onCambio, onCobrar, onAgregarExtra }: Props
   );
 }
 
+function LineaLink({ link, turno, onCambio }: { link: LinkPago; turno: TurnoDetalle; onCambio: (t: TurnoDetalle) => void }) {
+  const { colores } = useTema();
+  const pendiente = link.estado === 'pendiente';
+  const anular = () =>
+    Alert.alert('Anular link', 'El link deja de funcionar en Mercado Pago.', [
+      { text: 'Volver', style: 'cancel' },
+      {
+        text: 'Anular',
+        style: 'destructive',
+        onPress: async () => {
+          try {
+            const respuesta = await cobrosApi.anularLink(link.id);
+            onCambio(respuesta.turno);
+            if (respuesta.aviso) {
+              Alert.alert('Mercado Pago', respuesta.aviso);
+            }
+          } catch (e) {
+            Alert.alert('No se pudo anular', mensajeDeError(e));
+          }
+        },
+      },
+    ]);
+  return (
+    <View style={[estilos.link, { borderColor: colores.borde }]}>
+      <View style={estilos.datosLink}>
+        <Text style={[estilos.texto, { color: colores.texto }]}>Link Mercado Pago {formatearPesos(link.monto)}</Text>
+        <Text style={[estilos.detalleLink, { color: pendiente ? colores.senado : colores.inactivo }]}>
+          {pendiente
+            ? `Esperando el pago · vence ${fechaCorta(link.venceEn.slice(0, 10))} ${link.venceEn.slice(11)}`
+            : 'Vencido sin pagar'}
+        </Text>
+      </View>
+      {pendiente && (
+        <>
+          <Pressable
+            accessibilityRole="button"
+            accessibilityLabel="Reenviar el link por WhatsApp"
+            onPress={() => abrirWhatsApp(turno.cliente.telefono, mensajeLinkPago(turno, link))}
+            hitSlop={6}
+            style={estilos.iconoLink}>
+            <Icono nombre="whatsapp" color={colores.whatsapp} tamano={22} />
+          </Pressable>
+          <Pressable accessibilityRole="button" accessibilityLabel="Anular el link" onPress={anular} hitSlop={6} style={estilos.iconoLink}>
+            <Icono nombre="borrar" color={colores.error} tamano={18} />
+          </Pressable>
+        </>
+      )}
+    </View>
+  );
+}
+
 const estilos = StyleSheet.create({
+  link: { flexDirection: 'row', alignItems: 'center', borderTopWidth: StyleSheet.hairlineWidth, paddingVertical: espaciado.s },
+  datosLink: { flex: 1 },
+  detalleLink: { fontSize: 13, marginTop: 2 },
+  iconoLink: { width: 40, height: 40, alignItems: 'center', justifyContent: 'center' },
   tarjeta: { padding: espaciado.m, borderRadius: radio, borderWidth: 1, marginTop: espaciado.l },
   titulo: { fontSize: 17, fontWeight: '700', marginBottom: espaciado.s },
   linea: { flexDirection: 'row', alignItems: 'center', minHeight: 40 },

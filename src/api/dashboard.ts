@@ -1,5 +1,5 @@
 import { api } from './cliente';
-import type { MetodoPago } from './cobros';
+import type { MetodoManual } from './cobros';
 
 export type TipoMovimiento = 'ingreso' | 'egreso';
 
@@ -30,7 +30,7 @@ export type Movimiento = {
   categoria: string;
   descripcion: string | null;
   monto: number;
-  metodo: MetodoPago;
+  metodo: MetodoManual;
   fecha: string;
 };
 
@@ -42,7 +42,7 @@ export type Resumen = {
   egresos: number;
   balance: number;
   // Ingresos menos egresos de cada medio de pago
-  billetera: { efectivo: number; transferencia: number };
+  billetera: { efectivo: number; transferencia: number; mercadopago: number };
   // Una entrada por día ("AAAA-MM-DD") o por mes ("AAAA-MM")
   serie: { clave: string; ingresos: number; egresos: number }[];
   egresosPorCategoria: { categoria: string; monto: number }[];

@@ -46,6 +46,10 @@ final class CobroController extends Controlador
     {
         $this->soloDueno();
         $pago = $this->verificarDelComplejo($this->pagos->buscarConDueno($id), 'El pago');
+        // Lo confirmó Mercado Pago: si se devuelve, se hace desde Mercado Pago
+        if ($pago['metodo'] === Pago::MERCADO_PAGO) {
+            responder(409, ['error' => 'Los pagos de Mercado Pago no se borran: si lo devolviste, hacelo desde Mercado Pago.']);
+        }
         $turnoId = (int) $pago['turno_id'];
         $this->transaccion(function () use ($id, $turnoId) {
             $this->turnos->trabar($turnoId);
@@ -131,7 +135,7 @@ final class CobroController extends Controlador
         $this->transaccion(fn () => (new AgendaService($this->pdo))->materializarFijos($complejoId, $fecha));
 
         $cobros = $this->pagos->listarPorDia($complejoId, $fecha);
-        $totales = ['total' => 0.0, 'efectivo' => 0.0, 'transferencia' => 0.0, 'cantidad' => count($cobros)];
+        $totales = ['total' => 0.0, 'efectivo' => 0.0, 'transferencia' => 0.0, 'mercadopago' => 0.0, 'cantidad' => count($cobros)];
         foreach ($cobros as $c) {
             $totales[$c['metodo']] += (float) $c['monto'];
             $totales['total'] += (float) $c['monto'];

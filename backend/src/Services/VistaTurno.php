@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Services;
 
 use App\Models\Consumo;
+use App\Models\LinkPago;
 use App\Models\Pago;
 use App\Models\Turno;
 use App\Models\TurnoFijo;
@@ -25,6 +26,7 @@ final class VistaTurno
         $turnos = new Turno($this->pdo);
         $consumos = new Consumo($this->pdo);
         $pagos = new Pago($this->pdo);
+        $links = new LinkPago($this->pdo);
 
         $fila = $turnos->buscarDetalle($id);
         $fijo = $fila['turno_fijo_id'] !== null ? (new TurnoFijo($this->pdo))->buscarPorId((int) $fila['turno_fijo_id']) : null;
@@ -39,6 +41,11 @@ final class VistaTurno
             ] : null,
             'consumos' => array_map([$consumos, 'publico'], $consumos->listarPorTurno($id)),
             'pagos' => array_map([$pagos, 'publico'], $pagos->listarPorTurno($id)),
+            // Links de Mercado Pago (sin los anulados)
+            'linksPago' => array_values(array_map(
+                [$links, 'publico'],
+                array_filter($links->listarPorTurno($id), fn (array $l) => $l['estado'] !== 'anulado')
+            )),
         ];
     }
 }

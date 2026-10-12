@@ -11,7 +11,9 @@ final class Pago extends Modelo
 {
     protected string $tabla = 'pagos';
 
+    // Los que el dueño carga a mano; 'mercadopago' lo registra solo la API al aprobarse un link
     public const METODOS = ['efectivo', 'transferencia'];
+    public const MERCADO_PAGO = 'mercadopago';
 
     public function listarPorTurno(int $turnoId): array
     {

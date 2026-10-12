@@ -3,6 +3,7 @@ import { ActivityIndicator, Alert, StyleSheet, Text, View } from 'react-native';
 import { useFocusEffect } from '@react-navigation/native';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { agendaApi, EstadoTurno, NOMBRE_ESTADO, NOMBRE_PAGO, TurnoDetalle } from '../../api/agenda';
+import { cobrosApi } from '../../api/cobros';
 import { NOMBRE_DEPORTE } from '../../api/canchas';
 import { Boton } from '../../components/Boton';
 import { ErrorCarga } from '../../components/ErrorCarga';
@@ -31,7 +32,20 @@ export function TurnoScreen({ route, navigation }: Props) {
   const cargar = useCallback(async () => {
     setErrorCarga('');
     try {
-      setTurno((await agendaApi.obtenerTurno(id)).turno);
+      const { turno: datos } = await agendaApi.obtenerTurno(id);
+      setTurno(datos);
+      // Si hay links de Mercado Pago esperando, se consulta si ya los pagaron
+      if (datos.linksPago.some(l => l.estado === 'pendiente')) {
+        cobrosApi
+          .verificarLinks(id)
+          .then(respuesta => {
+            setTurno(respuesta.turno);
+            if (respuesta.aviso) {
+              Alert.alert('Mercado Pago', respuesta.aviso);
+            }
+          })
+          .catch(() => undefined); // sin conexión con Mercado Pago se reintenta al volver a abrir
+      }
     } catch (e) {
       setErrorCarga(mensajeDeError(e));
     }
@@ -168,6 +182,7 @@ export function TurnoScreen({ route, navigation }: Props) {
         onCambio={setTurno}
         onCobrar={() => navigation.navigate('Cobrar', { turnoId: turno.id })}
         onAgregarExtra={() => navigation.navigate('AgregarExtra', { turnoId: turno.id })}
+        onLinkPago={() => navigation.navigate('LinkPago', { turnoId: turno.id })}
       />
 
       <View style={estilos.acciones}>

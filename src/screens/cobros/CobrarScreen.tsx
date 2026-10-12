@@ -2,7 +2,7 @@ import React, { useCallback, useEffect, useState } from 'react';
 import { ActivityIndicator, StyleSheet, Text, View } from 'react-native';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { agendaApi, TurnoDetalle } from '../../api/agenda';
-import { cobrosApi, MetodoPago, NOMBRE_METODO } from '../../api/cobros';
+import { cobrosApi, MetodoManual, NOMBRE_METODO } from '../../api/cobros';
 import { Boton } from '../../components/Boton';
 import { CampoTexto } from '../../components/CampoTexto';
 import { Chip } from '../../components/Chip';
@@ -24,7 +24,7 @@ export function CobrarScreen({ route, navigation }: Props) {
   const [turno, setTurno] = useState<TurnoDetalle | null>(null);
   const [errorCarga, setErrorCarga] = useState('');
   const [monto, setMonto] = useState('');
-  const [metodo, setMetodo] = useState<MetodoPago>('efectivo');
+  const [metodo, setMetodo] = useState<MetodoManual>('efectivo');
   const [pagaCon, setPagaCon] = useState('');
   const [guardando, setGuardando] = useState(false);
   const [error, setError] = useState('');
@@ -113,7 +113,7 @@ export function CobrarScreen({ route, navigation }: Props) {
 
       <Text style={[estilos.seccion, { color: colores.texto }]}>Medio de pago</Text>
       <View style={estilos.chips}>
-        {(['efectivo', 'transferencia'] as MetodoPago[]).map(m => (
+        {(['efectivo', 'transferencia'] as MetodoManual[]).map(m => (
           <Chip key={m} texto={NOMBRE_METODO[m]} seleccionado={metodo === m} onPress={() => setMetodo(m)} />
         ))}
       </View>

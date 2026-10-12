@@ -259,3 +259,12 @@ function rangoDeFechas(): array
     }
     return [$desde, $hasta];
 }
+
+// "jueves 16 de octubre" (sin barras: Mercado Pago las borra de los títulos)
+function fechaLarga(string $fecha): string
+{
+    $dias = ['lunes', 'martes', 'miércoles', 'jueves', 'viernes', 'sábado', 'domingo'];
+    $meses = ['enero', 'febrero', 'marzo', 'abril', 'mayo', 'junio', 'julio', 'agosto', 'septiembre', 'octubre', 'noviembre', 'diciembre'];
+    $marca = strtotime($fecha);
+    return $dias[(int) date('N', $marca) - 1] . ' ' . (int) date('j', $marca) . ' de ' . $meses[(int) date('n', $marca) - 1];
+}

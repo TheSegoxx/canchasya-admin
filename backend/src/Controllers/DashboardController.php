@@ -42,7 +42,7 @@ final class DashboardController extends Controlador
         $ingresosTurnos = 0.0;
         $otrosIngresos = 0.0;
         $egresos = 0.0;
-        $billetera = ['efectivo' => 0.0, 'transferencia' => 0.0];
+        $billetera = ['efectivo' => 0.0, 'transferencia' => 0.0, 'mercadopago' => 0.0];
         $porCategoria = ['ingreso' => [], 'egreso' => []];
 
         foreach ((new Pago($this->pdo))->sumasPorDia($complejoId, $desde, $hasta) as $fila) {

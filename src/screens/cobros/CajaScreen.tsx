@@ -70,6 +70,7 @@ export function CajaScreen() {
           <View style={estilos.separador} />
           {tarjeta('Transferencia', delDia.totales.transferencia, colores.texto)}
         </View>
+        {delDia.totales.mercadopago > 0 && tarjeta('Mercado Pago', delDia.totales.mercadopago, colores.texto)}
 
         <Text style={[estilos.seccion, { color: colores.texto }]}>
           Falta cobrar {delDia.totalPorCobrar > 0 ? `· ${formatearPesos(delDia.totalPorCobrar)}` : ''}

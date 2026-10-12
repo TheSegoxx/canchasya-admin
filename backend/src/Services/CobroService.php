@@ -77,4 +77,27 @@ final class CobroService
         $this->actualizarEstadoPago($turnoId);
         return $id;
     }
+
+    /**
+     * Plata que ya entró por Mercado Pago: se registra aunque supere el saldo (por ejemplo,
+     * si mientras tanto pagaron en efectivo) o el turno se haya cancelado, porque el cobro
+     * existe igual. Devuelve [id del pago, aviso para el dueño o null].
+     *
+     * @return array{0: int, 1: ?string}
+     */
+    public function registrarPagoMercadoPago(int $turnoId, float $monto): array
+    {
+        $turno = $this->turnos->trabar($turnoId);
+        $saldo = $this->cuenta($turnoId)['saldo'];
+        $id = $this->pagos->crear($turnoId, $monto, Pago::MERCADO_PAGO);
+        $this->actualizarEstadoPago($turnoId);
+
+        $aviso = null;
+        if ($turno['estado'] === 'cancelado') {
+            $aviso = 'El turno está cancelado pero el pago por Mercado Pago entró: devolvelo desde Mercado Pago o reactivá el turno.';
+        } elseif ($monto > $saldo) {
+            $aviso = 'Con este pago de Mercado Pago se cobró ' . pesos($monto - max($saldo, 0)) . ' de más: devolvé la diferencia.';
+        }
+        return [$id, $aviso];
+    }
 }

@@ -109,6 +109,7 @@ export function DashboardScreen() {
           <View style={estilos.separador} />
           {dato('En transferencias', r.billetera.transferencia)}
         </View>
+        {r.billetera.mercadopago !== 0 && <View style={estilos.fila}>{dato('En Mercado Pago', r.billetera.mercadopago)}</View>}
 
         {tarjeta('Ingresos y egresos', <GraficoBalance serie={r.serie} periodo={periodo} />)}
 

@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
-import { MetodoPago, NOMBRE_METODO } from '../../api/cobros';
+import { MetodoManual, NOMBRE_METODO } from '../../api/cobros';
 import { CATEGORIAS, dashboardApi, TipoMovimiento } from '../../api/dashboard';
 import { Boton } from '../../components/Boton';
 import { CampoTexto } from '../../components/CampoTexto';
@@ -22,7 +22,7 @@ export function MovimientoScreen({ route, navigation }: Props) {
   const [tipo, setTipo] = useState<TipoMovimiento>(route.params.tipo ?? 'egreso');
   const [categoria, setCategoria] = useState(CATEGORIAS[route.params.tipo ?? 'egreso'][0].clave);
   const [monto, setMonto] = useState('');
-  const [metodo, setMetodo] = useState<MetodoPago>('efectivo');
+  const [metodo, setMetodo] = useState<MetodoManual>('efectivo');
   const [fecha, setFecha] = useState(hoyISO());
   const [descripcion, setDescripcion] = useState('');
   const [guardando, setGuardando] = useState(false);
@@ -83,7 +83,7 @@ export function MovimientoScreen({ route, navigation }: Props) {
 
       <Text style={[estilos.seccion, { color: colores.texto }]}>{tipo === 'egreso' ? 'Lo pagaste con' : 'Lo recibiste en'}</Text>
       <View style={estilos.chips}>
-        {(['efectivo', 'transferencia'] as MetodoPago[]).map(m => (
+        {(['efectivo', 'transferencia'] as MetodoManual[]).map(m => (
           <Chip key={m} texto={NOMBRE_METODO[m]} seleccionado={metodo === m} onPress={() => setMetodo(m)} />
         ))}
       </View>

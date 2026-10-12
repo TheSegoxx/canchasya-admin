@@ -18,6 +18,7 @@ use App\Controllers\ComplejoController;
 use App\Controllers\DashboardController;
 use App\Controllers\EmpleadoController;
 use App\Controllers\FotoController;
+use App\Controllers\LinkPagoController;
 use App\Controllers\ProductoController;
 use App\Controllers\TorneoController;
 use App\Controllers\TurnoController;
@@ -97,3 +98,8 @@ $router->agregar('PUT', '/partidos/:id/resultado', fn (array $p) => (new TorneoC
 $router->agregar('DELETE', '/partidos/:id/resultado', fn (array $p) => (new TorneoController())->borrarResultado($p['id']));
 $router->agregar('PUT', '/partidos/:id/programacion', fn (array $p) => (new TorneoController())->programar($p['id']));
 $router->agregar('DELETE', '/partidos/:id/programacion', fn (array $p) => (new TorneoController())->desprogramar($p['id']));
+
+// Mercado Pago: links de pago de un turno (la API consulta el estado: no hay webhook en un servidor local)
+$router->agregar('POST', '/turnos/:id/links-pago', fn (array $p) => (new LinkPagoController())->crear($p['id']));
+$router->agregar('POST', '/turnos/:id/links-pago/verificar', fn (array $p) => (new LinkPagoController())->verificar($p['id']));
+$router->agregar('DELETE', '/links-pago/:id', fn (array $p) => (new LinkPagoController())->anular($p['id']));
