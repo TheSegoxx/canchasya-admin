@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
-import { StyleSheet, Text } from 'react-native';
+import { StyleSheet } from 'react-native';
+import { Text } from '../../components/Texto';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { authApi } from '../../api/auth';
 import { Boton } from '../../components/Boton';

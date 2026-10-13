@@ -1,19 +1,38 @@
 import React, { useEffect, useState } from 'react';
-import { Alert, Image, StyleSheet, Text, View } from 'react-native';
+import { Alert, Image, Pressable, StyleSheet, View } from 'react-native';
+import { Text } from '../../components/Texto';
 import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { Boton } from '../../components/Boton';
-import { Chip } from '../../components/Chip';
+import { Icono, NombreIcono } from '../../components/Icono';
 import { Pantalla } from '../../components/Pantalla';
 import { useEsDueno, useSesion } from '../../context/SesionContext';
 import type { RutasApp } from '../../navigation/AppNavigator';
-import {
-  guardarPreferenciaTema,
-  leerPreferenciaTema,
-  NOMBRE_PREFERENCIA,
-  PreferenciaTema,
-} from '../../theme/preferencia';
+import { guardarPreferenciaTema, leerPreferenciaTema, PreferenciaTema } from '../../theme/preferencia';
 import { espaciado, radio, useTema } from '../../theme/tema';
+
+type Opcion = {
+  titulo: string;
+  icono: NombreIcono;
+  ruta: 'Complejo' | 'Empleados' | 'Torneos' | 'TurnosFijos' | 'Clientes' | 'Productos';
+  soloDueno?: boolean;
+};
+
+// El encargado no ve los datos del complejo, los empleados ni los productos
+const OPCIONES: Opcion[] = [
+  { titulo: 'Datos del complejo', icono: 'complejo', ruta: 'Complejo', soloDueno: true },
+  { titulo: 'Empleados', icono: 'empleados', ruta: 'Empleados', soloDueno: true },
+  { titulo: 'Torneos y ligas', icono: 'torneos', ruta: 'Torneos' },
+  { titulo: 'Turnos fijos', icono: 'turnosFijos', ruta: 'TurnosFijos' },
+  { titulo: 'Clientes', icono: 'clientes', ruta: 'Clientes' },
+  { titulo: 'Productos y extras', icono: 'productos', ruta: 'Productos', soloDueno: true },
+];
+
+const TEMAS: { preferencia: PreferenciaTema; titulo: string; icono: NombreIcono }[] = [
+  { preferencia: 'claro', titulo: 'Claro', icono: 'temaClaro' },
+  { preferencia: 'oscuro', titulo: 'Oscuro', icono: 'temaOscuro' },
+  { preferencia: 'sistema', titulo: 'Celular', icono: 'temaDispositivo' },
+];
 
 export function MasScreen() {
   const { colores } = useTema();
@@ -49,16 +68,16 @@ export function MasScreen() {
     return null;
   }
 
+  const opciones = OPCIONES.filter(o => esDueno || !o.soloDueno);
+
   return (
     <Pantalla>
       <View style={[estilos.tarjeta, { backgroundColor: colores.superficie, borderColor: colores.borde }]}>
         {usuario.foto ? (
           <Image source={{ uri: usuario.foto }} style={estilos.foto} accessibilityIgnoresInvertColors />
         ) : (
-          <View style={[estilos.foto, estilos.inicial, { backgroundColor: colores.primario }]}>
-            <Text style={[estilos.letra, { color: colores.textoSobrePrimario }]}>
-              {usuario.nombre.charAt(0).toUpperCase()}
-            </Text>
+          <View style={[estilos.foto, estilos.inicial, { backgroundColor: colores.primario + '1F' }]}>
+            <Text style={[estilos.letra, { color: colores.primario }]}>{usuario.nombre.charAt(0).toUpperCase()}</Text>
           </View>
         )}
         <View style={estilos.datos}>
@@ -72,34 +91,60 @@ export function MasScreen() {
         </View>
       </View>
 
-      <Text style={[estilos.seccion, { color: colores.texto }]}>Tema</Text>
-      <View style={estilos.chips}>
-        {(['claro', 'oscuro', 'sistema'] as PreferenciaTema[]).map(p => (
-          <Chip key={p} texto={NOMBRE_PREFERENCIA[p]} seleccionado={tema === p} onPress={() => elegirTema(p)} />
+      <Text style={[estilos.seccion, { color: colores.textoSecundario }]}>Gestión</Text>
+      <View style={[estilos.grupo, { backgroundColor: colores.superficie, borderColor: colores.borde }]}>
+        {opciones.map((opcion, i) => (
+          <Pressable
+            key={opcion.ruta}
+            accessibilityRole="button"
+            onPress={() => navigation.navigate(opcion.ruta)}
+            style={({ pressed }) => [
+              estilos.fila,
+              i > 0 && { borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: colores.borde },
+              pressed && { backgroundColor: colores.borde + '66' },
+            ]}>
+            <Icono nombre={opcion.icono} color={colores.texto} acento={colores.acento} tamano={22} />
+            <Text style={[estilos.textoFila, { color: colores.texto }]}>{opcion.titulo}</Text>
+            <Icono nombre="siguiente" color={colores.inactivo} tamano={18} />
+          </Pressable>
         ))}
       </View>
 
-      {esDueno && (
-        <>
-          <Boton titulo="Datos del complejo" variante="secundario" onPress={() => navigation.navigate('Complejo')} />
-          <View style={estilos.espacio} />
-          <Boton titulo="Empleados" variante="secundario" onPress={() => navigation.navigate('Empleados')} />
-          <View style={estilos.espacio} />
-        </>
-      )}
-      <Boton titulo="Torneos y ligas" variante="secundario" onPress={() => navigation.navigate('Torneos')} />
-      <View style={estilos.espacio} />
-      <Boton titulo="Turnos fijos" icono="repetir" variante="secundario" onPress={() => navigation.navigate('TurnosFijos')} />
-      <View style={estilos.espacio} />
-      <Boton titulo="Clientes" icono="persona" variante="secundario" onPress={() => navigation.navigate('Clientes')} />
-      <View style={estilos.espacio} />
-      {esDueno && (
-        <>
-          <Boton titulo="Productos y extras" variante="secundario" onPress={() => navigation.navigate('Productos')} />
-          <View style={estilos.espacio} />
-        </>
-      )}
-      <Boton titulo="Cerrar sesión" variante="texto" onPress={confirmarSalida} cargando={saliendo} />
+      <Text style={[estilos.seccion, { color: colores.textoSecundario }]}>Tema</Text>
+      <View
+        accessibilityRole="radiogroup"
+        style={[estilos.selector, { backgroundColor: colores.superficie, borderColor: colores.borde }]}>
+        {TEMAS.map(t => {
+          const elegido = tema === t.preferencia;
+          return (
+            <Pressable
+              key={t.preferencia}
+              accessibilityRole="radio"
+              accessibilityState={{ checked: elegido }}
+              accessibilityLabel={t.preferencia === 'sistema' ? 'Según el celular' : t.titulo}
+              onPress={() => elegirTema(t.preferencia)}
+              style={[estilos.opcionTema, elegido && { backgroundColor: colores.primario + '1F' }]}>
+              <Icono
+                nombre={t.icono}
+                color={elegido ? colores.primario : colores.textoSecundario}
+                acento={elegido ? colores.acento : colores.textoSecundario}
+                tamano={20}
+              />
+              <Text
+                style={[
+                  estilos.textoTema,
+                  { color: elegido ? colores.primario : colores.textoSecundario, fontWeight: elegido ? '600' : '500' },
+                ]}>
+                {t.titulo}
+              </Text>
+            </Pressable>
+          );
+        })}
+      </View>
+
+      <View style={estilos.salir}>
+        <Boton titulo="Cerrar sesión" variante="texto" color={colores.error} onPress={confirmarSalida} cargando={saliendo} />
+      </View>
     </Pantalla>
   );
 }
@@ -110,16 +155,41 @@ const estilos = StyleSheet.create({
     alignItems: 'center',
     padding: espaciado.m,
     borderRadius: radio,
-    borderWidth: 1,
+    borderWidth: StyleSheet.hairlineWidth,
     marginBottom: espaciado.l,
   },
-  foto: { width: 56, height: 56, borderRadius: 28 },
+  foto: { width: 52, height: 52, borderRadius: 26 },
   inicial: { alignItems: 'center', justifyContent: 'center' },
-  letra: { fontSize: 24, fontWeight: '700' },
+  letra: { fontSize: 22, fontWeight: '600' },
   datos: { flex: 1, marginLeft: espaciado.m },
-  nombre: { fontSize: 18, fontWeight: '700' },
-  email: { fontSize: 14, marginTop: 2 },
-  espacio: { height: espaciado.s },
-  seccion: { fontSize: 17, fontWeight: '700', marginBottom: espaciado.s },
-  chips: { flexDirection: 'row', flexWrap: 'wrap', marginBottom: espaciado.m },
+  nombre: { fontSize: 17, fontWeight: '600' },
+  email: { fontSize: 13, marginTop: 2 },
+  seccion: {
+    fontSize: 12,
+    fontWeight: '600',
+    letterSpacing: 0.8,
+    textTransform: 'uppercase',
+    marginBottom: espaciado.s,
+    marginLeft: espaciado.xs,
+  },
+  grupo: { borderRadius: radio, borderWidth: StyleSheet.hairlineWidth, overflow: 'hidden', marginBottom: espaciado.l },
+  fila: { flexDirection: 'row', alignItems: 'center', minHeight: 54, paddingHorizontal: espaciado.m },
+  textoFila: { flex: 1, fontSize: 15, fontWeight: '500', marginLeft: 14 },
+  selector: {
+    flexDirection: 'row',
+    borderRadius: radio,
+    borderWidth: StyleSheet.hairlineWidth,
+    padding: 4,
+    marginBottom: espaciado.l,
+  },
+  opcionTema: {
+    flex: 1,
+    minHeight: 48,
+    borderRadius: radio - 3,
+    alignItems: 'center',
+    justifyContent: 'center',
+    flexDirection: 'row',
+  },
+  textoTema: { fontSize: 14, marginLeft: 6 },
+  salir: { alignItems: 'center' },
 });

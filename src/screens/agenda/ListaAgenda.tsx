@@ -1,5 +1,6 @@
 import React from 'react';
-import { FlatList, Pressable, StyleSheet, Text, View } from 'react-native';
+import { FlatList, Pressable, StyleSheet, View } from 'react-native';
+import { Text } from '../../components/Texto';
 import { Agenda, Bloqueo, CanchaAgenda, NOMBRE_ESTADO, NOMBRE_PAGO, Turno } from '../../api/agenda';
 import { Icono } from '../../components/Icono';
 import { espaciado, radio, useTema } from '../../theme/tema';

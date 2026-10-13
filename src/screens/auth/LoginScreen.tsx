@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
-import { StyleSheet, Text, View } from 'react-native';
+import { Image, StyleSheet, View } from 'react-native';
+import { Text } from '../../components/Texto';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { GoogleSigninButton } from '@react-native-google-signin/google-signin';
 import { Boton } from '../../components/Boton';
@@ -51,7 +52,13 @@ export function LoginScreen({ navigation }: Props) {
 
   return (
     <Pantalla conMargenSuperior centrado>
-      <Text style={[estilos.titulo, { color: colores.primario }]}>CanchasYa Admin</Text>
+      <Image
+        source={require('../../../assets/app/logo.png')}
+        style={estilos.logo}
+        fadeDuration={0}
+        accessibilityRole="image"
+        accessibilityLabel="CanchasYa Admin"
+      />
       <Text style={[estilos.subtitulo, { color: colores.textoSecundario }]}>
         Administrá tu complejo: canchas, turnos y cobros.
       </Text>
@@ -125,8 +132,8 @@ export function LoginScreen({ navigation }: Props) {
 }
 
 const estilos = StyleSheet.create({
-  titulo: { fontSize: 36, fontWeight: '800', textAlign: 'center' },
-  subtitulo: { fontSize: 16, textAlign: 'center', marginTop: espaciado.s, marginBottom: espaciado.xl },
+  logo: { width: 132, height: 132, alignSelf: 'center' },
+  subtitulo: { fontSize: 15, textAlign: 'center', marginTop: espaciado.m, marginBottom: espaciado.xl },
   google: { alignItems: 'center' },
   botonGoogle: { width: '100%', height: 52 },
   separador: { flexDirection: 'row', alignItems: 'center', marginVertical: espaciado.l },

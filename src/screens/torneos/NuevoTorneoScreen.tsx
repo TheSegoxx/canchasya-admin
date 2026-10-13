@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
-import { StyleSheet, Text, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
+import { Text } from '../../components/Texto';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { Deporte, NOMBRE_DEPORTE } from '../../api/canchas';
 import { Formato, NOMBRE_FORMATO, torneosApi } from '../../api/torneos';

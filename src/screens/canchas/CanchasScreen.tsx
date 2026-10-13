@@ -1,5 +1,6 @@
 import React, { useCallback, useState } from 'react';
-import { Alert, FlatList, Image, Pressable, RefreshControl, StyleSheet, Switch, Text, View } from 'react-native';
+import { Alert, FlatList, Image, Pressable, RefreshControl, StyleSheet, Switch, View } from 'react-native';
+import { Text } from '../../components/Texto';
 import { useFocusEffect, useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { Cancha, canchasApi, Deporte, NOMBRE_DEPORTE } from '../../api/canchas';

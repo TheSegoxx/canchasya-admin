@@ -101,11 +101,12 @@ const iconos: Record<keyof RutasPestanas, NombreIcono> = {
   Mas: 'mas',
 };
 
-// Fuera del componente para que React no lo recree en cada render
+// Fuera del componente para que React no lo recree en cada render.
+// La pestaña activa lleva el detalle en verde; las otras van en gris.
 const iconoDe =
-  (ruta: keyof RutasPestanas) =>
-  ({ color, size }: { color: string; size: number }) =>
-    <Icono nombre={iconos[ruta]} color={color} tamano={size} />;
+  (ruta: keyof RutasPestanas, acento: string) =>
+  ({ color, size, focused }: { color: string; size: number; focused: boolean }) =>
+    <Icono nombre={iconos[ruta]} color={color} acento={focused ? acento : color} tamano={size} />;
 
 // El empleado solo ve Inicio, Agenda y Más (sin canchas ni dashboard)
 function Principal() {
@@ -114,9 +115,11 @@ function Principal() {
   return (
     <Pestanas.Navigator
       screenOptions={({ route }) => ({
-        tabBarActiveTintColor: colores.primario,
+        tabBarActiveTintColor: colores.texto,
         tabBarInactiveTintColor: colores.textoSecundario,
-        tabBarIcon: iconoDe(route.name),
+        tabBarIcon: iconoDe(route.name, colores.acento),
+        tabBarLabelStyle: estilos.etiquetaPestana,
+        tabBarStyle: { borderTopColor: colores.borde, elevation: 0 },
       })}>
       <Pestanas.Screen name="Inicio" component={HoyScreen} options={{ title: 'Hoy', tabBarLabel: 'Inicio' }} />
       <Pestanas.Screen name="Agenda" component={AgendaScreen} />
@@ -213,4 +216,5 @@ export function AppNavigator() {
 
 const estilos = StyleSheet.create({
   cargando: { flex: 1, alignItems: 'center', justifyContent: 'center' },
+  etiquetaPestana: { fontSize: 11, fontWeight: '500' },
 });

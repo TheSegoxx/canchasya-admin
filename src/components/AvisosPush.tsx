@@ -1,5 +1,6 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
-import { Animated, Pressable, StyleSheet, Text } from 'react-native';
+import { Animated, Pressable, StyleSheet } from 'react-native';
+import { Text } from './Texto';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useSesion } from '../context/SesionContext';
 import { navegacion } from '../navigation/referencia';

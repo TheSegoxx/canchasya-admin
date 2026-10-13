@@ -1,5 +1,6 @@
 import React, { useCallback, useState } from 'react';
-import { Alert, FlatList, Pressable, RefreshControl, StyleSheet, Text, View } from 'react-native';
+import { Alert, FlatList, Pressable, RefreshControl, StyleSheet, View } from 'react-native';
+import { Text } from '../../components/Texto';
 import { useFocusEffect } from '@react-navigation/native';
 import { agendaApi, TurnoFijo } from '../../api/agenda';
 import { Boton } from '../../components/Boton';

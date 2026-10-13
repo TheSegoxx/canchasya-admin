@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
-import { StyleSheet, Text, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
+import { Text } from '../../components/Texto';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { MetodoManual, NOMBRE_METODO } from '../../api/cobros';
 import { CATEGORIAS, dashboardApi, TipoMovimiento } from '../../api/dashboard';

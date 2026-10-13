@@ -1,5 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { Pressable, ScrollView, ScrollViewInstance, StyleSheet, Text, useWindowDimensions, View } from 'react-native';
+import { Pressable, ScrollView, ScrollViewInstance, StyleSheet, useWindowDimensions, View } from 'react-native';
+import { Text } from '../../components/Texto';
 import type { Agenda, Bloqueo, CanchaAgenda, Turno } from '../../api/agenda';
 import { Icono } from '../../components/Icono';
 import { Colores, espaciado, useTema } from '../../theme/tema';

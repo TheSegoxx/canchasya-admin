@@ -1,5 +1,6 @@
 import React from 'react';
-import { Alert, Pressable, StyleSheet, Text, View } from 'react-native';
+import { Alert, Pressable, StyleSheet, View } from 'react-native';
+import { Text } from '../../components/Texto';
 import type { TurnoDetalle } from '../../api/agenda';
 import { cobrosApi, LinkPago, NOMBRE_METODO } from '../../api/cobros';
 import { Boton } from '../../components/Boton';

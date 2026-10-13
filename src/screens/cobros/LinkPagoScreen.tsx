@@ -1,5 +1,6 @@
 import React, { useCallback, useEffect, useState } from 'react';
-import { ActivityIndicator, Share, StyleSheet, Text, View } from 'react-native';
+import { ActivityIndicator, Share, StyleSheet, View } from 'react-native';
+import { Text } from '../../components/Texto';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { agendaApi, TurnoDetalle } from '../../api/agenda';
 import { cobrosApi, LinkPago } from '../../api/cobros';

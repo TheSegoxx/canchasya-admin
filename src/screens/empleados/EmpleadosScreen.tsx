@@ -1,5 +1,6 @@
 import React, { useCallback, useState } from 'react';
-import { Alert, Pressable, RefreshControl, ScrollView, Share, StyleSheet, Text, View } from 'react-native';
+import { Alert, Pressable, RefreshControl, ScrollView, Share, StyleSheet, View } from 'react-native';
+import { Text } from '../../components/Texto';
 import { useFocusEffect } from '@react-navigation/native';
 import { Empleado, empleadosApi, Invitacion } from '../../api/empleados';
 import { Boton } from '../../components/Boton';

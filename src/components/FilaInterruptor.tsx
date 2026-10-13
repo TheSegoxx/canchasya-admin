@@ -1,5 +1,6 @@
 import React from 'react';
-import { StyleSheet, Switch, Text, View } from 'react-native';
+import { StyleSheet, Switch, View } from 'react-native';
+import { Text } from './Texto';
 import { espaciado, radio, useTema } from '../theme/tema';
 
 type Props = {

@@ -1,5 +1,6 @@
 import React from 'react';
-import { Pressable, StyleSheet, Text } from 'react-native';
+import { Pressable, StyleSheet } from 'react-native';
+import { Text } from './Texto';
 import { espaciado, useTema } from '../theme/tema';
 
 type Props = { texto: string; seleccionado: boolean; onPress: () => void };
@@ -15,13 +16,18 @@ export function Chip({ texto, seleccionado, onPress }: Props) {
       style={({ pressed }) => [
         estilos.chip,
         {
-          backgroundColor: seleccionado ? colores.primario : colores.superficie,
+          // Seleccionado: fondo verde suave y borde verde (sin bloques de color fuerte)
+          backgroundColor: seleccionado ? colores.primario + '1F' : colores.superficie,
           borderColor: seleccionado ? colores.primario : colores.borde,
           opacity: pressed ? 0.8 : 1,
         },
       ]}>
-      <Text style={[estilos.texto, { color: seleccionado ? colores.textoSobrePrimario : colores.texto }]}>
-        {seleccionado ? `✓ ${texto}` : texto}
+      <Text
+        style={[
+          estilos.texto,
+          { color: seleccionado ? colores.primario : colores.texto, fontWeight: seleccionado ? '600' : '500' },
+        ]}>
+        {texto}
       </Text>
     </Pressable>
   );
@@ -29,13 +35,13 @@ export function Chip({ texto, seleccionado, onPress }: Props) {
 
 const estilos = StyleSheet.create({
   chip: {
-    minHeight: 40,
-    paddingHorizontal: espaciado.m,
-    borderRadius: 20,
+    minHeight: 38,
+    paddingHorizontal: 14,
+    borderRadius: 19,
     borderWidth: 1,
     justifyContent: 'center',
     marginRight: espaciado.s,
     marginBottom: espaciado.s,
   },
-  texto: { fontSize: 15, fontWeight: '500' },
+  texto: { fontSize: 14 },
 });

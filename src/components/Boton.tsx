@@ -1,5 +1,6 @@
 import React from 'react';
-import { ActivityIndicator, Pressable, StyleSheet, Text, View } from 'react-native';
+import { ActivityIndicator, Pressable, StyleSheet, View } from 'react-native';
+import { Text } from './Texto';
 import { espaciado, radio, useTema } from '../theme/tema';
 import { Icono, NombreIcono } from './Icono';
 
@@ -14,15 +15,24 @@ type Props = {
   color?: string;
 };
 
-// Botón grande (mínimo 48 dp de alto) para usar con una sola mano
+/**
+ * Botón minimalista (mínimo 48 dp de alto, para usar con una sola mano):
+ * - primario: relleno, para la acción principal de la pantalla;
+ * - secundario: solo un borde fino;
+ * - texto: sin fondo ni borde, para acciones menores.
+ */
 export function Boton({ titulo, onPress, variante = 'primario', cargando, deshabilitado, icono, color }: Props) {
   const { colores } = useTema();
   const inactivo = deshabilitado || cargando;
-  const principal = color ?? colores.primario;
 
-  const fondo = variante === 'primario' ? principal : 'transparent';
-  const colorTexto = variante === 'primario' ? colores.textoSobrePrimario : principal;
-  const borde = variante === 'secundario' ? principal : 'transparent';
+  const fondo = variante === 'primario' ? color ?? colores.primario : 'transparent';
+  const colorTexto =
+    variante === 'primario'
+      ? colores.textoSobrePrimario
+      : variante === 'secundario'
+        ? color ?? colores.texto
+        : color ?? colores.primario;
+  const borde = variante === 'secundario' ? color ?? colores.borde : 'transparent';
 
   return (
     <Pressable
@@ -32,13 +42,18 @@ export function Boton({ titulo, onPress, variante = 'primario', cargando, deshab
       onPress={onPress}
       style={({ pressed }) => [
         estilos.boton,
-        { backgroundColor: fondo, borderColor: borde, opacity: inactivo ? 0.6 : pressed ? 0.85 : 1 },
+        variante === 'texto' && estilos.botonTexto,
+        {
+          backgroundColor: pressed && variante !== 'primario' ? colores.borde + '80' : fondo,
+          borderColor: borde,
+          opacity: inactivo ? 0.5 : pressed && variante === 'primario' ? 0.88 : 1,
+        },
       ]}>
       {cargando ? (
         <ActivityIndicator color={colorTexto} />
       ) : (
         <View style={estilos.contenido}>
-          {icono && <Icono nombre={icono} color={colorTexto} tamano={20} />}
+          {icono && <Icono nombre={icono} color={colorTexto} acento={colorTexto} tamano={18} />}
           <Text style={[estilos.texto, { color: colorTexto }, icono && estilos.conIcono]}>{titulo}</Text>
         </View>
       )}
@@ -48,14 +63,15 @@ export function Boton({ titulo, onPress, variante = 'primario', cargando, deshab
 
 const estilos = StyleSheet.create({
   boton: {
-    minHeight: 50,
+    minHeight: 48,
     borderRadius: radio,
-    borderWidth: 1.5,
+    borderWidth: 1,
     paddingHorizontal: espaciado.m,
     alignItems: 'center',
     justifyContent: 'center',
   },
+  botonTexto: { minHeight: 44, paddingHorizontal: espaciado.s },
   contenido: { flexDirection: 'row', alignItems: 'center' },
-  texto: { fontSize: 16, fontWeight: '600' },
+  texto: { fontSize: 15, fontWeight: '600', letterSpacing: 0.2 },
   conIcono: { marginLeft: espaciado.s },
 });

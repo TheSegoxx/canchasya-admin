@@ -1,8 +1,9 @@
 import React, { useState } from 'react';
-import { Pressable, StyleSheet, Text, useWindowDimensions, View } from 'react-native';
+import { Pressable, StyleSheet, useWindowDimensions, View } from 'react-native';
+import { Text } from '../../components/Texto';
 import { BarChart } from 'react-native-gifted-charts';
 import type { Resumen } from '../../api/dashboard';
-import { espaciado, useTema } from '../../theme/tema';
+import { espaciado, FUENTE, useTema } from '../../theme/tema';
 import { formatearPesos } from '../../utils/formato';
 import { etiquetaDeClave, etiquetaLarga, montoCompacto, Periodo, topeRedondo } from '../../utils/periodos';
 
@@ -139,7 +140,7 @@ const estilos = StyleSheet.create({
   textoMuestra: { fontSize: 14 },
   alternar: { marginLeft: 'auto' },
   textoAlternar: { fontSize: 14, fontWeight: '700' },
-  etiqueta: { fontSize: 11 },
+  etiqueta: { fontSize: 11, fontFamily: FUENTE },
   vacio: { fontSize: 15, paddingVertical: espaciado.l, textAlign: 'center' },
   detalle: { fontSize: 14, marginTop: espaciado.s },
   filaTabla: { flexDirection: 'row', minHeight: 36, alignItems: 'center', borderBottomWidth: StyleSheet.hairlineWidth },

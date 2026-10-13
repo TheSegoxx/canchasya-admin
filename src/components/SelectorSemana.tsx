@@ -1,5 +1,6 @@
 import React from 'react';
-import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { Pressable, StyleSheet, View } from 'react-native';
+import { Text } from './Texto';
 import { espaciado, radio, useTema } from '../theme/tema';
 import { DIAS_CORTOS, inicioDeSemana, sumarDias } from '../utils/fechas';
 import { Icono } from './Icono';

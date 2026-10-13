@@ -1,5 +1,6 @@
 import React from 'react';
-import { StyleSheet, Text, TextInput, TextInputProps, View } from 'react-native';
+import { StyleSheet, TextInputProps, View } from 'react-native';
+import { Text, TextInput } from './Texto';
 import { espaciado, radio, useTema } from '../theme/tema';
 
 type Props = TextInputProps & { etiqueta: string };
@@ -25,12 +26,12 @@ export function CampoTexto({ etiqueta, style, ...props }: Props) {
 
 const estilos = StyleSheet.create({
   contenedor: { marginBottom: espaciado.m },
-  etiqueta: { fontSize: 14, fontWeight: '600', marginBottom: espaciado.xs },
+  etiqueta: { fontSize: 13, fontWeight: '500', marginBottom: 6 },
   campo: {
-    minHeight: 50,
+    minHeight: 48,
     borderWidth: 1,
     borderRadius: radio,
-    paddingHorizontal: espaciado.m,
+    paddingHorizontal: 14,
     fontSize: 16,
   },
 });

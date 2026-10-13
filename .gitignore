@@ -73,3 +73,6 @@ yarn-error.log
 !.yarn/releases
 !.yarn/sdks
 !.yarn/versions
+
+# Variantes de Inter que la app no usa (las que usa están en android/app/src/main/res/font)
+assets/diseño/static/

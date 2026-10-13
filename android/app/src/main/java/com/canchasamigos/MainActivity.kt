@@ -1,6 +1,7 @@
 package com.canchasamigos
 
 import android.os.Bundle
+import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
 import com.facebook.react.ReactActivity
 import com.swmansion.rnscreens.fragment.restoration.RNScreensFragmentFactory
 import com.facebook.react.ReactActivityDelegate
@@ -27,6 +28,8 @@ class MainActivity : ReactActivity() {
    * (por ejemplo, al girar el celular o volver de otra app).
    */
   override fun onCreate(savedInstanceState: Bundle?) {
+    // Muestra el logo sobre el azul de la marca mientras arranca React Native
+    installSplashScreen()
     supportFragmentManager.fragmentFactory = RNScreensFragmentFactory()
     super.onCreate(savedInstanceState)
   }

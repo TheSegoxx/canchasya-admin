@@ -1,5 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <!-- Verde de la app: tiñe el ícono de las notificaciones -->
-    <color name="verde_canchasya">#2E7D32</color>
+    <!-- Azul del logo: fondo del ícono y de la pantalla de carga -->
+    <color name="fondo_marca">#071928</color>
+    <!-- Verde de la marca: tiñe el ícono de las notificaciones -->
+    <color name="verde_canchasya">#18B982</color>
 </resources>

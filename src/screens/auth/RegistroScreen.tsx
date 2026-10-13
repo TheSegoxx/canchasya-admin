@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
-import { StyleSheet, Text } from 'react-native';
+import { StyleSheet } from 'react-native';
+import { Text } from '../../components/Texto';
 import { Boton } from '../../components/Boton';
 import { CampoTexto } from '../../components/CampoTexto';
 import { Pantalla } from '../../components/Pantalla';

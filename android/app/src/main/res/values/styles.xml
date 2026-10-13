@@ -4,6 +4,16 @@
     <style name="AppTheme" parent="Theme.AppCompat.DayNight.NoActionBar">
         <!-- Customize your theme here. -->
         <item name="android:editTextBackground">@drawable/rn_edit_text_material</item>
+        <!-- Lo que se ve un instante entre la pantalla de carga del sistema y la de la app -->
+        <item name="android:windowBackground">@drawable/fondo_ventana</item>
+    </style>
+
+    <!-- Pantalla de carga del sistema: el símbolo del logo sobre el azul de la marca.
+         Después la app muestra la suya (src/components/PantallaDeCarga.tsx) con el mismo fondo. -->
+    <style name="Theme.App.SplashScreen" parent="Theme.SplashScreen">
+        <item name="windowSplashScreenBackground">@color/fondo_marca</item>
+        <item name="windowSplashScreenAnimatedIcon">@drawable/splash_icono</item>
+        <item name="postSplashScreenTheme">@style/AppTheme</item>
     </style>
 
 </resources>
