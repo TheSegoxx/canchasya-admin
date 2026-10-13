@@ -9,6 +9,7 @@ import { authApi, RespuestaSesion, Usuario } from '../api/auth';
 import { borrarToken, ErrorApi, guardarToken, leerToken, siPierdeElComplejo, siVenceLaSesion } from '../api/cliente';
 import { GOOGLE_WEB_CLIENT_ID } from '../config';
 import { desactivarNotificaciones } from '../notificaciones';
+import { cargarServidor } from '../servidor';
 
 // webClientId hace que Google entregue un idToken firmado para nuestra API
 GoogleSignin.configure({ webClientId: GOOGLE_WEB_CLIENT_ID });
@@ -41,6 +42,8 @@ export function SesionProvider({ children }: { children: React.ReactNode }) {
     setCargando(true);
     setSinConexion(false);
     try {
+      // La dirección del servidor guardada (si se cambió desde el login) va antes de la primera petición
+      await cargarServidor();
       if (await leerToken()) {
         const respuesta = await authApi.yo();
         setUsuario(respuesta.usuario);

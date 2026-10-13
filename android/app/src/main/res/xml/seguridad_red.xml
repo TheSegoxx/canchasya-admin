@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- La API corre en XAMPP por http dentro de la red WiFi (sin certificado), así que se permite http.
+     En una versión con servidor en internet esto se quita y se usa https. -->
+<network-security-config>
+    <base-config cleartextTrafficPermitted="true" />
+</network-security-config>

@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { ActivityIndicator, StyleSheet, View } from 'react-native';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
@@ -17,6 +17,8 @@ import { TurnosFijosScreen } from '../screens/agenda/TurnosFijosScreen';
 import { RecuperarScreen } from '../screens/auth/RecuperarScreen';
 import { RegistroScreen } from '../screens/auth/RegistroScreen';
 import { RestablecerScreen } from '../screens/auth/RestablecerScreen';
+import { ServidorScreen } from '../screens/auth/ServidorScreen';
+import { ConfigurarServidor } from '../components/ConfigurarServidor';
 import { CanchaScreen } from '../screens/canchas/CanchaScreen';
 import { CanchasScreen } from '../screens/canchas/CanchasScreen';
 import { ClienteScreen } from '../screens/clientes/ClienteScreen';
@@ -47,6 +49,8 @@ export type RutasAuth = {
   // El email que ya estaba escrito en el login
   Recuperar: { email?: string } | undefined;
   Restablecer: { email: string };
+  // Dirección de la computadora con XAMPP (por si cambió la IP)
+  Servidor: undefined;
 };
 
 // Con sesión: primero ConfigurarComplejo (si falta) y después las pestañas
@@ -183,6 +187,7 @@ function Autenticacion() {
       <Pila.Screen name="Registro" component={RegistroScreen} options={{ title: 'Crear cuenta' }} />
       <Pila.Screen name="Recuperar" component={RecuperarScreen} options={{ title: 'Recuperar contraseña' }} />
       <Pila.Screen name="Restablecer" component={RestablecerScreen} options={{ title: 'Contraseña nueva' }} />
+      <Pila.Screen name="Servidor" component={ServidorScreen} options={{ title: 'Servidor' }} />
     </Pila.Navigator>
   );
 }
@@ -191,6 +196,7 @@ function Autenticacion() {
 export function AppNavigator() {
   const { cargando, usuario, sinConexion, reintentar, cerrarSesion } = useSesion();
   const { colores } = useTema();
+  const [cambiandoServidor, setCambiandoServidor] = useState(false);
 
   if (cargando) {
     return (
@@ -202,11 +208,23 @@ export function AppNavigator() {
 
   // Sesión guardada pero sin servidor: no se manda al login como si se hubiera cerrado
   if (sinConexion && !usuario) {
+    if (cambiandoServidor) {
+      return (
+        <ConfigurarServidor
+          alGuardar={() => {
+            setCambiandoServidor(false);
+            reintentar();
+          }}
+          alCancelar={() => setCambiandoServidor(false)}
+        />
+      );
+    }
     return (
       <ErrorCarga
-        mensaje="No se pudo conectar con el servidor. Revisá que XAMPP esté encendido y el celular conectado."
+        mensaje="No se pudo conectar con el servidor. Revisá que XAMPP esté encendido y que el celular esté en el mismo WiFi que la computadora."
         onReintentar={reintentar}
-        accion={{ titulo: 'Cerrar sesión', onPress: cerrarSesion }}
+        accion={{ titulo: 'Cambiar la dirección del servidor', onPress: () => setCambiandoServidor(true) }}
+        otraAccion={{ titulo: 'Cerrar sesión', onPress: cerrarSesion }}
       />
     );
   }

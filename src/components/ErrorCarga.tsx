@@ -7,13 +7,14 @@ import { Boton } from './Boton';
 type Props = {
   mensaje: string;
   onReintentar: () => void;
-  // Acción extra opcional debajo de "Reintentar" (por ejemplo, cerrar sesión)
+  // Acciones extra opcionales debajo de "Reintentar" (por ejemplo, cerrar sesión)
   accion?: { titulo: string; onPress: () => void };
+  otraAccion?: { titulo: string; onPress: () => void };
 };
 
 // Pantalla completa para cuando no se pudieron traer los datos:
 // así nunca se muestra un formulario vacío que pisaría lo guardado
-export function ErrorCarga({ mensaje, onReintentar, accion }: Props) {
+export function ErrorCarga({ mensaje, onReintentar, accion, otraAccion }: Props) {
   const { colores } = useTema();
   return (
     <View style={[estilos.contenedor, { backgroundColor: colores.fondo }]}>
@@ -27,6 +28,7 @@ export function ErrorCarga({ mensaje, onReintentar, accion }: Props) {
           <Boton titulo={accion.titulo} variante="texto" onPress={accion.onPress} />
         </>
       )}
+      {otraAccion && <Boton titulo={otraAccion.titulo} variante="texto" onPress={otraAccion.onPress} />}
     </View>
   );
 }

@@ -1,5 +1,6 @@
 import * as Keychain from 'react-native-keychain';
-import { API_URL, SERVIDOR_URL, TIEMPO_ESPERA_MS } from '../config';
+import { TIEMPO_ESPERA_MS } from '../config';
+import { servidorActual } from '../servidor';
 
 /**
  * Cliente HTTP de la API: agrega el token de sesión, convierte la respuesta
@@ -42,7 +43,7 @@ export function siPierdeElComplejo(accion: () => void): void {
 }
 
 // Las fotos las sirve Apache directo; la API devuelve la ruta relativa ("fotos/abc.jpg")
-export const urlDeFoto = (ruta: string) => `${SERVIDOR_URL}/${ruta}`;
+export const urlDeFoto = (ruta: string) => `${servidorActual()}/${ruta}`;
 
 // cuerpo: un objeto (se manda como JSON) o un FormData (para subir archivos)
 export async function api<T>(ruta: string, metodo = 'GET', cuerpo?: unknown): Promise<T> {
@@ -53,7 +54,7 @@ export async function api<T>(ruta: string, metodo = 'GET', cuerpo?: unknown): Pr
 
   let respuesta: Response;
   try {
-    respuesta = await fetch(`${API_URL}${ruta}`, {
+    respuesta = await fetch(`${servidorActual()}/api${ruta}`, {
       method: metodo,
       headers: {
         // Con FormData el límite multipart lo pone fetch solo
@@ -66,7 +67,7 @@ export async function api<T>(ruta: string, metodo = 'GET', cuerpo?: unknown): Pr
     });
   } catch {
     throw new ErrorApi(
-      'No se pudo conectar con el servidor. Revisá que XAMPP esté encendido y el celular conectado.',
+      'No se pudo conectar con el servidor. Revisá que XAMPP esté encendido y que el celular esté en el mismo WiFi que la computadora.',
       0,
     );
   } finally {

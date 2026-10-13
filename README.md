@@ -48,6 +48,36 @@ MySQL/MariaDB sobre XAMPP (carpeta `backend/`).
    npm run android
    ```
 
+## APK para instalar (por WiFi)
+
+El celular se conecta con la computadora de XAMPP por el mismo WiFi (sin cable).
+
+1. **Firewall de Windows** (una sola vez, en PowerShell como administrador): permite que los
+   dispositivos de la red local lleguen a Apache.
+
+   ```powershell
+   New-NetFirewallRule -DisplayName "CanchasYa - Apache (XAMPP)" -Direction Inbound -Protocol TCP -LocalPort 80 -Action Allow -RemoteAddress LocalSubnet
+   ```
+
+2. **Firma:** `android/app/canchasya-release.keystore` y `android/keystore.properties` (no se suben a
+   GitHub; guardar una copia: sin ellos no se pueden publicar actualizaciones de la app).
+3. **Login con Google en el APK:** en Google Cloud (Credenciales) tiene que existir un ID de cliente
+   OAuth de tipo Android con el paquete `com.canchasamigos` y la huella SHA-1 de la llave de release
+   (`keytool -list -v -keystore android/app/canchasya-release.keystore`).
+4. **Compilar** (32 y 64 bits):
+
+   ```sh
+   cd android
+   ./gradlew assembleRelease -PreactNativeArchitectures=armeabi-v7a,arm64-v8a
+   ```
+
+   El APK queda en `android/app/build/outputs/apk/release/app-release.apk`.
+   Si falla con *"Filename longer than 260 characters"* (límite de Windows), compilar desde una
+   unidad corta: `subst W: "<carpeta del proyecto>"` y correr el comando dentro de `W:\android`
+   (después, `subst W: /D`).
+5. La app trae la IP con la que se compiló (`src/servidor.ts`). Si la computadora cambia de IP
+   (`ipconfig` → Dirección IPv4), se corrige desde el login → **Servidor**, sin volver a compilar.
+
 ## Pruebas
 
 ```sh

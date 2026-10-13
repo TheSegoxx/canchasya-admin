@@ -73,6 +73,16 @@ def enableProguardInReleaseBuilds = false
  */
 def jscFlavor = 'io.github.react-native-community:jsc-android:2026004.+'
 
+/**
+ * Firma del APK de release: los datos están en android/keystore.properties (no se sube a GitHub).
+ * Si no existe ese archivo, el release se firma con la llave de depuración (solo para probar).
+ */
+def propiedadesFirma = new Properties()
+def archivoFirma = rootProject.file('keystore.properties')
+if (archivoFirma.exists()) {
+    archivoFirma.withInputStream { propiedadesFirma.load(it) }
+}
+
 android {
     ndkVersion rootProject.ext.ndkVersion
     buildToolsVersion rootProject.ext.buildToolsVersion
@@ -84,7 +94,7 @@ android {
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
         versionCode 1
-        versionName "1.0"
+        versionName "1.0.0"
     }
     signingConfigs {
         debug {
@@ -93,15 +103,22 @@ android {
             keyAlias 'androiddebugkey'
             keyPassword 'android'
         }
+        if (archivoFirma.exists()) {
+            release {
+                storeFile file(propiedadesFirma['CANCHASYA_STORE_FILE'])
+                storePassword propiedadesFirma['CANCHASYA_STORE_PASSWORD']
+                keyAlias propiedadesFirma['CANCHASYA_KEY_ALIAS']
+                keyPassword propiedadesFirma['CANCHASYA_KEY_PASSWORD']
+            }
+        }
     }
     buildTypes {
         debug {
             signingConfig signingConfigs.debug
         }
         release {
-            // Caution! In production, you need to generate your own keystore file.
-            // see https://reactnative.dev/docs/signed-apk-android.
-            signingConfig signingConfigs.debug
+            // Llave propia de CanchasYa (ver keystore.properties); sin ella, la de depuración
+            signingConfig archivoFirma.exists() ? signingConfigs.release : signingConfigs.debug
             minifyEnabled enableProguardInReleaseBuilds
             proguardFiles getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro"
         }

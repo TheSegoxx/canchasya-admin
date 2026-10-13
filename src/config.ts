@@ -2,10 +2,7 @@
  * Configuración general de la app.
  */
 
-// Con el celular por USB, "adb reverse tcp:8080 tcp:80" hace que localhost:8080
-// del celular llegue al Apache (XAMPP) de la computadora.
-export const SERVIDOR_URL = 'http://localhost:8080/canchasya';
-export const API_URL = `${SERVIDOR_URL}/api`;
+// La dirección del servidor (XAMPP) está en src/servidor.ts: se puede cambiar desde el login.
 
 // ID de cliente "Aplicación web" de Google Cloud. No es un secreto:
 // sirve para que Google emita un idToken que nuestra API pueda verificar.

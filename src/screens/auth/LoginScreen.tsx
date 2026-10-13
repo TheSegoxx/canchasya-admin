@@ -1,12 +1,14 @@
 import React, { useState } from 'react';
 import { Image, StyleSheet, View } from 'react-native';
 import { Text } from '../../components/Texto';
+import { useIsFocused } from '@react-navigation/native';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { GoogleSigninButton } from '@react-native-google-signin/google-signin';
 import { Boton } from '../../components/Boton';
 import { CampoTexto } from '../../components/CampoTexto';
 import { Pantalla } from '../../components/Pantalla';
 import { mensajeDeError, useSesion } from '../../context/SesionContext';
+import { servidorActual } from '../../servidor';
 import type { RutasAuth } from '../../navigation/AppNavigator';
 import { espaciado, useTema } from '../../theme/tema';
 
@@ -19,6 +21,8 @@ export function LoginScreen({ navigation }: Props) {
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [enviando, setEnviando] = useState<'email' | 'google' | null>(null);
+  // Al volver de "Servidor" se vuelve a dibujar con la dirección nueva
+  useIsFocused();
 
   const entrar = async () => {
     // La tecla "Ir" del teclado no pasa por el botón deshabilitado
@@ -125,6 +129,14 @@ export function LoginScreen({ navigation }: Props) {
         titulo="Crear una cuenta"
         variante="texto"
         onPress={() => navigation.navigate('Registro')}
+        deshabilitado={enviando !== null}
+      />
+      {/* Por si cambió la IP de la computadora con XAMPP */}
+      <Boton
+        titulo={`Servidor: ${servidorActual().replace(/^https?:\/\//, '').replace(/\/canchasya$/, '')}`}
+        variante="texto"
+        color={colores.textoSecundario}
+        onPress={() => navigation.navigate('Servidor')}
         deshabilitado={enviando !== null}
       />
     </Pantalla>
