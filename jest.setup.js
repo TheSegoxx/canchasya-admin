@@ -19,3 +19,13 @@ jest.mock('react-native-image-picker', () => ({
   launchCamera: jest.fn(() => Promise.resolve({ didCancel: true })),
   launchImageLibrary: jest.fn(() => Promise.resolve({ didCancel: true })),
 }));
+
+jest.mock('@react-native-firebase/messaging', () => ({
+  getMessaging: jest.fn(() => ({})),
+  getToken: jest.fn(() => Promise.resolve('token-de-prueba')),
+  getInitialNotification: jest.fn(() => Promise.resolve(null)),
+  onMessage: jest.fn(() => () => undefined),
+  onNotificationOpenedApp: jest.fn(() => () => undefined),
+  onTokenRefresh: jest.fn(() => () => undefined),
+  setBackgroundMessageHandler: jest.fn(),
+}));

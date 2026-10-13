@@ -4,10 +4,10 @@ declare(strict_types=1);
 
 namespace App\Controllers;
 
-use App\ErrorHttp;
 use App\Models\LinkPago;
 use App\Models\Turno;
 use App\Services\CobroService;
+use App\Services\LinksDePago;
 use App\Services\MercadoPago;
 use App\Services\VistaTurno;
 
@@ -22,12 +22,14 @@ final class LinkPagoController extends Controlador
 
     private LinkPago $links;
     private Turno $turnos;
+    private LinksDePago $verificador;
 
     public function __construct()
     {
         parent::__construct();
         $this->links = new LinkPago($this->pdo);
         $this->turnos = new Turno($this->pdo);
+        $this->verificador = new LinksDePago($this->pdo);
     }
 
     // POST /turnos/:id/links-pago  {monto}
@@ -87,9 +89,13 @@ final class LinkPagoController extends Controlador
         if ($pendientes !== []) {
             $mercadoPago = new MercadoPago();
             foreach ($pendientes as $pendiente) {
-                $aviso = $this->transaccion(fn () => $this->verificarLink((int) $pendiente['id'], $mercadoPago));
-                if ($aviso !== null) {
-                    $avisos[] = $aviso;
+                $id = (int) $pendiente['id'];
+                $resultado = $this->transaccion(fn () => $this->verificador->verificar($id, $mercadoPago));
+                if ($resultado['pagado']) {
+                    $this->verificador->avisarPago($id, $this->usuarioActual());
+                }
+                if ($resultado['aviso'] !== null) {
+                    $avisos[] = $resultado['aviso'];
                 }
             }
         }
@@ -105,45 +111,23 @@ final class LinkPagoController extends Controlador
     {
         $link = $this->verificarDelComplejo($this->links->buscarConDueno($id), 'El link');
         $mercadoPago = new MercadoPago();
-        $aviso = $this->transaccion(function () use ($id, $mercadoPago) {
+        [$pagado, $aviso] = $this->transaccion(function () use ($id, $mercadoPago) {
             // Antes de anularlo se mira si no lo pagaron recién
-            $aviso = $this->verificarLink($id, $mercadoPago);
+            $resultado = $this->verificador->verificar($id, $mercadoPago);
             if ($this->links->trabar($id)['estado'] !== 'pendiente') {
-                return $aviso ?? 'No se anuló: el link ya estaba pagado o vencido.';
+                return [$resultado['pagado'], $resultado['aviso'] ?? 'No se anuló: el link ya estaba pagado o vencido.'];
             }
             $mercadoPago->vencerLink($this->links->buscarPorId($id)['preferencia_id']);
             $this->links->cambiarEstado($id, 'anulado');
-            return null;
+            return [false, null];
         });
+        if ($pagado) {
+            $this->verificador->avisarPago($id, $this->usuarioActual());
+        }
         $respuesta = ['turno' => (new VistaTurno($this->pdo))->detalle((int) $link['turno_id'])];
         if ($aviso !== null) {
             $respuesta['aviso'] = $aviso;
         }
         responder(200, $respuesta);
-    }
-
-    /**
-     * Si Mercado Pago aprobó el pago del link, lo registra en la cuenta del turno (una sola vez).
-     * Si no y ya venció, lo marca vencido. Va dentro de una transacción. Devuelve un aviso o null.
-     */
-    private function verificarLink(int $id, MercadoPago $mercadoPago): ?string
-    {
-        $link = $this->links->trabar($id);
-        if ($link['estado'] !== 'pendiente') {
-            return null;
-        }
-        $pago = $mercadoPago->pagoAprobado(LinkPago::referencia($id));
-        if ($pago !== null) {
-            if (abs($pago['monto'] - (float) $link['monto']) > 0.01) {
-                throw new ErrorHttp(409, 'El pago aprobado en Mercado Pago no coincide con el monto del link. Revisalo en Mercado Pago.');
-            }
-            [$pagoId, $aviso] = (new CobroService($this->pdo))->registrarPagoMercadoPago((int) $link['turno_id'], $pago['monto']);
-            $this->links->marcarPagado($id, $pago['id'], $pagoId);
-            return $aviso;
-        }
-        if ($link['vence_en'] < date('Y-m-d H:i:s')) {
-            $this->links->cambiarEstado($id, 'vencido');
-        }
-        return null;
     }
 }

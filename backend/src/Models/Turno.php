@@ -26,6 +26,23 @@ final class Turno extends Modelo
         'SELECT t.*, cl.nombre AS cliente_nombre, cl.telefono AS cliente_telefono, ' . self::TOTALES . '
          FROM turnos t JOIN clientes cl ON cl.id = t.cliente_id';
 
+    // Turnos confirmados de todos los complejos que empiezan entre $desde y $hasta ("AAAA-MM-DD HH:MM:SS")
+    // y todavía deben algo (para el recordatorio)
+    public function porEmpezarSinPagar(string $desde, string $hasta): array
+    {
+        $stmt = $this->pdo->prepare(
+            "SELECT t.*, cl.nombre AS cliente_nombre, " . self::TOTALES . ",
+                    c.nombre AS cancha_nombre, c.complejo_id
+             FROM turnos t
+             JOIN clientes cl ON cl.id = t.cliente_id
+             JOIN canchas c ON c.id = t.cancha_id
+             WHERE t.fecha IN (?, ?) AND t.estado = 'confirmado' AND t.estado_pago <> 'pagado'
+               AND TIMESTAMP(t.fecha, t.hora_inicio) > ? AND TIMESTAMP(t.fecha, t.hora_inicio) <= ?"
+        );
+        $stmt->execute([substr($desde, 0, 10), substr($hasta, 0, 10), $desde, $hasta]);
+        return $stmt->fetchAll();
+    }
+
     // Todos los turnos del día, incluidos los cancelados (la app decide cuáles mostrar)
     public function listarPorFecha(int $complejoId, string $fecha): array
     {
@@ -44,7 +61,7 @@ final class Turno extends Modelo
     {
         $stmt = $this->pdo->prepare(
             'SELECT t.*, cl.nombre AS cliente_nombre, cl.telefono AS cliente_telefono, ' . self::TOTALES . ',
-                    c.nombre AS cancha_nombre, c.deporte AS cancha_deporte,
+                    c.nombre AS cancha_nombre, c.deporte AS cancha_deporte, c.complejo_id,
                     x.nombre AS complejo_nombre, x.direccion AS complejo_direccion, x.usuario_id
              FROM turnos t
              JOIN clientes cl ON cl.id = t.cliente_id

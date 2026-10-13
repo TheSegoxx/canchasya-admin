@@ -8,8 +8,10 @@ import React, { useEffect, useState } from 'react';
 import { StatusBar } from 'react-native';
 import { DarkTheme, DefaultTheme, NavigationContainer, Theme } from '@react-navigation/native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
+import { AvisosPush } from './src/components/AvisosPush';
 import { SesionProvider } from './src/context/SesionContext';
 import { AppNavigator } from './src/navigation/AppNavigator';
+import { navegacion } from './src/navigation/referencia';
 import { aplicarTema, leerPreferenciaTema } from './src/theme/preferencia';
 import { useTema } from './src/theme/tema';
 
@@ -47,9 +49,11 @@ function App() {
     <SafeAreaProvider>
       <StatusBar barStyle={oscuro ? 'light-content' : 'dark-content'} />
       <SesionProvider>
-        <NavigationContainer theme={temaNavegacion}>
+        <NavigationContainer ref={navegacion} theme={temaNavegacion}>
           <AppNavigator />
         </NavigationContainer>
+        {/* Notificaciones push: registro del celular y aviso cuando llega una con la app abierta */}
+        <AvisosPush />
       </SesionProvider>
     </SafeAreaProvider>
   );

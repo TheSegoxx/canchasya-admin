@@ -1,6 +1,9 @@
 package com.canchasamigos
 
 import android.app.Application
+import android.app.NotificationChannel
+import android.app.NotificationManager
+import android.os.Build
 import com.facebook.react.PackageList
 import com.facebook.react.ReactApplication
 import com.facebook.react.ReactHost
@@ -23,5 +26,15 @@ class MainApplication : Application(), ReactApplication {
   override fun onCreate() {
     super.onCreate()
     loadReactNative(this)
+    crearCanalDeAvisos()
+  }
+
+  // Canal de las notificaciones push (Android 8 o superior): con sonido y aviso emergente.
+  // La API manda cada notificación a este canal ("avisos", ver backend/src/Services/Fcm.php).
+  private fun crearCanalDeAvisos() {
+    if (Build.VERSION.SDK_INT < Build.VERSION_CODES.O) return
+    val canal = NotificationChannel("avisos", "Avisos del complejo", NotificationManager.IMPORTANCE_HIGH)
+    canal.description = "Turnos nuevos o cancelados, pagos recibidos, recordatorios y resumen de caja"
+    getSystemService(NotificationManager::class.java).createNotificationChannel(canal)
   }
 }

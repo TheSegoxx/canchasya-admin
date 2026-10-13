@@ -38,7 +38,7 @@ abstract class Controlador
     protected function usuario(): array
     {
         if ($this->usuario === null) {
-            $stmt = $this->pdo->prepare('SELECT id, rol, complejo_id FROM usuarios WHERE id = ?');
+            $stmt = $this->pdo->prepare('SELECT id, nombre, rol, complejo_id FROM usuarios WHERE id = ?');
             $stmt->execute([$this->usuarioActual()]);
             $this->usuario = $stmt->fetch() ?: responder(401, ['error' => 'La cuenta ya no existe']);
         }

@@ -16,6 +16,7 @@ use App\Controllers\ClienteController;
 use App\Controllers\CobroController;
 use App\Controllers\ComplejoController;
 use App\Controllers\DashboardController;
+use App\Controllers\DispositivoController;
 use App\Controllers\EmpleadoController;
 use App\Controllers\FotoController;
 use App\Controllers\LinkPagoController;
@@ -33,6 +34,10 @@ $router->agregar('POST', '/auth/google', fn () => (new AuthController())->google
 $router->agregar('POST', '/auth/recuperar', fn () => (new AuthController())->recuperar());
 $router->agregar('POST', '/auth/restablecer', fn () => (new AuthController())->restablecer());
 $router->agregar('GET', '/auth/yo', fn () => (new AuthController())->yo());
+
+// Notificaciones push: el celular registra su token de Firebase (y lo da de baja al cerrar sesión)
+$router->agregar('POST', '/dispositivos', fn () => (new DispositivoController())->registrar());
+$router->agregar('POST', '/dispositivos/baja', fn () => (new DispositivoController())->quitar());
 
 // Complejo del dueño
 $router->agregar('GET', '/complejo', fn () => (new ComplejoController())->obtener());

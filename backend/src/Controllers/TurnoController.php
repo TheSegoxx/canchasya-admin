@@ -12,6 +12,7 @@ use App\Models\TurnoFijo;
 use App\Services\AgendaService;
 use App\Services\CobroService;
 use App\Services\LinksDePago;
+use App\Services\Notificaciones;
 use App\Services\VistaTurno;
 
 /**
@@ -131,6 +132,8 @@ final class TurnoController extends Controlador
             return [$id, $ocupadas];
         });
 
+        $this->avisar($esFijo ? 'Nuevo turno fijo' : 'Nuevo turno', $turnoId, 'lo cargó');
+
         $respuesta = ['turno' => $this->detalle($turnoId)];
         if ($ocupadas !== []) {
             $respuesta['aviso'] = 'Esas semanas el horario ya estaba reservado, así que no se le guarda: '
@@ -174,6 +177,7 @@ final class TurnoController extends Controlador
             $this->turnos->cambiarEstado($id, $estado);
             if ($estado === 'cancelado') {
                 (new LinksDePago($this->pdo))->anularDeTurnosCancelados([$id]);
+                $this->avisar('Turno cancelado', $id, 'lo canceló');
             }
         }
         responder(200, ['turno' => $this->detalle($id)]);
@@ -214,6 +218,26 @@ final class TurnoController extends Controlador
                 : "Quedaron $conPago turnos sin cancelar porque ya tienen un pago registrado.";
         }
         responder(200, $respuesta);
+    }
+
+    // Notificación al resto del complejo: "Juan Pérez · Cancha 1, hoy a las 20:00 (lo cargó Ana)"
+    private function avisar(string $titulo, int $turnoId, string $accion): void
+    {
+        $turno = $this->turnos->buscarDetalle($turnoId);
+        (new Notificaciones($this->pdo))->alComplejo(
+            (int) $turno['complejo_id'],
+            $titulo,
+            sprintf(
+                '%s · %s, %s (%s %s)',
+                $turno['cliente_nombre'],
+                $turno['cancha_nombre'],
+                Notificaciones::cuando($turno['fecha'], $turno['hora_inicio']),
+                $accion,
+                strtok($this->usuario()['nombre'], ' ')
+            ),
+            ['turnoId' => $turnoId],
+            $this->usuarioActual()
+        );
     }
 
     // El turno con su cancha, complejo, turno fijo y cuenta, como lo muestra la app

@@ -10,6 +10,8 @@ App Android para que el dueño de un complejo de pádel y fútbol 5 administre t
 - **Torneos y ligas:** fixture por sorteo, resultados, tabla de posiciones y partidos reservados en la agenda.
 - **Encargados:** el dueño invita empleados con un código; operan la agenda y la caja, sin ver precios
   ni el dashboard.
+- **Notificaciones push:** turno nuevo o cancelado por otro del equipo, pago recibido por Mercado Pago,
+  recordatorio 30 minutos antes de un turno que todavía debe plata y resumen de la caja al cierre.
 - Fotos del complejo y de las canchas, tema claro u oscuro, login con email o Google y recuperación
   de la contraseña con un código por email.
 
@@ -27,11 +29,17 @@ MySQL/MariaDB sobre XAMPP (carpeta `backend/`).
    - Opcional: `MP_ACCESS_TOKEN` con el Access Token de Mercado Pago (para los links de pago).
    - `MAIL_USUARIO` y `MAIL_CLAVE` con la cuenta que manda el código de "¿Olvidaste tu contraseña?"
      (en desarrollo, si quedan vacíos, los correos se guardan en `backend/storage/correos.log`).
+   - Notificaciones push: en Firebase (Configuración del proyecto → Cuentas de servicio) generar una clave
+     privada y guardarla como `backend/storage/firebase-cuenta-servicio.json`. Nunca va en la app ni en GitHub.
    - Ejecutar `composer install` dentro de `backend/`.
    - Crear el acceso desde XAMPP:
      `mklink /J C:\xampp\htdocs\canchasya <ruta del proyecto>\backend`
    - Probar con `http://localhost/canchasya/api/salud`.
-3. **App:** `npm install`, conectar el celular por USB con la depuración activada y ejecutar:
+   - Avisos automáticos (recordatorios, pagos de Mercado Pago y resumen de caja): ejecutar una vez
+     `backend\bin\instalar-avisos.bat`, que crea una tarea del Programador de tareas de Windows que corre
+     `bin/avisos.php` cada minuto. Lo que envía queda en `backend/storage/avisos.log`.
+3. **App:** la app de Android registrada en el mismo proyecto de Firebase (paquete `com.canchasamigos`)
+   da el archivo `google-services.json`, que va en `android/app/`. Después: `npm install`, conectar el celular por USB con la depuración activada y ejecutar:
 
    ```sh
    adb reverse tcp:8081 tcp:8081   # Metro

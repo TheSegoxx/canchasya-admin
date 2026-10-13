@@ -8,6 +8,7 @@ import {
 import { authApi, RespuestaSesion, Usuario } from '../api/auth';
 import { borrarToken, ErrorApi, guardarToken, leerToken, siPierdeElComplejo, siVenceLaSesion } from '../api/cliente';
 import { GOOGLE_WEB_CLIENT_ID } from '../config';
+import { desactivarNotificaciones } from '../notificaciones';
 
 // webClientId hace que Google entregue un idToken firmado para nuestra API
 GoogleSignin.configure({ webClientId: GOOGLE_WEB_CLIENT_ID });
@@ -113,6 +114,8 @@ export function SesionProvider({ children }: { children: React.ReactNode }) {
 
   const cerrarSesion = useCallback(async () => {
     try {
+      // Primero, mientras todavía hay sesión: este celular deja de recibir los avisos de la cuenta
+      await desactivarNotificaciones();
       await borrarToken();
       // Así la próxima vez Google vuelve a preguntar qué cuenta usar
       await GoogleSignin.signOut().catch(() => undefined);

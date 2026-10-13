@@ -25,6 +25,37 @@ final class CobroService
         $this->pagos = new Pago($pdo);
     }
 
+    /**
+     * Caja de un día: lo cobrado por medio de pago y los turnos que todavía deben algo.
+     * Los turnos fijos del día ya tienen que estar materializados.
+     *
+     * @return array{totales: array, cobros: list<array>, porCobrar: list<array>, totalPorCobrar: float}
+     */
+    public function caja(int $complejoId, string $fecha): array
+    {
+        $cobros = $this->pagos->listarPorDia($complejoId, $fecha);
+        $totales = ['total' => 0.0, 'efectivo' => 0.0, 'transferencia' => 0.0, 'mercadopago' => 0.0, 'cantidad' => count($cobros)];
+        foreach ($cobros as $c) {
+            $totales[$c['metodo']] += (float) $c['monto'];
+            $totales['total'] += (float) $c['monto'];
+        }
+
+        $porCobrar = array_values(array_filter(
+            array_map(
+                fn (array $t) => [...$this->turnos->publico($t), 'canchaNombre' => $t['cancha_nombre']],
+                $this->turnos->listarPorFecha($complejoId, $fecha)
+            ),
+            fn (array $t) => $t['estado'] !== 'cancelado' && $t['pagado'] < $t['total']
+        ));
+
+        return [
+            'totales' => array_map(fn ($v) => is_float($v) ? round($v, 2) : $v, $totales),
+            'cobros' => $cobros,
+            'porCobrar' => $porCobrar,
+            'totalPorCobrar' => round(array_sum(array_map(fn ($t) => $t['total'] - $t['pagado'], $porCobrar)), 2),
+        ];
+    }
+
     /** @return array{total: float, pagado: float, saldo: float} */
     public function cuenta(int $turnoId): array
     {

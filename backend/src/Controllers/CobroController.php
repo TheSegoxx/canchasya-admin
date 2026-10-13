@@ -134,24 +134,11 @@ final class CobroController extends Controlador
         // Los turnos fijos del día también tienen que aparecer como pendientes de cobro
         $this->transaccion(fn () => (new AgendaService($this->pdo))->materializarFijos($complejoId, $fecha));
 
-        $cobros = $this->pagos->listarPorDia($complejoId, $fecha);
-        $totales = ['total' => 0.0, 'efectivo' => 0.0, 'transferencia' => 0.0, 'mercadopago' => 0.0, 'cantidad' => count($cobros)];
-        foreach ($cobros as $c) {
-            $totales[$c['metodo']] += (float) $c['monto'];
-            $totales['total'] += (float) $c['monto'];
-        }
-
-        $porCobrar = array_values(array_filter(
-            array_map(
-                fn (array $t) => [...$this->turnos->publico($t), 'canchaNombre' => $t['cancha_nombre']],
-                $this->turnos->listarPorFecha($complejoId, $fecha)
-            ),
-            fn (array $t) => $t['estado'] !== 'cancelado' && $t['pagado'] < $t['total']
-        ));
+        $caja = $this->cobros->caja($complejoId, $fecha);
 
         responder(200, [
             'fecha' => $fecha,
-            'totales' => array_map(fn ($v) => is_float($v) ? round($v, 2) : $v, $totales),
+            'totales' => $caja['totales'],
             'cobros' => array_map(fn (array $c) => [
                 ...$this->pagos->publico($c),
                 'turno' => [
@@ -161,9 +148,9 @@ final class CobroController extends Controlador
                     'cancha' => $c['cancha_nombre'],
                     'cliente' => $c['cliente_nombre'],
                 ],
-            ], $cobros),
-            'porCobrar' => $porCobrar,
-            'totalPorCobrar' => round(array_sum(array_map(fn ($t) => $t['total'] - $t['pagado'], $porCobrar)), 2),
+            ], $caja['cobros']),
+            'porCobrar' => $caja['porCobrar'],
+            'totalPorCobrar' => $caja['totalPorCobrar'],
         ]);
     }
 
