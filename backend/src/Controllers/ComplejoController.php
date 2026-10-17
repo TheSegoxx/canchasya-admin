@@ -25,6 +25,7 @@ final class ComplejoController extends Controlador
     public function obtener(): void
     {
         // El dueño ve el suyo; el empleado, el complejo donde trabaja
+        $this->noJugador();
         $complejo = $this->esEmpleado()
             ? $this->complejoActual()
             : $this->complejos->buscarPorUsuario($this->usuarioActual());

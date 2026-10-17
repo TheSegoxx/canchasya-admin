@@ -87,6 +87,7 @@ final class EmpleadoController extends Controlador
         $limite = new LimiteIntentos($this->pdo);
         $limite->verificar(ipCliente());
 
+        $this->noJugador();
         $usuario = $this->usuario();
         if ($usuario['rol'] === 'empleado' && $usuario['complejo_id'] !== null) {
             responder(409, ['error' => 'Ya trabajás en un complejo. Pedile al dueño que te quite el acceso para unirte a otro.']);

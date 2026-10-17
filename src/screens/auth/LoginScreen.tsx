@@ -57,14 +57,18 @@ export function LoginScreen({ navigation }: Props) {
   return (
     <Pantalla conMargenSuperior centrado>
       <Image
-        source={require('../../../assets/app/logo.png')}
-        style={estilos.logo}
+        source={require('../../../assets/app/simbolo.png')}
+        style={estilos.simbolo}
         fadeDuration={0}
-        accessibilityRole="image"
-        accessibilityLabel="CanchasYa Admin"
+        accessibilityIgnoresInvertColors
       />
+      {/* Dos textos juntos: con un texto anidado Android deja un espacio entre "Canchas" y "Ya" */}
+      <View accessible accessibilityRole="header" accessibilityLabel="CanchasYa" style={estilos.marca}>
+        <Text style={[estilos.textoMarca, { color: colores.texto }]}>Canchas</Text>
+        <Text style={[estilos.textoMarca, estilos.ya, { color: colores.primario }]}>Ya</Text>
+      </View>
       <Text style={[estilos.subtitulo, { color: colores.textoSecundario }]}>
-        Administrá tu complejo: canchas, turnos y cobros.
+        Reservá tu cancha o administrá tu complejo.
       </Text>
 
       <View style={estilos.google}>
@@ -87,7 +91,7 @@ export function LoginScreen({ navigation }: Props) {
         etiqueta="Email"
         value={email}
         onChangeText={setEmail}
-        placeholder="dueño@complejo.com"
+        placeholder="tu@email.com"
         keyboardType="email-address"
         autoCapitalize="none"
         autoComplete="email"
@@ -144,7 +148,11 @@ export function LoginScreen({ navigation }: Props) {
 }
 
 const estilos = StyleSheet.create({
-  logo: { width: 132, height: 132, alignSelf: 'center' },
+  simbolo: { width: 112, height: 112 * (468 / 596), alignSelf: 'center' },
+  marca: { flexDirection: 'row', alignSelf: 'center', marginTop: espaciado.s },
+  textoMarca: { fontSize: 34, fontWeight: '800', letterSpacing: -0.5 },
+  // Android le deja aire al final del primer texto: se compensa para que quede como una sola palabra
+  ya: { marginLeft: -4 },
   subtitulo: { fontSize: 15, textAlign: 'center', marginTop: espaciado.m, marginBottom: espaciado.xl },
   google: { alignItems: 'center' },
   botonGoogle: { width: '100%', height: 52 },

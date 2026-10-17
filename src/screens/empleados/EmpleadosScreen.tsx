@@ -40,7 +40,7 @@ export function EmpleadosScreen() {
   );
 
   const mensaje = (codigo: string, venceEn: string) =>
-    `¡Hola! Te invito a usar CanchasYa Admin como encargado de ${usuario?.complejo ?? 'mi complejo'}. ` +
+    `¡Hola! Te invito a usar CanchasYa como encargado de ${usuario?.complejo ?? 'mi complejo'}. ` +
     `Instalá la app, creá tu cuenta y en "Unirme a un complejo" escribí este código: ${codigo} ` +
     `(vence el ${fechaCorta(venceEn)}).`;
 

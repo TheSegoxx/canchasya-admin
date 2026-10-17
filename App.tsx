@@ -1,5 +1,5 @@
 /**
- * CanchasYa Admin — app para que el dueño administre su complejo
+ * CanchasYa: los jugadores reservan canchas y los dueños (con sus encargados) administran su complejo
  *
  * @format
  */

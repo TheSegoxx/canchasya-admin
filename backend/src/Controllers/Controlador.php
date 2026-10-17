@@ -11,8 +11,9 @@ use Throwable;
 
 /**
  * Base de los controladores: conexión a la base, usuario logueado y su complejo.
- * Un usuario es el dueño de su complejo o un empleado del complejo de otro;
- * el rol se lee de la base en cada petición, así quitarle el acceso rige al instante.
+ * Un usuario es el dueño de su complejo, un empleado del complejo de otro o un jugador
+ * (que no entra a nada del complejo); el rol se lee de la base en cada petición, así
+ * quitarle el acceso rige al instante.
  * responder() y leerJson() son funciones globales (src/helpers.php).
  */
 abstract class Controlador
@@ -50,11 +51,25 @@ abstract class Controlador
         return $this->usuario()['rol'] === 'empleado';
     }
 
-    // Lo que no puede hacer un empleado: precios, dashboard, datos del complejo, borrar cobros...
+    protected function esJugador(): bool
+    {
+        return $this->usuario()['rol'] === 'jugador';
+    }
+
+    // Lo que no puede hacer un empleado (ni un jugador): precios, dashboard, datos del complejo, borrar cobros...
     protected function soloDueno(): void
     {
+        $this->noJugador();
         if ($this->esEmpleado()) {
             responder(403, ['error' => 'Esto solo lo puede hacer el dueño del complejo']);
+        }
+    }
+
+    // Lo del complejo es para el dueño y sus encargados
+    protected function noJugador(): void
+    {
+        if ($this->esJugador()) {
+            responder(403, ['error' => 'Esta cuenta es de jugador: no administra un complejo']);
         }
     }
 
@@ -62,6 +77,7 @@ abstract class Controlador
     protected function complejoActual(): array
     {
         if ($this->complejo === null) {
+            $this->noJugador();
             $complejos = new Complejo($this->pdo);
             $usuario = $this->usuario();
             $this->complejo = $usuario['rol'] === 'empleado'

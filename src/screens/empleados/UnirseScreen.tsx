@@ -39,7 +39,7 @@ export function UnirseScreen() {
   return (
     <Pantalla>
       <Text style={[estilos.ayuda, { color: colores.textoSecundario }]}>
-        Si trabajás en un complejo que ya usa CanchasYa Admin, pedile al dueño un código de invitación (lo genera en
+        Si trabajás en un complejo que ya usa CanchasYa, pedile al dueño un código de invitación (lo genera en
         Más → Empleados) y escribilo acá.
       </Text>
       <CampoTexto

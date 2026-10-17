@@ -5,11 +5,16 @@ declare(strict_types=1);
 namespace App\Models;
 
 /**
- * Usuario de la app: el dueño de un complejo o un empleado (encargado) del complejo de otro.
+ * Cuenta de la app: un jugador (el cliente que reserva canchas), el dueño de un complejo
+ * o un empleado (encargado) del complejo de otro.
  */
 final class Usuario extends Modelo
 {
     protected string $tabla = 'usuarios';
+
+    // Los que se eligen al crear la cuenta (el encargado entra después con un código del dueño)
+    public const ROLES_ELEGIBLES = ['jugador', 'dueno'];
+    public const DEPORTES = ['padel', 'futbol5'];
 
     public function buscarPorEmail(string $email): ?array
     {
@@ -25,15 +30,46 @@ final class Usuario extends Modelo
         return $stmt->fetch() ?: null;
     }
 
-    public function crear(string $nombre, string $email, ?string $passwordHash, ?string $googleId = null, ?string $fotoUrl = null): int
-    {
+    /**
+     * @param array{rol?: string, rolElegido?: bool, telefono?: ?string, ciudad?: ?string, deportes?: list<string>} $perfil
+     *        Sin rol: dueño (como la app 1.0)
+     */
+    public function crear(
+        string $nombre,
+        string $email,
+        ?string $passwordHash,
+        ?string $googleId = null,
+        ?string $fotoUrl = null,
+        array $perfil = []
+    ): int {
         return $this->insertar([
             'nombre' => $nombre,
             'email' => $email,
             'password_hash' => $passwordHash,
             'google_id' => $googleId,
             'foto_url' => $fotoUrl,
+            'rol' => $perfil['rol'] ?? 'dueno',
+            'rol_elegido' => ($perfil['rolElegido'] ?? true) ? 1 : 0,
+            'telefono' => $perfil['telefono'] ?? null,
+            'ciudad' => $perfil['ciudad'] ?? null,
+            'deportes' => isset($perfil['deportes']) ? json_encode($perfil['deportes']) : null,
         ]);
+    }
+
+    /** @param array{nombre: string, telefono: string, ciudad: ?string, deportes: ?list<string>, rol?: string} $perfil */
+    public function guardarPerfil(int $id, array $perfil): void
+    {
+        $columnas = [
+            'nombre' => $perfil['nombre'],
+            'telefono' => $perfil['telefono'],
+            'ciudad' => $perfil['ciudad'],
+            'deportes' => $perfil['deportes'] !== null ? json_encode($perfil['deportes']) : null,
+        ];
+        if (isset($perfil['rol'])) {
+            $columnas['rol'] = $perfil['rol'];
+            $columnas['rol_elegido'] = 1;
+        }
+        $this->actualizar($id, $columnas);
     }
 
     // Asocia una cuenta creada con email a su cuenta de Google
@@ -52,9 +88,12 @@ final class Usuario extends Modelo
         return $usuario['password_hash'] !== null && password_verify($password, $usuario['password_hash']);
     }
 
-    // Nombre del complejo propio (dueño) o donde trabaja (empleado); null si no tiene
+    // Nombre del complejo propio (dueño) o donde trabaja (empleado); null si no tiene (o es jugador)
     public function nombreDelComplejo(array $usuario): ?string
     {
+        if ($usuario['rol'] === 'jugador') {
+            return null;
+        }
         $stmt = $usuario['rol'] === 'empleado'
             ? $this->pdo->prepare('SELECT nombre FROM complejos WHERE id = ?')
             : $this->pdo->prepare('SELECT nombre FROM complejos WHERE usuario_id = ?');
@@ -93,7 +132,12 @@ final class Usuario extends Modelo
             'email' => $usuario['email'],
             'foto' => $usuario['foto_url'],
             'tienePassword' => $usuario['password_hash'] !== null,
+            'telefono' => $usuario['telefono'],
+            'ciudad' => $usuario['ciudad'],
+            'deportes' => json_decode($usuario['deportes'] ?? '[]', true) ?? [],
             'rol' => $usuario['rol'],
+            // false: entró con Google y la app tiene que preguntarle si es jugador o dueño
+            'rolElegido' => (bool) $usuario['rol_elegido'],
             'tieneComplejo' => $complejo !== null,
             'complejo' => $complejo,
         ];

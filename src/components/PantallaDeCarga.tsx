@@ -64,7 +64,7 @@ export function PantallaDeCarga({ listo, alTerminar }: Props) {
   return (
     <Animated.View
       accessibilityRole="progressbar"
-      accessibilityLabel="Cargando CanchasYa Admin"
+      accessibilityLabel="Cargando CanchasYa"
       style={[StyleSheet.absoluteFill, estilos.fondo, { opacity: salida }]}>
       <Fondo ancho={width} alto={height} />
 
@@ -86,11 +86,8 @@ export function PantallaDeCarga({ listo, alTerminar }: Props) {
             <Text style={estilos.marca}>Canchas</Text>
             <Text style={[estilos.marca, estilos.ya]}>Ya</Text>
           </View>
-          <View style={estilos.pastilla}>
-            <Text style={estilos.admin}>ADMIN</Text>
-          </View>
           <Text style={estilos.lema}>
-            Gestioná tus canchas,{'\n'}todo en un solo lugar.
+            Reservá y administrá canchas,{'\n'}todo en un solo lugar.
           </Text>
         </Animated.View>
       </View>
@@ -159,14 +156,6 @@ const estilos = StyleSheet.create({
   marca: { fontSize: 42, fontWeight: '800', color: '#FFFFFF', letterSpacing: -0.5 },
   // Android le deja aire al final del primer texto: se compensa para que quede como una sola palabra
   ya: { color: VERDE_MARCA, marginLeft: -4 },
-  pastilla: {
-    backgroundColor: VERDE_MARCA,
-    borderRadius: 8,
-    paddingHorizontal: 18,
-    paddingVertical: 4,
-    marginTop: 6,
-  },
-  admin: { fontSize: 16, fontWeight: '800', color: '#FFFFFF', letterSpacing: 5 },
   lema: { fontSize: 16, color: '#C9D6E2', textAlign: 'center', marginTop: 28, lineHeight: 23 },
   barra: {
     position: 'absolute',

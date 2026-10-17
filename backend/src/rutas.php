@@ -34,6 +34,7 @@ $router->agregar('POST', '/auth/google', fn () => (new AuthController())->google
 $router->agregar('POST', '/auth/recuperar', fn () => (new AuthController())->recuperar());
 $router->agregar('POST', '/auth/restablecer', fn () => (new AuthController())->restablecer());
 $router->agregar('GET', '/auth/yo', fn () => (new AuthController())->yo());
+$router->agregar('PUT', '/auth/perfil', fn () => (new AuthController())->guardarPerfil());
 
 // Notificaciones push: el celular registra su token de Firebase (y lo da de baja al cerrar sesión)
 $router->agregar('POST', '/dispositivos', fn () => (new DispositivoController())->registrar());

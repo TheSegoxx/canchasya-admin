@@ -1,4 +1,12 @@
 import { api } from './cliente';
+import type { Deporte } from './canchas';
+
+// jugador: el cliente que reserva canchas. dueno: el dueño del complejo.
+// empleado: el encargado del complejo de otro (no ve el dashboard ni cambia precios)
+export type Rol = 'jugador' | 'dueno' | 'empleado';
+
+// Los que se eligen al crear la cuenta (el encargado entra con un código del dueño)
+export type RolElegible = 'jugador' | 'dueno';
 
 export type Usuario = {
   id: number;
@@ -6,8 +14,12 @@ export type Usuario = {
   email: string;
   foto: string | null;
   tienePassword: boolean;
-  // El empleado (encargado) no ve el dashboard ni cambia precios
-  rol: 'dueno' | 'empleado';
+  telefono: string | null;
+  ciudad: string | null;
+  deportes: Deporte[];
+  rol: Rol;
+  // false: entró con Google y todavía no eligió si es jugador o dueño
+  rolElegido: boolean;
   tieneComplejo: boolean;
   // Nombre del complejo propio o donde trabaja
   complejo: string | null;
@@ -19,13 +31,23 @@ export type RespuestaSesion = {
   nuevo?: boolean;
 };
 
+// Datos personales que se piden al crear la cuenta y se editan en "Mis datos"
+export type DatosPerfil = {
+  nombre: string;
+  telefono: string;
+  ciudad?: string;
+  // Solo jugadores
+  deportes?: Deporte[];
+};
+
+export type DatosRegistro = DatosPerfil & { rol: RolElegible; email: string; password: string };
+
 // Endpoints /auth de la API
 export const authApi = {
   login: (email: string, password: string) =>
     api<RespuestaSesion>('/auth/login', 'POST', { email, password }),
 
-  registrar: (nombre: string, email: string, password: string) =>
-    api<RespuestaSesion>('/auth/register', 'POST', { nombre, email, password }),
+  registrar: (datos: DatosRegistro) => api<RespuestaSesion>('/auth/register', 'POST', datos),
 
   google: (idToken: string) => api<RespuestaSesion>('/auth/google', 'POST', { idToken }),
 
@@ -37,4 +59,8 @@ export const authApi = {
     api<RespuestaSesion>('/auth/restablecer', 'POST', { email, codigo, password }),
 
   yo: () => api<{ usuario: Usuario }>('/auth/yo'),
+
+  // El rol solo se manda una vez: la primera vez que entra con Google
+  guardarPerfil: (datos: DatosPerfil & { rol?: RolElegible }) =>
+    api<{ usuario: Usuario }>('/auth/perfil', 'PUT', datos),
 };

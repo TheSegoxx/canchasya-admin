@@ -25,7 +25,8 @@ final class AuthService
     {
     }
 
-    public function registrar(string $nombre, string $email, string $password): array
+    /** @param array $perfil rol, telefono, ciudad y deportes (ver Usuario::crear) */
+    public function registrar(string $nombre, string $email, string $password, array $perfil = []): array
     {
         if ($this->usuarios->buscarPorEmail($email) !== null) {
             responder(409, ['error' => 'Ya existe una cuenta con ese email']);
@@ -34,7 +35,7 @@ final class AuthService
         // bcrypt genera la sal sola y la guarda dentro del hash
         $hash = password_hash($password, PASSWORD_BCRYPT, ['cost' => 10]);
         try {
-            $id = $this->usuarios->crear($nombre, $email, $hash);
+            $id = $this->usuarios->crear($nombre, $email, $hash, null, null, $perfil);
         } catch (PDOException $e) {
             // Dos registros con el mismo email al mismo tiempo: el índice UNIQUE frena al segundo
             if ($e->getCode() === '23000') {
@@ -77,7 +78,8 @@ final class AuthService
 
         $usuario = $this->usuarios->buscarPorGoogleId($datos->sub) ?? $this->usuarios->buscarPorEmail($email);
         if ($usuario === null) {
-            $id = $this->usuarios->crear($nombre, $email, null, $datos->sub, $foto);
+            // Queda como dueño (así funciona la app 1.0), pero la app nueva le pregunta si es jugador o dueño
+            $id = $this->usuarios->crear($nombre, $email, null, $datos->sub, $foto, ['rolElegido' => false]);
             return [$this->usuarios->buscarPorId($id), true];
         }
 

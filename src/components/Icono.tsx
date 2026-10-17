@@ -30,7 +30,8 @@ export type NombreIcono =
   | 'temaOscuro'
   | 'temaDispositivo'
   | 'ubicacion'
-  | 'miUbicacion';
+  | 'miUbicacion'
+  | 'buscar';
 
 type Props = {
   nombre: NombreIcono;
@@ -192,6 +193,14 @@ export function Icono({ nombre, color, acento = color, tamano = 24 }: Props) {
             <Path d="M3 11v-1a4 4 0 0 1 4-4h14" />
             <Path d="M7 22l-4-4 4-4" />
             <Path d="M21 13v1a4 4 0 0 1-4 4H3" />
+          </>
+        )}
+        {nombre === 'buscar' && (
+          <>
+            {/* Lupa con el vidrio en verde */}
+            <Circle cx={10.5} cy={10.5} r={6.5} />
+            <Path d="m15.5 15.5 5 5" strokeWidth={2.2} />
+            <Path d="M8 8.6a3.4 3.4 0 0 1 2.5-1.1" {...trazo} />
           </>
         )}
         {nombre === 'ubicacion' && (

@@ -10,15 +10,19 @@ DROP DATABASE IF EXISTS canchasya;
 CREATE DATABASE canchasya CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 USE canchasya;
 
--- Dueños de complejos y sus empleados
+-- Jugadores (los clientes que reservan), dueños de complejos y sus empleados
 CREATE TABLE usuarios (
     id            INT AUTO_INCREMENT PRIMARY KEY,
     nombre        VARCHAR(100) NOT NULL,
     email         VARCHAR(150) NOT NULL,
+    telefono      VARCHAR(30) NULL COMMENT 'Celular en 10 cifras (para WhatsApp)',
+    ciudad        VARCHAR(80) NULL,
+    deportes      JSON NULL COMMENT 'Solo jugadores: ["padel","futbol5"]',
     password_hash VARCHAR(255) NULL COMMENT 'NULL si solo entra con Google',
     google_id     VARCHAR(100) NULL COMMENT 'NULL si solo usa contraseña',
     foto_url      VARCHAR(255) NULL,
-    rol           ENUM('dueno', 'empleado') NOT NULL DEFAULT 'dueno',
+    rol           ENUM('dueno', 'empleado', 'jugador') NOT NULL DEFAULT 'dueno',
+    rol_elegido   BOOLEAN NOT NULL DEFAULT 1 COMMENT '0 = entró con Google y todavía no eligió si es jugador o dueño',
     complejo_id   INT NULL COMMENT 'Solo empleados: el complejo donde trabaja (FK más abajo)',
     creado_en     TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     UNIQUE KEY uq_usuarios_email (email),

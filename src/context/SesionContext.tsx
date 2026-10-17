@@ -5,7 +5,7 @@ import {
   isSuccessResponse,
   statusCodes,
 } from '@react-native-google-signin/google-signin';
-import { authApi, RespuestaSesion, Usuario } from '../api/auth';
+import { authApi, DatosRegistro, RespuestaSesion, Usuario } from '../api/auth';
 import { borrarToken, ErrorApi, guardarToken, leerToken, siPierdeElComplejo, siVenceLaSesion } from '../api/cliente';
 import { GOOGLE_WEB_CLIENT_ID } from '../config';
 import { desactivarNotificaciones } from '../notificaciones';
@@ -21,7 +21,7 @@ type Sesion = {
   sinConexion: boolean;
   reintentar: () => void;
   entrarConEmail: (email: string, password: string) => Promise<void>;
-  registrarse: (nombre: string, email: string, password: string) => Promise<void>;
+  registrarse: (datos: DatosRegistro) => Promise<void>;
   // Cambia la contraseña con el código que llegó por email y entra a la app
   restablecerPassword: (email: string, codigo: string, password: string) => Promise<void>;
   // Devuelve false si el dueño cerró la ventana de Google sin elegir cuenta
@@ -81,11 +81,7 @@ export function SesionProvider({ children }: { children: React.ReactNode }) {
     [iniciar],
   );
 
-  const registrarse = useCallback(
-    async (nombre: string, email: string, password: string) =>
-      iniciar(await authApi.registrar(nombre, email, password)),
-    [iniciar],
-  );
+  const registrarse = useCallback(async (datos: DatosRegistro) => iniciar(await authApi.registrar(datos)), [iniciar]);
 
   const restablecerPassword = useCallback(
     async (email: string, codigo: string, password: string) =>
@@ -165,9 +161,9 @@ export function useSesion(): Sesion {
   return sesion;
 }
 
-// El dueño puede todo; el empleado no ve el dashboard ni cambia precios
+// En el complejo, el dueño puede todo; el empleado no ve el dashboard ni cambia precios
 export function useEsDueno(): boolean {
-  return useSesion().usuario?.rol !== 'empleado';
+  return useSesion().usuario?.rol === 'dueno';
 }
 
 // Convierte cualquier error en un mensaje entendible para el dueño

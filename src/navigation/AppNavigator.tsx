@@ -40,6 +40,11 @@ import { PartidoScreen } from '../screens/torneos/PartidoScreen';
 import { TorneoScreen } from '../screens/torneos/TorneoScreen';
 import { TorneosScreen } from '../screens/torneos/TorneosScreen';
 import { MasScreen } from '../screens/principal/MasScreen';
+import { MisDatosScreen } from '../screens/cuenta/MisDatosScreen';
+import { PerfilInicialScreen } from '../screens/cuenta/PerfilInicialScreen';
+import { BuscarScreen } from '../screens/jugador/BuscarScreen';
+import { MisReservasScreen } from '../screens/jugador/MisReservasScreen';
+import { PerfilJugadorScreen } from '../screens/jugador/PerfilJugadorScreen';
 import { useTema } from '../theme/tema';
 
 export type RutasAuth = {
@@ -52,8 +57,9 @@ export type RutasAuth = {
   Servidor: undefined;
 };
 
-// Con sesión: primero ConfigurarComplejo (si falta) y después las pestañas
+// Dueño y encargado: primero ConfigurarComplejo (si falta) y después las pestañas
 export type RutasApp = {
+  MisDatos: undefined;
   ConfigurarComplejo: undefined;
   // Un empleado se une al complejo de otro con un código de invitación
   Unirse: undefined;
@@ -91,22 +97,40 @@ export type RutasPestanas = {
   Mas: undefined;
 };
 
+// Jugador (el cliente que reserva canchas)
+export type RutasJugador = {
+  PestanasJugador: undefined;
+  MisDatos: undefined;
+};
+
+export type RutasPestanasJugador = {
+  Buscar: undefined;
+  MisReservas: undefined;
+  Perfil: undefined;
+};
+
 const Pila = createNativeStackNavigator<RutasAuth>();
 const PilaApp = createNativeStackNavigator<RutasApp>();
+const PilaJugador = createNativeStackNavigator<RutasJugador>();
+const PilaPerfil = createNativeStackNavigator<{ PerfilInicial: undefined }>();
 const Pestanas = createBottomTabNavigator<RutasPestanas>();
+const PestanasJugador = createBottomTabNavigator<RutasPestanasJugador>();
 
-const iconos: Record<keyof RutasPestanas, NombreIcono> = {
+const iconos: Record<keyof RutasPestanas | keyof RutasPestanasJugador, NombreIcono> = {
   Inicio: 'inicio',
   Agenda: 'agenda',
   Canchas: 'canchas',
   Dashboard: 'grafico',
   Mas: 'mas',
+  Buscar: 'buscar',
+  MisReservas: 'agenda',
+  Perfil: 'persona',
 };
 
 // Fuera del componente para que React no lo recree en cada render.
 // La pestaña activa lleva el detalle en verde; las otras van en gris.
 const iconoDe =
-  (ruta: keyof RutasPestanas, acento: string) =>
+  (ruta: keyof typeof iconos, acento: string) =>
   ({ color, size, focused }: { color: string; size: number; focused: boolean }) =>
     <Icono nombre={iconos[ruta]} color={color} acento={focused ? acento : color} tamano={size} />;
 
@@ -162,6 +186,7 @@ function Aplicacion({ tieneComplejo }: { tieneComplejo: boolean }) {
           <PilaApp.Screen name="NuevoTorneo" component={NuevoTorneoScreen} options={{ title: 'Nuevo torneo' }} />
           <PilaApp.Screen name="Torneo" component={TorneoScreen} options={{ title: 'Torneo' }} />
           <PilaApp.Screen name="Partido" component={PartidoScreen} options={{ title: 'Partido' }} />
+          <PilaApp.Screen name="MisDatos" component={MisDatosScreen} options={{ title: 'Mis datos' }} />
         </>
       ) : (
         <>
@@ -174,6 +199,43 @@ function Aplicacion({ tieneComplejo }: { tieneComplejo: boolean }) {
         </>
       )}
     </PilaApp.Navigator>
+  );
+}
+
+// Las pestañas del jugador: buscar dónde jugar, sus reservas y su perfil
+function PrincipalJugador() {
+  const { colores } = useTema();
+  return (
+    <PestanasJugador.Navigator
+      screenOptions={({ route }) => ({
+        tabBarActiveTintColor: colores.texto,
+        tabBarInactiveTintColor: colores.textoSecundario,
+        tabBarIcon: iconoDe(route.name, colores.acento),
+        tabBarLabelStyle: estilos.etiquetaPestana,
+        tabBarStyle: { borderTopColor: colores.borde, elevation: 0 },
+      })}>
+      <PestanasJugador.Screen name="Buscar" component={BuscarScreen} options={{ title: 'CanchasYa', tabBarLabel: 'Buscar' }} />
+      <PestanasJugador.Screen name="MisReservas" component={MisReservasScreen} options={{ title: 'Mis reservas' }} />
+      <PestanasJugador.Screen name="Perfil" component={PerfilJugadorScreen} />
+    </PestanasJugador.Navigator>
+  );
+}
+
+function AplicacionJugador() {
+  return (
+    <PilaJugador.Navigator>
+      <PilaJugador.Screen name="PestanasJugador" component={PrincipalJugador} options={{ headerShown: false }} />
+      <PilaJugador.Screen name="MisDatos" component={MisDatosScreen} options={{ title: 'Mis datos' }} />
+    </PilaJugador.Navigator>
+  );
+}
+
+// Entró con Google por primera vez: elige si es jugador o dueño antes de seguir
+function PrimerIngreso() {
+  return (
+    <PilaPerfil.Navigator>
+      <PilaPerfil.Screen name="PerfilInicial" component={PerfilInicialScreen} options={{ headerShown: false }} />
+    </PilaPerfil.Navigator>
   );
 }
 
@@ -226,7 +288,14 @@ export function AppNavigator() {
     );
   }
 
-  return usuario ? <Aplicacion tieneComplejo={usuario.tieneComplejo} /> : <Autenticacion />;
+  // Cada tipo de cuenta tiene su propia parte de la app
+  if (!usuario) {
+    return <Autenticacion />;
+  }
+  if (!usuario.rolElegido) {
+    return <PrimerIngreso />;
+  }
+  return usuario.rol === 'jugador' ? <AplicacionJugador /> : <Aplicacion tieneComplejo={usuario.tieneComplejo} />;
 }
 
 const estilos = StyleSheet.create({
