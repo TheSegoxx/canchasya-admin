@@ -15,6 +15,20 @@ final class Pago extends Modelo
     public const METODOS = ['efectivo', 'transferencia'];
     public const MERCADO_PAGO = 'mercadopago';
 
+    /**
+     * Qué fue cada pago, según lo que el turno debía cuando entró:
+     * sena = el primero sin completar; total = el primero y completa; saldo = completa lo que faltaba;
+     * parcial = uno del medio.
+     */
+    public static function concepto(float $total, float $pagadoAntes, float $monto): string
+    {
+        $completa = $pagadoAntes + $monto >= $total;
+        if ($pagadoAntes <= 0) {
+            return $completa ? 'total' : 'sena';
+        }
+        return $completa ? 'saldo' : 'parcial';
+    }
+
     public function listarPorTurno(int $turnoId): array
     {
         $stmt = $this->pdo->prepare('SELECT * FROM pagos WHERE turno_id = ? ORDER BY fecha_pago, id');
@@ -82,9 +96,9 @@ final class Pago extends Modelo
         return $stmt->fetch() ?: null;
     }
 
-    public function crear(int $turnoId, float $monto, string $metodo): int
+    public function crear(int $turnoId, float $monto, string $metodo, string $concepto): int
     {
-        return $this->insertar(['turno_id' => $turnoId, 'monto' => $monto, 'metodo' => $metodo]);
+        return $this->insertar(['turno_id' => $turnoId, 'monto' => $monto, 'metodo' => $metodo, 'concepto' => $concepto]);
     }
 
     public function borrar(int $id): void
@@ -98,6 +112,7 @@ final class Pago extends Modelo
             'id' => (int) $pago['id'],
             'monto' => (float) $pago['monto'],
             'metodo' => $pago['metodo'],
+            'concepto' => $pago['concepto'],
             'fecha' => substr($pago['fecha_pago'], 0, 10),
             'hora' => substr($pago['fecha_pago'], 11, 5),
         ];

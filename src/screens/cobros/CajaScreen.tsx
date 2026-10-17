@@ -3,7 +3,7 @@ import { ActivityIndicator, Pressable, RefreshControl, ScrollView, StyleSheet, V
 import { Text } from '../../components/Texto';
 import { useFocusEffect, useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import { Caja, cobrosApi, NOMBRE_METODO } from '../../api/cobros';
+import { Caja, cobrosApi, NOMBRE_CONCEPTO, NOMBRE_METODO } from '../../api/cobros';
 import { ErrorCarga } from '../../components/ErrorCarga';
 import { SelectorDia } from '../../components/SelectorDia';
 import { mensajeDeError } from '../../context/SesionContext';
@@ -119,7 +119,7 @@ export function CajaScreen() {
               <View style={estilos.datos}>
                 <Text numberOfLines={1} style={[estilos.nombre, { color: colores.texto }]}>{c.turno.cliente}</Text>
                 <Text numberOfLines={1} style={[estilos.detalle, { color: colores.textoSecundario }]}>
-                  {NOMBRE_METODO[c.metodo]} · turno {c.turno.fecha === fecha ? '' : `${fechaCorta(c.turno.fecha)} `}
+                  {NOMBRE_CONCEPTO[c.concepto]} · {NOMBRE_METODO[c.metodo]} · turno {c.turno.fecha === fecha ? '' : `${fechaCorta(c.turno.fecha)} `}
                   {c.turno.horaInicio} {c.turno.cancha}
                 </Text>
               </View>

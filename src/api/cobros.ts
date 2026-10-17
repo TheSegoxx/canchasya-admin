@@ -19,10 +19,21 @@ export type LinkPago = {
   venceEn: string; // "AAAA-MM-DD HH:MM"
 };
 
+// Qué fue el pago según lo que el turno debía cuando entró (lo decide la API al registrarlo)
+export type ConceptoPago = 'sena' | 'parcial' | 'saldo' | 'total';
+
+export const NOMBRE_CONCEPTO: Record<ConceptoPago, string> = {
+  sena: 'Seña',
+  parcial: 'Pago parcial',
+  saldo: 'Saldo',
+  total: 'Pago total',
+};
+
 export type Pago = {
   id: number;
   monto: number;
   metodo: MetodoPago;
+  concepto: ConceptoPago;
   fecha: string; // cuándo entró la plata
   hora: string;
 };

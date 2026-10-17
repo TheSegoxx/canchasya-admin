@@ -214,7 +214,7 @@ $turno = $pdo->prepare(
     "INSERT INTO turnos (cancha_id, cliente_id, fecha, hora_inicio, hora_fin, precio, estado, estado_pago)
      VALUES (?, ?, ?, ?, ?, ?, 'jugado', 'pagado')"
 );
-$pago = $pdo->prepare('INSERT INTO pagos (turno_id, monto, metodo, fecha_pago) VALUES (?, ?, ?, ?)');
+$pago = $pdo->prepare('INSERT INTO pagos (turno_id, monto, metodo, concepto, fecha_pago) VALUES (?, ?, ?, ?, ?)');
 mt_srand(2610);
 $cargados = 0;
 $pdo->beginTransaction();
@@ -235,8 +235,8 @@ for ($d = -30; $d <= -1; $d++) {
             $id = (int) $pdo->lastInsertId();
             $metodo = ['efectivo', 'efectivo', 'transferencia', 'mercadopago'][mt_rand(0, 3)];
             $sena = $futbol ? 15000 : 10000;
-            $pago->execute([$id, $sena, 'transferencia', date('Y-m-d H:i:s', strtotime("$dia 12:00") - 86400)]);
-            $pago->execute([$id, $precio - $sena, $metodo, "$dia $hora:00"]);
+            $pago->execute([$id, $sena, 'transferencia', 'sena', date('Y-m-d H:i:s', strtotime("$dia 12:00") - 86400)]);
+            $pago->execute([$id, $precio - $sena, $metodo, 'saldo', "$dia $hora:00"]);
             $cargados++;
         }
     }

@@ -98,13 +98,14 @@ final class CobroService
     public function registrarPago(int $turnoId, float $monto, string $metodo): int
     {
         $this->trabarParaCobrar($turnoId);
-        $saldo = $this->cuenta($turnoId)['saldo'];
+        $cuenta = $this->cuenta($turnoId);
+        $saldo = $cuenta['saldo'];
         if ($monto > $saldo) {
             throw new ErrorHttp(409, $saldo > 0
                 ? 'El pago supera lo que falta cobrar (' . pesos($saldo) . ')'
                 : 'Este turno ya está pagado');
         }
-        $id = $this->pagos->crear($turnoId, $monto, $metodo);
+        $id = $this->pagos->crear($turnoId, $monto, $metodo, Pago::concepto($cuenta['total'], $cuenta['pagado'], $monto));
         $this->actualizarEstadoPago($turnoId);
         return $id;
     }
@@ -119,8 +120,9 @@ final class CobroService
     public function registrarPagoMercadoPago(int $turnoId, float $monto): array
     {
         $turno = $this->turnos->trabar($turnoId);
-        $saldo = $this->cuenta($turnoId)['saldo'];
-        $id = $this->pagos->crear($turnoId, $monto, Pago::MERCADO_PAGO);
+        $cuenta = $this->cuenta($turnoId);
+        $saldo = $cuenta['saldo'];
+        $id = $this->pagos->crear($turnoId, $monto, Pago::MERCADO_PAGO, Pago::concepto($cuenta['total'], $cuenta['pagado'], $monto));
         $this->actualizarEstadoPago($turnoId);
 
         $aviso = null;

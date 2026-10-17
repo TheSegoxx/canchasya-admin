@@ -2,7 +2,7 @@ import React from 'react';
 import { Alert, Pressable, StyleSheet, View } from 'react-native';
 import { Text } from '../../components/Texto';
 import type { TurnoDetalle } from '../../api/agenda';
-import { cobrosApi, LinkPago, NOMBRE_METODO } from '../../api/cobros';
+import { cobrosApi, LinkPago, NOMBRE_CONCEPTO, NOMBRE_METODO } from '../../api/cobros';
 import { Boton } from '../../components/Boton';
 import { Icono } from '../../components/Icono';
 import { mensajeDeError, useEsDueno } from '../../context/SesionContext';
@@ -78,7 +78,8 @@ export function CuentaTurno({ turno, onCambio, onCobrar, onAgregarExtra, onLinkP
 
       {turno.pagos.map(p =>
         linea(
-          `${NOMBRE_METODO[p.metodo]} · ${p.fecha === turno.fecha ? '' : `${fechaCorta(p.fecha)} `}${p.hora}`,
+          // "Seña · Transferencia · 12:30"
+          `${NOMBRE_CONCEPTO[p.concepto]} · ${NOMBRE_METODO[p.metodo]} · ${p.fecha === turno.fecha ? '' : `${fechaCorta(p.fecha)} `}${p.hora}`,
           `−${formatearPesos(p.monto)}`,
           {
             clave: `p${p.id}`,
@@ -87,7 +88,7 @@ export function CuentaTurno({ turno, onCambio, onCobrar, onAgregarExtra, onLinkP
             extra: !esDueno || p.metodo === 'mercadopago' ? null : botonBorrar(`Borrar pago de ${formatearPesos(p.monto)}`, () =>
               borrar(
                 'Borrar pago',
-                `${NOMBRE_METODO[p.metodo]} de ${formatearPesos(p.monto)}. Solo si se cargó por error: también sale de la caja.`,
+                `${NOMBRE_CONCEPTO[p.concepto]} en ${NOMBRE_METODO[p.metodo].toLowerCase()} de ${formatearPesos(p.monto)}. Solo si se cargó por error: también sale de la caja.`,
                 () => cobrosApi.borrarPago(p.id),
               ),
             ),

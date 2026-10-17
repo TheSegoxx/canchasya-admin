@@ -190,6 +190,8 @@ CREATE TABLE pagos (
     turno_id   INT NOT NULL,
     monto      DECIMAL(10, 2) NOT NULL,
     metodo     ENUM('efectivo', 'transferencia', 'mercadopago') NOT NULL,
+    concepto   ENUM('sena', 'parcial', 'saldo', 'total') NOT NULL DEFAULT 'parcial'
+               COMMENT 'Se decide al registrar el pago, con lo que el turno debía en ese momento',
     fecha_pago TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     KEY idx_pagos_fecha (fecha_pago),
     CONSTRAINT chk_pagos_monto CHECK (monto > 0),
