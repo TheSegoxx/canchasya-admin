@@ -42,6 +42,7 @@ $router->agregar('POST', '/dispositivos/baja', fn () => (new DispositivoControll
 // Complejo del dueño
 $router->agregar('GET', '/complejo', fn () => (new ComplejoController())->obtener());
 $router->agregar('PUT', '/complejo', fn () => (new ComplejoController())->guardar());
+$router->agregar('GET', '/complejo/buscar-ubicacion', fn () => (new ComplejoController())->buscarUbicacion());
 
 // Canchas y precios por franja horaria
 $router->agregar('GET', '/canchas', fn () => (new CanchaController())->listar());

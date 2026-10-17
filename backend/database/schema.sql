@@ -31,12 +31,19 @@ CREATE TABLE complejos (
     usuario_id    INT NOT NULL,
     nombre        VARCHAR(150) NOT NULL,
     direccion     VARCHAR(150) NOT NULL,
+    ciudad        VARCHAR(80) NULL,
+    latitud       DECIMAL(9, 6) NULL,
+    longitud      DECIMAL(9, 6) NULL,
     telefono      VARCHAR(30) NULL,
     hora_apertura TIME NOT NULL,
     hora_cierre   TIME NOT NULL,
     servicios     JSON NULL COMMENT 'Ej.: ["vestuarios","buffet","estacionamiento"]',
     creado_en     TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     UNIQUE KEY uq_complejos_usuario (usuario_id),
+    CONSTRAINT chk_complejos_ubicacion CHECK (
+        (latitud IS NULL AND longitud IS NULL)
+        OR (latitud BETWEEN -90 AND 90 AND longitud BETWEEN -180 AND 180)
+    ),
     CONSTRAINT fk_complejos_usuario FOREIGN KEY (usuario_id) REFERENCES usuarios (id) ON DELETE CASCADE
 ) ENGINE=InnoDB;
 
@@ -212,7 +219,7 @@ CREATE TABLE movimientos (
     id          INT AUTO_INCREMENT PRIMARY KEY,
     complejo_id INT NOT NULL,
     tipo        ENUM('ingreso', 'egreso') NOT NULL,
-    categoria   VARCHAR(30) NOT NULL COMMENT 'Clave fija de la API (sueldos, servicios, ventas...)',
+    categoria   VARCHAR(30) NOT NULL COMMENT 'Categoría principal (el reparto está en movimiento_categorias)',
     descripcion VARCHAR(100) NULL,
     monto       DECIMAL(10, 2) NOT NULL,
     metodo      ENUM('efectivo', 'transferencia') NOT NULL,
@@ -221,6 +228,17 @@ CREATE TABLE movimientos (
     KEY idx_movimientos_fecha (complejo_id, fecha),
     CONSTRAINT chk_movimientos_monto CHECK (monto > 0),
     CONSTRAINT fk_movimientos_complejo FOREIGN KEY (complejo_id) REFERENCES complejos (id) ON DELETE CASCADE
+) ENGINE=InnoDB;
+
+-- Cómo se reparte el monto de un movimiento entre sus categorías (suman el monto del movimiento)
+CREATE TABLE movimiento_categorias (
+    id            INT AUTO_INCREMENT PRIMARY KEY,
+    movimiento_id INT NOT NULL,
+    categoria     VARCHAR(30) NOT NULL COMMENT 'Clave fija de la API (sueldos, servicios, ventas...)',
+    monto         DECIMAL(10, 2) NOT NULL,
+    UNIQUE KEY uq_movimiento_categoria (movimiento_id, categoria),
+    CONSTRAINT chk_movimiento_categorias_monto CHECK (monto > 0),
+    CONSTRAINT fk_movimiento_categorias FOREIGN KEY (movimiento_id) REFERENCES movimientos (id) ON DELETE CASCADE
 ) ENGINE=InnoDB;
 
 -- Cancha cerrada por mantenimiento, lluvia, etc.

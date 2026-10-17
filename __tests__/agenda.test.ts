@@ -1,5 +1,5 @@
 import type { Bloqueo, CanchaAgenda, Turno } from '../src/api/agenda';
-import { horariosLibres, mensajeCancelacion, mensajeConfirmacion, precioPara } from '../src/utils/agenda';
+import { horariosLibres, mensajeCancelacion, mensajeConfirmacion } from '../src/utils/agenda';
 import { diaEnPlural, diaSemana, fechaLarga, fechaRelativa, inicioDeSemana, sumarDias } from '../src/utils/fechas';
 import { formatearTelefono, linkWhatsApp } from '../src/utils/telefono';
 
@@ -51,18 +51,6 @@ describe('fechas', () => {
     expect(fechaRelativa('2026-10-17', '2026-10-11')).toBe('Sábado 17 de octubre');
     expect(diaEnPlural(6)).toBe('sábados');
     expect(diaEnPlural(2)).toBe('martes');
-  });
-});
-
-describe('precioPara', () => {
-  test('usa la franja en la que empieza el turno', () => {
-    expect(precioPara(cancha, '18:00')).toBe(28000);
-    expect(precioPara(cancha, '23:30')).toBe(28000);
-  });
-
-  test('fuera de las franjas usa el precio base', () => {
-    expect(precioPara(cancha, '17:30')).toBe(20000);
-    expect(precioPara(cancha, '08:00')).toBe(20000);
   });
 });
 
@@ -120,5 +108,19 @@ describe('WhatsApp', () => {
     expect(confirmacion).toContain('$ 28.000');
     expect(confirmacion).toContain('todos los sábados');
     expect(mensajeCancelacion(datos)).toContain('se canceló tu turno del sábado 17/10 a las 19:00');
+  });
+
+  test('con la ubicación del complejo lleva el link "Cómo llegar"', () => {
+    const confirmacion = mensajeConfirmacion({
+      nombreCliente: 'Ana',
+      complejo: 'El Complejo',
+      cancha: 'Pádel 1',
+      fecha: '2026-10-17',
+      horaInicio: '19:00',
+      horaFin: '20:30',
+      precio: 28000,
+      ubicacion: { latitud: -31.4201, longitud: -64.1888 },
+    });
+    expect(confirmacion).toContain('Cómo llegar: https://www.google.com/maps/search/?api=1&query=-31.4201,-64.1888');
   });
 });

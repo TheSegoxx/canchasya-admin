@@ -150,7 +150,12 @@ export function BloqueoScreen({ route, navigation }: Props) {
             onPress={() =>
               abrirWhatsApp(
                 t.cliente.telefono,
-                mensajeDeTurno(t, { complejo: agenda.complejo.nombre, cancha: nombreCancha(t.canchaId) }),
+                mensajeDeTurno(t, {
+                  complejo: agenda.complejo.nombre,
+                  direccion: agenda.complejo.direccion,
+                  ubicacion: agenda.complejo.ubicacion,
+                  cancha: nombreCancha(t.canchaId),
+                }),
               )
             }
             style={({ pressed }) => [

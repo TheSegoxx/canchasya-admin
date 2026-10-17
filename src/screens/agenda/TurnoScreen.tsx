@@ -25,7 +25,7 @@ type Props = NativeStackScreenProps<RutasApp, 'Turno'>;
 // Detalle de un turno: avisar por WhatsApp, llamar, cobrar, cancelar o marcar como jugado
 export function TurnoScreen({ route, navigation }: Props) {
   const { colores } = useTema();
-  const { id, recienCreado } = route.params;
+  const { id } = route.params;
   const [turno, setTurno] = useState<TurnoDetalle | null>(null);
   const [errorCarga, setErrorCarga] = useState('');
   const [guardando, setGuardando] = useState(false);
@@ -53,8 +53,8 @@ export function TurnoScreen({ route, navigation }: Props) {
   }, [id]);
 
   useEffect(() => {
-    navigation.setOptions({ title: recienCreado ? 'Turno reservado' : 'Turno' });
-  }, [navigation, recienCreado]);
+    navigation.setOptions({ title: 'Turno' });
+  }, [navigation]);
 
   // También al volver de cobrar o de agregar un extra
   useFocusEffect(
@@ -125,6 +125,7 @@ export function TurnoScreen({ route, navigation }: Props) {
   const mensaje = mensajeDeTurno(turno, {
     complejo: turno.complejo.nombre,
     direccion: turno.complejo.direccion,
+    ubicacion: turno.complejo.ubicacion,
     cancha: turno.cancha.nombre,
   });
   const color = colorDeTurno(turno, colores);
@@ -139,12 +140,6 @@ export function TurnoScreen({ route, navigation }: Props) {
 
   return (
     <Pantalla>
-      {recienCreado && !cancelado && (
-        <Text accessibilityLiveRegion="polite" style={[estilos.aviso, { color: colores.primario }]}>
-          ✓ Turno reservado. Mandale la confirmación al cliente:
-        </Text>
-      )}
-
       <View style={[estilos.tarjeta, { backgroundColor: colores.superficie, borderColor: colores.borde, borderLeftColor: color }]}>
         <View style={estilos.cabecera}>
           <Icono nombre="persona" color={colores.primario} tamano={28} />
@@ -207,7 +202,6 @@ export function TurnoScreen({ route, navigation }: Props) {
 
 const estilos = StyleSheet.create({
   cargando: { flex: 1, alignItems: 'center', justifyContent: 'center' },
-  aviso: { fontSize: 16, fontWeight: '700', marginBottom: espaciado.m },
   tarjeta: {
     padding: espaciado.m,
     borderRadius: radio,

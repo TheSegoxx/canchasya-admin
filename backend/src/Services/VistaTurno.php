@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Services;
 
+use App\Models\Complejo;
 use App\Models\Consumo;
 use App\Models\LinkPago;
 use App\Models\Pago;
@@ -33,7 +34,11 @@ final class VistaTurno
         return [
             ...$turnos->publico($fila),
             'cancha' => ['id' => (int) $fila['cancha_id'], 'nombre' => $fila['cancha_nombre'], 'deporte' => $fila['cancha_deporte']],
-            'complejo' => ['nombre' => $fila['complejo_nombre'], 'direccion' => $fila['complejo_direccion']],
+            'complejo' => [
+                'nombre' => $fila['complejo_nombre'],
+                'direccion' => $fila['complejo_direccion'],
+                'ubicacion' => Complejo::ubicacion($fila, 'complejo_'),
+            ],
             'fijo' => $fijo !== null ? [
                 'id' => (int) $fijo['id'],
                 'diaSemana' => (int) $fijo['dia_semana'],

@@ -41,6 +41,7 @@ final class AgendaController extends Controlador
             'complejo' => [
                 'nombre' => $datosComplejo['nombre'],
                 'direccion' => $datosComplejo['direccion'],
+                'ubicacion' => $datosComplejo['ubicacion'],
                 'horaApertura' => $datosComplejo['horaApertura'],
                 'horaCierre' => $datosComplejo['horaCierre'],
             ],

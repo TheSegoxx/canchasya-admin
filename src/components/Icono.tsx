@@ -28,7 +28,9 @@ export type NombreIcono =
   | 'turnosFijos'
   | 'temaClaro'
   | 'temaOscuro'
-  | 'temaDispositivo';
+  | 'temaDispositivo'
+  | 'ubicacion'
+  | 'miUbicacion';
 
 type Props = {
   nombre: NombreIcono;
@@ -190,6 +192,21 @@ export function Icono({ nombre, color, acento = color, tamano = 24 }: Props) {
             <Path d="M3 11v-1a4 4 0 0 1 4-4h14" />
             <Path d="M7 22l-4-4 4-4" />
             <Path d="M21 13v1a4 4 0 0 1-4 4H3" />
+          </>
+        )}
+        {nombre === 'ubicacion' && (
+          <>
+            {/* Pin del mapa con el centro en verde */}
+            <Path d="M12 21s-6.5-5.6-6.5-11a6.5 6.5 0 0 1 13 0c0 5.4-6.5 11-6.5 11Z" />
+            <Circle cx={12} cy={10} r={2.4} {...relleno} />
+          </>
+        )}
+        {nombre === 'miUbicacion' && (
+          <>
+            {/* Mira del GPS */}
+            <Circle cx={12} cy={12} r={6.5} />
+            <Path d="M12 2.5v3M12 18.5v3M2.5 12h3M18.5 12h3" />
+            <Circle cx={12} cy={12} r={2.2} {...relleno} />
           </>
         )}
         {nombre === 'candado' && (

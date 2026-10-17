@@ -10,9 +10,6 @@ import { aHora, aMinutos, minutosAhora } from '../../utils/horas';
 type Props = {
   agenda: Agenda;
   esHoy: boolean;
-  // En días pasados no se pueden cargar turnos: los casilleros libres no responden
-  esPasado: boolean;
-  onLibre: (canchaId: number, hora: string) => void;
   onTurno: (turno: Turno) => void;
   onBloqueo: (bloqueo: Bloqueo, cancha: CanchaAgenda) => void;
 };
@@ -31,9 +28,9 @@ export function colorDeTurno(turno: Turno, colores: Colores): string {
   return turno.estadoPago === 'pagado' ? colores.pagado : turno.estadoPago === 'senado' ? colores.senado : colores.ocupada;
 }
 
-// Grilla del día: una columna por cancha y una fila cada 30 minutos.
-// Tocar un casillero libre carga un turno ahí; tocar un turno lo abre.
-export function GrillaAgenda({ agenda, esHoy, esPasado, onLibre, onTurno, onBloqueo }: Props) {
+// Grilla del día: una columna por cancha y una fila cada 30 minutos. Tocar un turno lo abre.
+// Los casilleros libres no se tocan: los turnos los reservan los jugadores desde su app.
+export function GrillaAgenda({ agenda, esHoy, onTurno, onBloqueo }: Props) {
   const { colores } = useTema();
   const { width } = useWindowDimensions();
   const vertical = useRef<ScrollViewInstance>(null);
@@ -133,19 +130,12 @@ export function GrillaAgenda({ agenda, esHoy, esPasado, onLibre, onTurno, onBloq
                     const hora = aHora(apertura + i * PASO_MINUTOS);
                     const enPunto = (apertura + i * PASO_MINUTOS) % 60 === 0;
                     return (
-                      <Pressable
+                      <View
                         key={hora}
-                        accessibilityRole="button"
-                        accessibilityLabel={`${cancha.nombre}, ${hora}, libre`}
-                        disabled={esPasado || !cancha.habilitada}
-                        onPress={() => onLibre(cancha.id, hora)}
-                        style={({ pressed }) => [
+                        style={[
                           estilos.casillero,
-                          {
-                            // Las medias horas con una línea más tenue
-                            borderTopColor: enPunto ? colores.borde : colores.borde + '66',
-                            backgroundColor: pressed ? colores.primario + '22' : 'transparent',
-                          },
+                          // Las medias horas con una línea más tenue
+                          { borderTopColor: enPunto ? colores.borde : colores.borde + '66' },
                         ]}
                       />
                     );

@@ -62,7 +62,8 @@ final class Turno extends Modelo
         $stmt = $this->pdo->prepare(
             'SELECT t.*, cl.nombre AS cliente_nombre, cl.telefono AS cliente_telefono, ' . self::TOTALES . ',
                     c.nombre AS cancha_nombre, c.deporte AS cancha_deporte, c.complejo_id,
-                    x.nombre AS complejo_nombre, x.direccion AS complejo_direccion, x.usuario_id
+                    x.nombre AS complejo_nombre, x.direccion AS complejo_direccion, x.usuario_id,
+                    x.latitud AS complejo_latitud, x.longitud AS complejo_longitud
              FROM turnos t
              JOIN clientes cl ON cl.id = t.cliente_id
              JOIN canchas c ON c.id = t.cancha_id

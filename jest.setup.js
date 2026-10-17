@@ -29,3 +29,8 @@ jest.mock('@react-native-firebase/messaging', () => ({
   onTokenRefresh: jest.fn(() => () => undefined),
   setBackgroundMessageHandler: jest.fn(),
 }));
+
+jest.mock('@react-native-community/geolocation', () => ({
+  getCurrentPosition: jest.fn(),
+  setRNConfiguration: jest.fn(),
+}));

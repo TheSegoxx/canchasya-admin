@@ -1,5 +1,17 @@
 import { Alert, Linking } from 'react-native';
+import type { Ubicacion } from '../api/complejo';
 import { linkWhatsApp, numeroInternacional } from './telefono';
+
+// Link de Google Maps al punto (abre la app de mapas o el navegador)
+export const linkMapa = (u: Ubicacion) => `https://www.google.com/maps/search/?api=1&query=${u.latitud},${u.longitud}`;
+
+export async function abrirMapa(ubicacion: Ubicacion): Promise<void> {
+  try {
+    await Linking.openURL(linkMapa(ubicacion));
+  } catch {
+    Alert.alert('No se pudo abrir el mapa', 'Este celular no pudo abrir Google Maps ni el navegador.');
+  }
+}
 
 // Abre WhatsApp con el chat del cliente y el mensaje ya escrito (el dueño solo toca enviar)
 export async function abrirWhatsApp(telefono: string, mensaje: string): Promise<void> {

@@ -3,18 +3,21 @@ import { ActivityIndicator, Alert, StyleSheet, View } from 'react-native';
 import { Text } from '../../components/Texto';
 import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import { complejoApi, Servicio, SERVICIOS } from '../../api/complejo';
+import { complejoApi, Servicio, SERVICIOS, Ubicacion } from '../../api/complejo';
 import { Foto, MAXIMO_FOTOS_COMPLEJO } from '../../api/fotos';
 import { Boton } from '../../components/Boton';
 import { CampoTexto } from '../../components/CampoTexto';
 import { Chip } from '../../components/Chip';
 import { ErrorCarga } from '../../components/ErrorCarga';
 import { GaleriaFotos } from '../../components/GaleriaFotos';
+import { Icono } from '../../components/Icono';
 import { Pantalla } from '../../components/Pantalla';
 import { SelectorHora } from '../../components/SelectorHora';
 import { mensajeDeError, useSesion } from '../../context/SesionContext';
 import type { RutasApp } from '../../navigation/AppNavigator';
-import { espaciado, useTema } from '../../theme/tema';
+import { espaciado, radio, useTema } from '../../theme/tema';
+import { ubicacionActual } from '../../ubicacion';
+import { abrirMapa } from '../../utils/acciones';
 import { sumarMinutos } from '../../utils/horas';
 
 /**
@@ -29,6 +32,11 @@ export function ComplejoScreen() {
 
   const [nombre, setNombre] = useState('');
   const [direccion, setDireccion] = useState('');
+  const [ciudad, setCiudad] = useState('');
+  const [ubicacion, setUbicacion] = useState<Ubicacion | null>(null);
+  // Lo que encontró el buscador (para que el dueño confirme que es ahí)
+  const [encontrada, setEncontrada] = useState('');
+  const [ubicando, setUbicando] = useState<'direccion' | 'gps' | null>(null);
   const [telefono, setTelefono] = useState('');
   const [apertura, setApertura] = useState('08:00');
   const [cierre, setCierre] = useState('24:00');
@@ -48,6 +56,8 @@ export function ComplejoScreen() {
       setFotos(guardadas);
       setNombre(complejo.nombre);
       setDireccion(complejo.direccion);
+      setCiudad(complejo.ciudad ?? '');
+      setUbicacion(complejo.ubicacion);
       setTelefono(complejo.telefono ?? '');
       setApertura(complejo.horaApertura);
       setCierre(complejo.horaCierre);
@@ -70,6 +80,36 @@ export function ComplejoScreen() {
       actuales.includes(clave) ? actuales.filter(s => s !== clave) : [...actuales, clave],
     );
 
+  const buscarPorDireccion = async () => {
+    const texto = [direccion.trim(), ciudad.trim()].filter(Boolean).join(', ');
+    if (texto.length < 5) {
+      Alert.alert('Falta la dirección', 'Escribí la dirección y la ciudad del complejo.');
+      return;
+    }
+    setUbicando('direccion');
+    try {
+      const { latitud, longitud, encontrada: lugar } = await complejoApi.buscarUbicacion(texto);
+      setUbicacion({ latitud, longitud });
+      setEncontrada(lugar);
+    } catch (e) {
+      Alert.alert('No se encontró', mensajeDeError(e));
+    } finally {
+      setUbicando(null);
+    }
+  };
+
+  const usarGps = async () => {
+    setUbicando('gps');
+    try {
+      setUbicacion(await ubicacionActual());
+      setEncontrada('');
+    } catch (e) {
+      Alert.alert('Ubicación actual', e instanceof Error ? e.message : 'No se pudo obtener la ubicación.');
+    } finally {
+      setUbicando(null);
+    }
+  };
+
   const guardar = async () => {
     if (guardando) {
       return;
@@ -84,6 +124,8 @@ export function ComplejoScreen() {
       await complejoApi.guardar({
         nombre: nombre.trim(),
         direccion: direccion.trim(),
+        ciudad: ciudad.trim() || null,
+        ubicacion,
         telefono: telefono.trim() || null,
         horaApertura: apertura,
         horaCierre: cierre,
@@ -147,6 +189,60 @@ export function ComplejoScreen() {
         maxLength={150}
         autoComplete="street-address"
       />
+      <CampoTexto etiqueta="Ciudad o localidad" value={ciudad} onChangeText={setCiudad} maxLength={80} placeholder="Por ejemplo, Rosario" />
+
+      <Text style={[estilos.seccion, { color: colores.texto }]}>Ubicación en el mapa</Text>
+      <Text style={[estilos.ayudaChica, { color: colores.textoSecundario }]}>
+        Con la ubicación, el mensaje de confirmación por WhatsApp lleva el link "Cómo llegar".
+      </Text>
+      {ubicacion && (
+        <View style={[estilos.ubicacion, { backgroundColor: colores.superficie, borderColor: colores.primario }]}>
+          <Icono nombre="ubicacion" color={colores.texto} acento={colores.primario} />
+          <View style={estilos.datosUbicacion}>
+            <Text style={[estilos.tituloUbicacion, { color: colores.texto }]}>Ubicación cargada</Text>
+            <Text numberOfLines={2} style={[estilos.ayudaChica, estilos.sinMargen, { color: colores.textoSecundario }]}>
+              {encontrada || `${ubicacion.latitud}, ${ubicacion.longitud}`}
+            </Text>
+          </View>
+        </View>
+      )}
+      {ubicacion && (
+        <View style={estilos.filaBotones}>
+          <View style={estilos.flex}>
+            <Boton titulo="Ver en el mapa" icono="ubicacion" variante="secundario" onPress={() => abrirMapa(ubicacion)} />
+          </View>
+          <View style={estilos.separadorHoras} />
+          <Boton
+            titulo="Quitar"
+            variante="texto"
+            color={colores.error}
+            onPress={() => {
+              setUbicacion(null);
+              setEncontrada('');
+            }}
+          />
+        </View>
+      )}
+      <Boton
+        titulo={ubicacion ? 'Buscar de nuevo con la dirección' : 'Buscar con la dirección'}
+        icono="ubicacion"
+        variante="secundario"
+        onPress={buscarPorDireccion}
+        cargando={ubicando === 'direccion'}
+        deshabilitado={ubicando !== null}
+      />
+      <View style={estilos.espacio} />
+      <Boton
+        titulo="Usar mi ubicación actual"
+        icono="miUbicacion"
+        variante="secundario"
+        onPress={usarGps}
+        cargando={ubicando === 'gps'}
+        deshabilitado={ubicando !== null}
+      />
+      <Text style={[estilos.ayudaChica, { color: colores.textoSecundario }]}>
+        Si estás en el complejo, es lo más preciso. Después tocá "Ver en el mapa" para revisar que esté bien.
+      </Text>
       <CampoTexto
         etiqueta="Teléfono (opcional)"
         value={telefono}
@@ -202,6 +298,20 @@ export function ComplejoScreen() {
 const estilos = StyleSheet.create({
   cargando: { flex: 1, alignItems: 'center', justifyContent: 'center' },
   ayuda: { fontSize: 15, lineHeight: 21, marginBottom: espaciado.l },
+  ayudaChica: { fontSize: 14, lineHeight: 20, marginBottom: espaciado.m },
+  sinMargen: { marginBottom: 0 },
+  ubicacion: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: espaciado.m,
+    borderWidth: 1.5,
+    borderRadius: radio,
+    marginBottom: espaciado.s,
+  },
+  datosUbicacion: { flex: 1, marginLeft: espaciado.m },
+  tituloUbicacion: { fontSize: 16, fontWeight: '700' },
+  filaBotones: { flexDirection: 'row', alignItems: 'center', marginBottom: espaciado.s },
+  flex: { flex: 1 },
   seccion: { fontSize: 17, fontWeight: '700', marginTop: espaciado.s, marginBottom: espaciado.s },
   horarios: { flexDirection: 'row', marginBottom: espaciado.m },
   separadorHoras: { width: espaciado.m },

@@ -24,15 +24,29 @@ export const CATEGORIAS: Record<TipoMovimiento, { clave: string; nombre: string 
 export const nombreCategoria = (tipo: TipoMovimiento, clave: string) =>
   CATEGORIAS[tipo].find(c => c.clave === clave)?.nombre ?? clave;
 
+// Parte del monto de un movimiento que va a una categoría
+export type ParteCategoria = { categoria: string; monto: number };
+
 export type Movimiento = {
   id: number;
   tipo: TipoMovimiento;
+  // La principal (la de mayor monto)
   categoria: string;
+  // Cómo se reparte el monto (suman el monto); de mayor a menor
+  categorias: ParteCategoria[];
   descripcion: string | null;
   monto: number;
   metodo: MetodoManual;
   fecha: string;
 };
+
+export type NuevoMovimiento = Pick<Movimiento, 'tipo' | 'categorias' | 'descripcion' | 'metodo' | 'fecha'>;
+
+// "Compras y mercadería + Mantenimiento"
+export const nombresCategorias = (m: Pick<Movimiento, 'tipo' | 'categoria' | 'categorias'>) =>
+  (m.categorias.length > 0 ? m.categorias.map(c => c.categoria) : [m.categoria])
+    .map(c => nombreCategoria(m.tipo, c))
+    .join(' + ');
 
 export type Resumen = {
   desde: string;
@@ -57,6 +71,6 @@ export const dashboardApi = {
   resumen: (desde: string, hasta: string) => api<Resumen>(`/dashboard?desde=${desde}&hasta=${hasta}`),
   movimientos: (desde: string, hasta: string) =>
     api<{ movimientos: Movimiento[] }>(`/movimientos?desde=${desde}&hasta=${hasta}`),
-  crearMovimiento: (datos: Omit<Movimiento, 'id'>) => api<{ movimiento: Movimiento }>('/movimientos', 'POST', datos),
+  crearMovimiento: (datos: NuevoMovimiento) => api<{ movimiento: Movimiento }>('/movimientos', 'POST', datos),
   borrarMovimiento: (id: number) => api<null>(`/movimientos/${id}`, 'DELETE'),
 };

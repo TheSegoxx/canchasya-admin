@@ -53,14 +53,6 @@ export function AgendaScreen() {
     }, [cargar, fecha]),
   );
 
-  const nuevoTurno = (canchaId?: number, hora?: string) => navigation.navigate('NuevoTurno', { fecha, canchaId, hora });
-
-  const agregar = () =>
-    Alert.alert('Agregar', `¿Qué querés cargar para ${fechaRelativa(fecha).toLowerCase()}?`, [
-      { text: 'Cancelar', style: 'cancel' },
-      { text: 'Bloquear horario', onPress: () => navigation.navigate('Bloqueo', { fecha }) },
-      { text: 'Nuevo turno', onPress: () => nuevoTurno() },
-    ]);
 
   const verBloqueo = (bloqueo: Bloqueo, cancha: CanchaAgenda) =>
     Alert.alert(
@@ -90,7 +82,12 @@ export function AgendaScreen() {
     const cancha = agenda.canchas.find(c => c.id === turno.canchaId)?.nombre ?? '';
     abrirWhatsApp(
       turno.cliente.telefono,
-      mensajeDeTurno(turno, { complejo: agenda.complejo.nombre, direccion: agenda.complejo.direccion, cancha }),
+      mensajeDeTurno(turno, {
+        complejo: agenda.complejo.nombre,
+        direccion: agenda.complejo.direccion,
+        ubicacion: agenda.complejo.ubicacion,
+        cancha,
+      }),
     );
   };
 
@@ -117,8 +114,6 @@ export function AgendaScreen() {
         <GrillaAgenda
           agenda={delDia}
           esHoy={fecha === hoy}
-          esPasado={esPasado}
-          onLibre={nuevoTurno}
           onTurno={t => navigation.navigate('Turno', { id: t.id })}
           onBloqueo={verBloqueo}
         />
@@ -172,13 +167,14 @@ export function AgendaScreen() {
 
       {contenido}
 
+      {/* Los turnos los reservan los jugadores desde su app: acá solo se bloquean horarios (lluvia, mantenimiento) */}
       {!esPasado && (
         <Pressable
           accessibilityRole="button"
-          accessibilityLabel="Agregar turno o bloqueo"
-          onPress={agregar}
+          accessibilityLabel="Bloquear horario"
+          onPress={() => navigation.navigate('Bloqueo', { fecha })}
           style={({ pressed }) => [estilos.flotante, { backgroundColor: colores.primario, opacity: pressed ? 0.85 : 1 }]}>
-          <Icono nombre="agregar" color={colores.textoSobrePrimario} tamano={28} />
+          <Icono nombre="candado" color={colores.textoSobrePrimario} tamano={26} />
         </Pressable>
       )}
     </View>

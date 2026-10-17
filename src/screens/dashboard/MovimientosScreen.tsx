@@ -4,7 +4,7 @@ import { Text } from '../../components/Texto';
 import { useFocusEffect } from '@react-navigation/native';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { NOMBRE_METODO } from '../../api/cobros';
-import { dashboardApi, Movimiento, nombreCategoria } from '../../api/dashboard';
+import { dashboardApi, Movimiento, nombreCategoria, nombresCategorias } from '../../api/dashboard';
 import { Boton } from '../../components/Boton';
 import { Icono } from '../../components/Icono';
 import { mensajeDeError } from '../../context/SesionContext';
@@ -45,7 +45,7 @@ export function MovimientosScreen({ route, navigation }: Props) {
   );
 
   const borrar = (m: Movimiento) =>
-    Alert.alert('Borrar', `${nombreCategoria(m.tipo, m.categoria)} de ${formatearPesos(m.monto)} del ${fechaCorta(m.fecha)}.`, [
+    Alert.alert('Borrar', `${nombresCategorias(m)} de ${formatearPesos(m.monto)} del ${fechaCorta(m.fecha)}.`, [
       { text: 'Volver', style: 'cancel' },
       {
         text: 'Borrar',
@@ -68,7 +68,13 @@ export function MovimientosScreen({ route, navigation }: Props) {
         {/* El color identifica el tipo; el texto queda en color de texto */}
         <View style={[estilos.marca, { backgroundColor: egreso ? colores.serieEgresos : colores.serieIngresos }]} />
         <View style={estilos.datos}>
-          <Text style={[estilos.categoria, { color: colores.texto }]}>{nombreCategoria(item.tipo, item.categoria)}</Text>
+          <Text style={[estilos.categoria, { color: colores.texto }]}>{nombresCategorias(item)}</Text>
+          {/* Con varias categorías, cuánto fue a cada una */}
+          {item.categorias.length > 1 && (
+            <Text style={[estilos.detalle, { color: colores.textoSecundario }]}>
+              {item.categorias.map(c => `${nombreCategoria(item.tipo, c.categoria)} ${formatearPesos(c.monto)}`).join(' · ')}
+            </Text>
+          )}
           <Text numberOfLines={1} style={[estilos.detalle, { color: colores.textoSecundario }]}>
             {fechaCorta(item.fecha)} · {NOMBRE_METODO[item.metodo]}
             {item.descripcion ? ` · ${item.descripcion}` : ''}
@@ -80,7 +86,7 @@ export function MovimientosScreen({ route, navigation }: Props) {
         </Text>
         <Pressable
           accessibilityRole="button"
-          accessibilityLabel={`Borrar ${nombreCategoria(item.tipo, item.categoria)}`}
+          accessibilityLabel={`Borrar ${nombresCategorias(item)}`}
           onPress={() => borrar(item)}
           hitSlop={8}
           style={estilos.borrar}>

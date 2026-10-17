@@ -109,7 +109,11 @@ final class DashboardController extends Controlador
         ]);
     }
 
-    // POST /movimientos  {tipo, categoria, descripcion?, monto, metodo, fecha}
+    /**
+     * POST /movimientos  {tipo, categorias: [{categoria, monto}], descripcion?, metodo, fecha}
+     * El monto del movimiento es la suma de sus categorías. También acepta una sola
+     * categoría como {categoria, monto}, como lo manda la versión 1.0 de la app.
+     */
     public function crear(): void
     {
         $this->soloDueno();
@@ -120,29 +124,54 @@ final class DashboardController extends Controlador
         if (!in_array($tipo, Movimiento::TIPOS, true)) {
             responder(400, ['error' => 'El tipo tiene que ser ingreso o egreso']);
         }
-        $categoria = textoDe($datos, 'categoria');
-        if (!in_array($categoria, Movimiento::CATEGORIAS[$tipo], true)) {
-            responder(400, ['error' => 'La categoría no es válida']);
-        }
+        $partes = $this->partes($datos, $tipo);
         $descripcion = trim(textoDe($datos, 'descripcion'));
         if (mb_strlen($descripcion) > 100) {
             responder(400, ['error' => 'La descripción no puede superar los 100 caracteres']);
         }
-        $pago = pagoValido($datos);
+        // El monto de verdad es la suma de las partes: acá solo se valida el medio de pago
+        $metodo = pagoValido([...$datos, 'monto' => 1])['metodo'];
         $fecha = fechaRequerida($datos, 'fecha', 'la fecha');
         if ($fecha > sumarDias(hoy(), 365)) {
             responder(400, ['error' => 'La fecha es demasiado lejana']);
         }
 
-        $id = $this->movimientos->crear($complejoId, [
+        $id = $this->transaccion(fn () => $this->movimientos->crear($complejoId, [
             'tipo' => $tipo,
-            'categoria' => $categoria,
+            'partes' => $partes,
             'descripcion' => $descripcion !== '' ? $descripcion : null,
-            'monto' => $pago['monto'],
-            'metodo' => $pago['metodo'],
+            'metodo' => $metodo,
             'fecha' => $fecha,
-        ]);
-        responder(201, ['movimiento' => $this->movimientos->publico($this->movimientos->buscarPorId($id))]);
+        ]));
+        responder(201, ['movimiento' => $this->movimientos->publico($this->movimientos->buscarConPartes($id))]);
+    }
+
+    /** @return list<array{categoria: string, monto: float}> */
+    private function partes(array $datos, string $tipo): array
+    {
+        $partes = $datos['categorias'] ?? [['categoria' => $datos['categoria'] ?? null, 'monto' => $datos['monto'] ?? null]];
+        if (!is_array($partes) || $partes === [] || !array_is_list($partes)) {
+            responder(400, ['error' => 'Elegí al menos una categoría']);
+        }
+        $validas = [];
+        foreach ($partes as $parte) {
+            if (!is_array($parte)) {
+                responder(400, ['error' => 'Las categorías no tienen el formato correcto']);
+            }
+            $categoria = textoDe($parte, 'categoria');
+            if (!in_array($categoria, Movimiento::CATEGORIAS[$tipo], true)) {
+                responder(400, ['error' => 'La categoría no es válida']);
+            }
+            if (isset($validas[$categoria])) {
+                responder(400, ['error' => 'Hay una categoría repetida']);
+            }
+            $monto = precioRequerido($parte, 'monto', 'el monto');
+            if ($monto <= 0) {
+                responder(400, ['error' => 'El monto de cada categoría tiene que ser mayor a cero']);
+            }
+            $validas[$categoria] = ['categoria' => $categoria, 'monto' => $monto];
+        }
+        return array_values($validas);
     }
 
     // DELETE /movimientos/:id

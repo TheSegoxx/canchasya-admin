@@ -12,9 +12,13 @@ export const SERVICIOS = [
 
 export type Servicio = (typeof SERVICIOS)[number]['clave'];
 
+export type Ubicacion = { latitud: number; longitud: number };
+
 export type DatosComplejo = {
   nombre: string;
   direccion: string;
+  ciudad: string | null;
+  ubicacion: Ubicacion | null;
   telefono: string | null;
   horaApertura: string; // "HH:MM"
   horaCierre: string; // "HH:MM", puede ser "24:00"
@@ -27,4 +31,7 @@ export type Complejo = DatosComplejo & { id: number };
 export const complejoApi = {
   obtener: () => api<{ complejo: Complejo; fotos: Foto[] }>('/complejo'),
   guardar: (datos: DatosComplejo) => api<{ complejo: Complejo }>('/complejo', 'PUT', datos),
+  // Las coordenadas de una dirección (con OpenStreetMap)
+  buscarUbicacion: (direccion: string) =>
+    api<Ubicacion & { encontrada: string }>(`/complejo/buscar-ubicacion?direccion=${encodeURIComponent(direccion)}`),
 };

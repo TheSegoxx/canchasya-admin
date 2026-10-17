@@ -11,7 +11,6 @@ import { useEsDueno, useSesion } from '../context/SesionContext';
 import { LoginScreen } from '../screens/auth/LoginScreen';
 import { AgendaScreen } from '../screens/agenda/AgendaScreen';
 import { BloqueoScreen } from '../screens/agenda/BloqueoScreen';
-import { NuevoTurnoScreen } from '../screens/agenda/NuevoTurnoScreen';
 import { TurnoScreen } from '../screens/agenda/TurnoScreen';
 import { TurnosFijosScreen } from '../screens/agenda/TurnosFijosScreen';
 import { RecuperarScreen } from '../screens/auth/RecuperarScreen';
@@ -64,8 +63,7 @@ export type RutasApp = {
   // Sin id: nueva cancha; con id: editar
   Cancha: { id?: number } | undefined;
   // Cancha y hora vienen del casillero tocado en la grilla
-  NuevoTurno: { fecha: string; canchaId?: number; hora?: string };
-  Turno: { id: number; recienCreado?: boolean };
+  Turno: { id: number };
   Bloqueo: { fecha: string; canchaId?: number };
   TurnosFijos: undefined;
   Clientes: undefined;
@@ -146,7 +144,6 @@ function Aplicacion({ tieneComplejo }: { tieneComplejo: boolean }) {
           <PilaApp.Screen name="Pestanas" component={Principal} options={{ headerShown: false }} />
           <PilaApp.Screen name="Complejo" component={ComplejoScreen} options={{ title: 'Datos del complejo' }} />
           <PilaApp.Screen name="Cancha" component={CanchaScreen} />
-          <PilaApp.Screen name="NuevoTurno" component={NuevoTurnoScreen} options={{ title: 'Nuevo turno' }} />
           <PilaApp.Screen name="Turno" component={TurnoScreen} />
           <PilaApp.Screen name="Bloqueo" component={BloqueoScreen} options={{ title: 'Bloquear horario' }} />
           <PilaApp.Screen name="TurnosFijos" component={TurnosFijosScreen} options={{ title: 'Turnos fijos' }} />

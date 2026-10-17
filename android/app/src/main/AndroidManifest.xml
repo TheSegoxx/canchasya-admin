@@ -3,6 +3,9 @@
     <uses-permission android:name="android.permission.INTERNET" />
     <!-- Android 13 o superior: permiso para mostrar notificaciones (la app lo pide al iniciar sesión) -->
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+    <!-- "Usar mi ubicación actual" al cargar dónde queda el complejo -->
+    <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
+    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
 
     <application
       android:name=".MainApplication"

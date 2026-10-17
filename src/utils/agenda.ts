@@ -1,4 +1,6 @@
 import type { Bloqueo, CanchaAgenda, Turno } from '../api/agenda';
+import type { Ubicacion } from '../api/complejo';
+import { linkMapa } from './acciones';
 import { DIAS, diaEnPlural, diaSemana, fechaCorta } from './fechas';
 import { formatearPesos } from './formato';
 import { aHora, aMinutos, seSuperponen } from './horas';
@@ -9,13 +11,6 @@ import { aHora, aMinutos, seSuperponen } from './horas';
 
 // Cada cuánto se puede empezar un turno
 export const PASO_MINUTOS = 30;
-
-// Precio de la franja en que empieza el turno, o el precio base de la cancha
-export function precioPara(cancha: CanchaAgenda, horaInicio: string): number {
-  const minutos = aMinutos(horaInicio);
-  const franja = cancha.franjas.find(f => aMinutos(f.horaDesde) <= minutos && minutos < aMinutos(f.horaHasta));
-  return franja ? franja.precio : cancha.precioBase;
-}
 
 export const turnoActivo = (t: Turno) => t.estado !== 'cancelado';
 
@@ -50,6 +45,7 @@ type DatosMensaje = {
   nombreCliente: string;
   complejo: string;
   direccion?: string;
+  ubicacion?: Ubicacion | null;
   cancha: string;
   fecha: string;
   horaInicio: string;
@@ -73,6 +69,9 @@ export function mensajeConfirmacion(d: DatosMensaje): string {
   if (d.direccion) {
     lineas.push(`📍 ${d.direccion}`);
   }
+  if (d.ubicacion) {
+    lineas.push(`Cómo llegar: ${linkMapa(d.ubicacion)}`);
+  }
   if (d.diaFijo) {
     lineas.push(`Es tu turno fijo de todos los ${diaEnPlural(d.diaFijo)}.`);
   }
@@ -88,11 +87,15 @@ export function mensajeCancelacion(d: DatosMensaje): string {
 }
 
 // El mensaje que corresponde al estado del turno: confirmación o aviso de cancelación
-export function mensajeDeTurno(turno: Turno, lugar: { complejo: string; direccion?: string; cancha: string }): string {
+export function mensajeDeTurno(
+  turno: Turno,
+  lugar: { complejo: string; direccion?: string; ubicacion?: Ubicacion | null; cancha: string },
+): string {
   const datos: DatosMensaje = {
     nombreCliente: turno.cliente.nombre,
     complejo: lugar.complejo,
     direccion: lugar.direccion,
+    ubicacion: lugar.ubicacion,
     cancha: lugar.cancha,
     fecha: turno.fecha,
     horaInicio: turno.horaInicio,

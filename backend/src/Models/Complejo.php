@@ -30,6 +30,9 @@ final class Complejo extends Modelo
         $columnas = [
             'nombre' => $datos['nombre'],
             'direccion' => $datos['direccion'],
+            'ciudad' => $datos['ciudad'],
+            'latitud' => $datos['latitud'],
+            'longitud' => $datos['longitud'],
             'telefono' => $datos['telefono'],
             'hora_apertura' => $datos['horaApertura'],
             'hora_cierre' => $datos['horaCierre'],
@@ -52,10 +55,25 @@ final class Complejo extends Modelo
             'id' => (int) $complejo['id'],
             'nombre' => $complejo['nombre'],
             'direccion' => $complejo['direccion'],
+            'ciudad' => $complejo['ciudad'],
+            'ubicacion' => self::ubicacion($complejo),
             'telefono' => $complejo['telefono'],
             'horaApertura' => substr($complejo['hora_apertura'], 0, 5),
             'horaCierre' => substr($complejo['hora_cierre'], 0, 5),
             'servicios' => json_decode($complejo['servicios'] ?? '[]', true) ?? [],
         ];
+    }
+
+    /**
+     * {latitud, longitud} o null si no se cargó. Recibe una fila con las columnas
+     * latitud y longitud (o complejo_latitud y complejo_longitud, como la arma Turno).
+     */
+    public static function ubicacion(array $fila, string $prefijo = ''): ?array
+    {
+        $latitud = $fila[$prefijo . 'latitud'] ?? null;
+        $longitud = $fila[$prefijo . 'longitud'] ?? null;
+        return $latitud !== null && $longitud !== null
+            ? ['latitud' => (float) $latitud, 'longitud' => (float) $longitud]
+            : null;
     }
 }

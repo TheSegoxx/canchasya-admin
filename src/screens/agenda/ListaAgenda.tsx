@@ -107,7 +107,7 @@ export function ListaAgenda({ agenda, onTurno, onBloqueo, onWhatsApp }: Props) {
       contentContainerStyle={estilos.lista}
       ListEmptyComponent={
         <Text style={[estilos.vacio, { color: colores.textoSecundario }]}>
-          No hay turnos este día. Tocá + para cargar uno.
+          No hay turnos este día. Los reservan los jugadores desde la app CanchasYa.
         </Text>
       }
     />
