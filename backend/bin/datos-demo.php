@@ -6,7 +6,8 @@ declare(strict_types=1);
  * Carga una cuenta de demostración con datos para ver la app funcionando:
  * complejo, canchas con precios por franja, productos, turnos de hoy y de los próximos días
  * (pagados, señados y sin pagar), un turno fijo, un bloqueo, un mes de historial para el
- * dashboard, gastos e ingresos, una liga con resultados y un encargado.
+ * dashboard, gastos e ingresos, una liga con resultados y un encargado. Del lado de los jugadores:
+ * Sofía con sellos de fidelidad (y un premio) y una reserva, y Martina buscando jugadores ("me falta uno").
  *
  * Usa la API (Apache y MySQL de XAMPP encendidos) y la base solo para el historial,
  * porque la API no deja cargar turnos en días pasados. Las fechas son relativas a hoy.
@@ -14,7 +15,8 @@ declare(strict_types=1);
  *
  *   C:\xampp\php\php.exe bin\datos-demo.php [http://localhost/canchasya/api]
  *
- * Cuentas: demo@canchasya.test / demo1234 (dueño) y encargado@canchasya.test / demo1234.
+ * Cuentas (contraseña demo1234): demo@canchasya.test (dueño), encargado@canchasya.test (encargado),
+ * jugador@canchasya.test (jugadora) y martina@canchasya.test (otra jugadora).
  */
 
 use App\Database;
@@ -32,6 +34,7 @@ Dotenv::createImmutable($raiz)->load();
 const DUENO = 'demo@canchasya.test';
 const ENCARGADO = 'encargado@canchasya.test';
 const JUGADOR = 'jugador@canchasya.test';
+const JUGADORA = 'martina@canchasya.test';
 const CLAVE = 'demo1234';
 
 $api = rtrim($argv[1] ?? 'http://localhost/canchasya/api', '/');
@@ -75,8 +78,8 @@ function fecha(int $dias): string
 }
 
 // 1) Si ya estaba la demo, se borra (en orden, por las claves foráneas sin borrado en cascada)
-$stmt = $pdo->prepare('SELECT id FROM usuarios WHERE email IN (?, ?, ?)');
-$stmt->execute([DUENO, ENCARGADO, JUGADOR]);
+$stmt = $pdo->prepare('SELECT id FROM usuarios WHERE email IN (?, ?, ?, ?)');
+$stmt->execute([DUENO, ENCARGADO, JUGADOR, JUGADORA]);
 $anteriores = $stmt->fetchAll(PDO::FETCH_COLUMN);
 if ($anteriores !== []) {
     $marcas = implode(', ', array_fill(0, count($anteriores), '?'));
@@ -98,10 +101,14 @@ $tokenEncargado = pedir('POST', '/auth/register', [
     'nombre' => 'Lucía Fernández', 'email' => ENCARGADO, 'password' => CLAVE, 'rol' => 'dueno', 'telefono' => '11 4000 5678',
 ])['token'];
 // Un jugador para probar la parte de los clientes
-pedir('POST', '/auth/register', [
+$tokenJugador = pedir('POST', '/auth/register', [
     'nombre' => 'Sofía Herrera', 'email' => JUGADOR, 'password' => CLAVE, 'rol' => 'jugador',
     'telefono' => '11 3000 0101', 'ciudad' => 'Almagro', 'deportes' => ['padel', 'futbol5'],
-]);
+])['token'];
+$tokenJugadora = pedir('POST', '/auth/register', [
+    'nombre' => 'Martina Ríos', 'email' => JUGADORA, 'password' => CLAVE, 'rol' => 'jugador',
+    'telefono' => '11 3000 0303', 'ciudad' => 'Caballito', 'deportes' => ['futbol5'],
+])['token'];
 
 pedir('PUT', '/complejo', [
     'nombre' => 'Complejo Demo CanchasYa',
@@ -261,7 +268,35 @@ for ($d = -30; $d <= -1; $d++) {
 }
 $pdo->commit();
 
+// 8) Jugadores: Sofía jugó 12 turnos reservando por la app (un premio de fidelidad y 2 sellos de la
+// tarjeta nueva) y tiene una reserva mañana con la seña pagada; Martina busca 2 jugadores
+$jugadoraId = (int) $pdo->query("SELECT id FROM usuarios WHERE email = '" . JUGADOR . "'")->fetchColumn();
+$pdo->prepare('INSERT INTO clientes (complejo_id, nombre, telefono) VALUES (?, ?, ?)')->execute([$complejoId, 'Sofía Herrera', '1130000101']);
+$clienteJugadora = (int) $pdo->lastInsertId();
+$jugado = $pdo->prepare(
+    "INSERT INTO turnos (cancha_id, cliente_id, usuario_id, fecha, hora_inicio, hora_fin, precio, estado, estado_pago)
+     VALUES (?, ?, ?, ?, '10:00', '11:00', 36000, 'jugado', 'pagado')"
+);
+for ($i = 1; $i <= 12; $i++) {
+    $dia = fecha(-2 * $i);
+    $jugado->execute([$canchas['Fútbol 5'], $clienteJugadora, $jugadoraId, $dia]);
+    $pago->execute([(int) $pdo->lastInsertId(), 36000, 'mercadopago', 'total', "$dia 09:00:00"]);
+}
+$reservaSofia = pedir('POST', '/reservas', [
+    'canchaId' => $canchas['Fútbol 5'], 'fecha' => fecha(1), 'horaInicio' => '17:00', 'duracionMin' => 120, 'pago' => 'sena',
+], $tokenJugador)['reserva'];
+pedir('POST', "/turnos/{$reservaSofia['id']}/pagos", ['monto' => $reservaSofia['sena'], 'metodo' => 'transferencia'], $token);
+
+$reservaMartina = pedir('POST', '/reservas', [
+    'canchaId' => $canchas['Fútbol 5'], 'fecha' => fecha(2), 'horaInicio' => '20:00', 'duracionMin' => 60, 'pago' => 'sena',
+], $tokenJugadora)['reserva'];
+pedir('POST', "/turnos/{$reservaMartina['id']}/pagos", ['monto' => $reservaMartina['sena'], 'metodo' => 'transferencia'], $token);
+pedir('PUT', "/reservas/{$reservaMartina['id']}/me-falta-uno", [
+    'faltan' => 2, 'nivel' => 'intermedio', 'comentario' => 'Nos faltan 2 para el picado, buena onda',
+], $tokenJugadora);
+
 echo "Demo lista: $cargados turnos de historial.\n";
 echo 'Dueño: ' . DUENO . ' / ' . CLAVE . "\n";
 echo 'Encargado: ' . ENCARGADO . ' / ' . CLAVE . "\n";
-echo 'Jugador: ' . JUGADOR . ' / ' . CLAVE . "\n";
+echo 'Jugadora: ' . JUGADOR . ' / ' . CLAVE . "\n";
+echo 'Otra jugadora: ' . JUGADORA . ' / ' . CLAVE . "\n";
