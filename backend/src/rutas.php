@@ -56,6 +56,8 @@ $router->agregar('GET', '/reservas/:id', fn (array $p) => (new ReservaController
 $router->agregar('POST', '/reservas/:id/pago', fn (array $p) => (new ReservaController())->pagar($p['id']));
 $router->agregar('POST', '/reservas/:id/verificar-pago', fn (array $p) => (new ReservaController())->verificarPago($p['id']));
 $router->agregar('POST', '/reservas/:id/cancelar', fn (array $p) => (new ReservaController())->cancelar($p['id']));
+$router->agregar('POST', '/reservas/:id/vaquita', fn (array $p) => (new ReservaController())->armarVaquita($p['id']));
+$router->agregar('DELETE', '/reservas/:id/vaquita', fn (array $p) => (new ReservaController())->deshacerVaquita($p['id']));
 
 // Complejo del dueño
 $router->agregar('GET', '/complejo', fn () => (new ComplejoController())->obtener());

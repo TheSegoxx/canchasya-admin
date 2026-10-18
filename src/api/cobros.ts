@@ -17,6 +17,8 @@ export type LinkPago = {
   url: string;
   estado: 'pendiente' | 'pagado' | 'vencido';
   venceEn: string; // "AAAA-MM-DD HH:MM"
+  // De quién es, si es una parte de la vaquita del jugador
+  vaquita?: string | null;
 };
 
 // Qué fue el pago según lo que el turno debía cuando entró (lo decide la API al registrarlo)

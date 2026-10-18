@@ -35,6 +35,14 @@ final class Dispositivo extends Modelo
         $this->pdo->prepare("DELETE FROM dispositivos WHERE token IN ($marcas)")->execute($tokens);
     }
 
+    /** @return list<string> */
+    public function tokensDelUsuario(int $usuarioId): array
+    {
+        $stmt = $this->pdo->prepare('SELECT token FROM dispositivos WHERE usuario_id = ?');
+        $stmt->execute([$usuarioId]);
+        return $stmt->fetchAll(\PDO::FETCH_COLUMN);
+    }
+
     /**
      * Tokens de la gente del complejo: el dueño y, si $conEncargados, sus empleados.
      *

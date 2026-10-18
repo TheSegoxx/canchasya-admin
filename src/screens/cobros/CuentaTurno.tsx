@@ -149,7 +149,9 @@ function LineaLink({ link, turno, onCambio }: { link: LinkPago; turno: TurnoDeta
   return (
     <View style={[estilos.link, { borderColor: colores.borde }]}>
       <View style={estilos.datosLink}>
-        <Text style={[estilos.texto, { color: colores.texto }]}>Link Mercado Pago {formatearPesos(link.monto)}</Text>
+        <Text style={[estilos.texto, { color: colores.texto }]}>
+          {link.vaquita ? `Vaquita · ${link.vaquita}` : 'Link Mercado Pago'} {formatearPesos(link.monto)}
+        </Text>
         <Text style={[estilos.detalleLink, { color: pendiente ? colores.senado : colores.inactivo }]}>
           {pendiente
             ? `Esperando el pago · vence ${fechaCorta(link.venceEn.slice(0, 10))} ${link.venceEn.slice(11)}`

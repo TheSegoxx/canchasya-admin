@@ -22,7 +22,7 @@ export function AvisosPush() {
   const posicion = useRef(new Animated.Value(0)).current;
   // Una notificación tocada antes de que la app esté lista (sesión cargando)
   const pendiente = useRef<Aviso | null>(null);
-  const puedeAbrir = !!usuario?.tieneComplejo;
+  const puedeAbrir = !!usuario?.tieneComplejo || usuario?.rol === 'jugador';
   const puedeAbrirRef = useRef(puedeAbrir);
   puedeAbrirRef.current = puedeAbrir;
 
@@ -32,7 +32,9 @@ export function AvisosPush() {
       return;
     }
     pendiente.current = null;
-    if (destino.turnoId !== null) {
+    if (destino.reservaId !== null) {
+      navegacion.navigate('Reserva', { id: destino.reservaId });
+    } else if (destino.turnoId !== null) {
       navegacion.navigate('Turno', { id: destino.turnoId });
     } else if (destino.pantalla === 'caja') {
       navegacion.navigate('Caja');

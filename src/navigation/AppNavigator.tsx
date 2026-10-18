@@ -49,6 +49,7 @@ import { MisReservasScreen } from '../screens/jugador/MisReservasScreen';
 import { PerfilJugadorScreen } from '../screens/jugador/PerfilJugadorScreen';
 import { ReservaScreen } from '../screens/jugador/ReservaScreen';
 import { ReservarScreen } from '../screens/jugador/ReservarScreen';
+import { VaquitaScreen } from '../screens/jugador/VaquitaScreen';
 import { useTema } from '../theme/tema';
 
 export type RutasAuth = {
@@ -113,6 +114,8 @@ export type RutasJugador = {
   Reservar: { complejoId: number; canchaId?: number };
   // nueva: recién reservada (si eligió pagar, la app ya abrió Mercado Pago)
   Reserva: { id: number; nueva?: boolean };
+  // Dividir lo que falta pagar de la reserva entre los amigos
+  Vaquita: { id: number };
 };
 
 export type RutasPestanasJugador = {
@@ -242,6 +245,7 @@ function AplicacionJugador() {
       <PilaJugador.Screen name="ComplejoJugador" component={ComplejoJugadorScreen} />
       <PilaJugador.Screen name="Reservar" component={ReservarScreen} options={{ title: 'Reservar' }} />
       <PilaJugador.Screen name="Reserva" component={ReservaScreen} options={{ title: 'Tu reserva' }} />
+      <PilaJugador.Screen name="Vaquita" component={VaquitaScreen} options={{ title: 'La vaquita' }} />
     </PilaJugador.Navigator>
   );
 }

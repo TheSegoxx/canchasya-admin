@@ -7,6 +7,7 @@ namespace App\Services;
 use App\ErrorHttp;
 use App\Models\LinkPago;
 use App\Models\Turno;
+use App\Models\VaquitaParte;
 use PDO;
 use Throwable;
 
@@ -26,16 +27,18 @@ final class LinksDePago
     /**
      * Crea un link de Mercado Pago por $monto para el turno ($turno es una fila de
      * Turno::buscarDetalle o buscarReserva), que vence en $vence ("Y-m-d H:i:s").
+     * $quien se suma al título (por ejemplo, la parte de la vaquita de un amigo).
      * Va fuera de las transacciones: llama a Mercado Pago.
      */
-    public function crear(array $turno, float $monto, string $vence, MercadoPago $mercadoPago): array
+    public function crear(array $turno, float $monto, string $vence, MercadoPago $mercadoPago, ?string $quien = null): array
     {
         // Primero se guarda (para tener el id que identifica al pago) y después se pide el link
         $id = $this->links->crear((int) $turno['id'], $monto, '', '', $vence);
         try {
             $link = $mercadoPago->crearLink(
                 sprintf(
-                    'Turno %s, %s %s - %s',
+                    '%sTurno %s, %s %s - %s',
+                    $quien !== null ? "Vaquita ($quien): " : '',
                     $turno['cancha_nombre'],
                     fechaLarga($turno['fecha']),
                     horaCorta($turno['hora_inicio']),
@@ -81,17 +84,25 @@ final class LinksDePago
         return ['pagado' => false, 'aviso' => null];
     }
 
-    // Notificación "Pago recibido": después de la transacción de verificar()
+    /**
+     * Notificación "Pago recibido": después de la transacción de verificar().
+     * Si es la parte de la vaquita de un amigo, también se le avisa al jugador que la armó.
+     */
     public function avisarPago(int $id, ?int $exceptoUsuarioId = null): void
     {
         $link = $this->links->buscarPorId($id);
         $turno = (new Turno($this->pdo))->buscarDetalle((int) $link['turno_id']);
-        (new Notificaciones($this->pdo))->alComplejo(
+        $parte = (new VaquitaParte($this->pdo))->buscarPorLink($id);
+        $quien = $parte !== null && !$parte['es_organizador']
+            ? "{$parte['nombre']} (vaquita de {$turno['cliente_nombre']})"
+            : $turno['cliente_nombre'];
+        $notificaciones = new Notificaciones($this->pdo);
+        $notificaciones->alComplejo(
             (int) $turno['complejo_id'],
             'Pago recibido por Mercado Pago',
             sprintf(
                 '%s pagó %s · %s, %s',
-                $turno['cliente_nombre'],
+                $quien,
                 pesos((float) $link['monto']),
                 $turno['cancha_nombre'],
                 Notificaciones::cuando($turno['fecha'], $turno['hora_inicio'])
@@ -99,6 +110,48 @@ final class LinksDePago
             ['turnoId' => (int) $turno['id']],
             $exceptoUsuarioId
         );
+        if ($parte !== null && !$parte['es_organizador'] && $turno['jugador_id'] !== null) {
+            $notificaciones->alUsuario(
+                (int) $turno['jugador_id'],
+                "{$parte['nombre']} puso su parte",
+                sprintf('Pagó %s de la vaquita · %s, %s', pesos((float) $link['monto']), $turno['cancha_nombre'], Notificaciones::cuando($turno['fecha'], $turno['hora_inicio'])),
+                ['reservaId' => (int) $turno['id']]
+            );
+        }
+    }
+
+    /**
+     * Anula esos links también en Mercado Pago (así nadie los paga después). Va fuera de las
+     * transacciones. Si Mercado Pago no responde, el link queda pendiente: si igual lo pagan,
+     * al verificar se registra el pago.
+     *
+     * @param list<int> $ids
+     */
+    public function anular(array $ids): void
+    {
+        if ($ids === []) {
+            return;
+        }
+        try {
+            $mercadoPago = new MercadoPago();
+        } catch (Throwable $e) {
+            error_log('[CanchasYa API] No se pudieron anular links de Mercado Pago: ' . $e->getMessage());
+            return;
+        }
+        foreach ($ids as $id) {
+            $link = $this->links->buscarPorId($id);
+            if ($link === null || $link['estado'] !== 'pendiente') {
+                continue;
+            }
+            try {
+                if ($link['preferencia_id'] !== '') {
+                    $mercadoPago->vencerLink($link['preferencia_id']);
+                }
+                $this->links->cambiarEstado($id, 'anulado');
+            } catch (Throwable $e) {
+                error_log("[CanchasYa API] No se pudo anular el link $id: " . $e->getMessage());
+            }
+        }
     }
 
     /**

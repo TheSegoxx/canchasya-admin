@@ -132,6 +132,8 @@ describe('estado de la reserva', () => {
     cancelableHasta: '2026-10-20 17:00',
     cancelacionHoras: 24,
     linkPago: null,
+    vaquita: [],
+    vaquitaEnMarcha: false,
     complejo: { id: 1, nombre: 'Complejo', direccion: 'Calle 1', ciudad: null, telefono: null, ubicacion: null },
     cancha: { id: 1, nombre: 'Fútbol 5', deporte: 'futbol5' },
   };

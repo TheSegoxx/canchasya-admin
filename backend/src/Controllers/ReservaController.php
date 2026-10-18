@@ -12,6 +12,7 @@ use App\Models\Complejo;
 use App\Models\LinkPago;
 use App\Models\Turno;
 use App\Models\Usuario;
+use App\Models\VaquitaParte;
 use App\Services\AgendaService;
 use App\Services\CobroService;
 use App\Services\LinksDePago;
@@ -22,7 +23,8 @@ use Throwable;
 
 /**
  * Lo que hace el jugador para jugar: ver los horarios libres, reservar (eligiendo cuánto juega),
- * pagar la seña o el total por Mercado Pago, ver sus reservas y cancelarlas.
+ * pagar la seña o el total por Mercado Pago, dividirlo con los amigos (la vaquita), ver sus
+ * reservas y cancelarlas.
  * Al jugador nunca se le muestran datos de otros clientes (un horario ocupado es solo "ocupado").
  */
 final class ReservaController extends Controlador
@@ -38,6 +40,7 @@ final class ReservaController extends Controlador
     private Cancha $canchas;
     private Complejo $complejos;
     private LinkPago $links;
+    private VaquitaParte $vaquita;
     private AgendaService $agenda;
     private Reservas $reservas;
 
@@ -48,6 +51,7 @@ final class ReservaController extends Controlador
         $this->canchas = new Cancha($this->pdo);
         $this->complejos = new Complejo($this->pdo);
         $this->links = new LinkPago($this->pdo);
+        $this->vaquita = new VaquitaParte($this->pdo);
         $this->agenda = new AgendaService($this->pdo);
         $this->reservas = new Reservas($this->pdo);
     }
@@ -245,6 +249,9 @@ final class ReservaController extends Controlador
         if ($que === 'sena' && !Turno::senaPendiente($reserva)) {
             responder(409, ['error' => 'Esta reserva no tiene una seña pendiente']);
         }
+        if ($this->publica($reserva)['vaquitaEnMarcha']) {
+            responder(409, ['error' => 'Hay una vaquita en marcha: pagá tu parte desde la vaquita o deshacela.']);
+        }
         $link = $this->linkDePago($reserva, $que);
         responder(200, ['link' => $link, 'reserva' => $this->publica($this->turnos->buscarReserva($id))]);
     }
@@ -255,6 +262,71 @@ final class ReservaController extends Controlador
         $this->reservaDelJugador($id);
         $pagado = $this->reservas->verificarLinks([$id]);
         responder(200, ['pagado' => $pagado, 'reserva' => $this->publica($this->turnos->buscarReserva($id))]);
+    }
+
+    /**
+     * POST /reservas/:id/vaquita  {partes: [{nombre}, ...]}  (la primera es la del jugador que reservó)
+     * Divide lo que falta pagar entre 2 y 10 personas; cada una recibe su link de Mercado Pago.
+     * Si había otros links esperando el pago, se anulan (los reemplaza la vaquita).
+     */
+    public function armarVaquita(int $id): void
+    {
+        $reserva = $this->reservaDelJugador($id);
+        $nombres = $this->nombresDeLaVaquita(leerJson()['partes'] ?? null);
+        if ($reserva['estado'] !== 'confirmado' || $this->publica($reserva)['terminada']) {
+            responder(409, ['error' => 'La vaquita se arma para una reserva confirmada que todavía no se jugó']);
+        }
+        // Primero se mira si entró algún pago, así no se divide de más
+        $this->reservas->verificarLinks([$id]);
+        if ($this->publica($this->turnos->buscarReserva($id))['vaquitaEnMarcha']) {
+            responder(409, ['error' => 'Ya hay una vaquita en marcha. Deshacela para armar otra.']);
+        }
+        $saldo = (new CobroService($this->pdo))->cuenta($id)['saldo'];
+        if ($saldo < count($nombres)) {
+            responder(409, ['error' => $saldo > 0 ? 'Lo que falta pagar es muy poco para dividirlo' : 'Esta reserva ya está pagada']);
+        }
+
+        // Los links que esperaban el pago (la seña, el total) los reemplaza la vaquita
+        $links = new LinksDePago($this->pdo);
+        $links->anular(array_map(fn (array $l) => (int) $l['id'], $this->links->pendientesDelTurno($id)));
+        if ($this->links->pendientesDelTurno($id) !== []) {
+            responder(502, ['error' => 'No se pudo anular el link de pago anterior en Mercado Pago. Probá de nuevo en un rato.']);
+        }
+
+        $montos = VaquitaParte::dividir($saldo, count($nombres));
+        $partes = $this->transaccion(function () use ($id, $nombres, $montos) {
+            $ids = [];
+            foreach ($nombres as $i => $nombre) {
+                $ids[] = $this->vaquita->crear($id, $nombre, $montos[$i], $i === 0);
+            }
+            return $ids;
+        });
+
+        // Los links vencen cuando termina el turno (si la seña no se completa, se anulan al cancelarse)
+        $vence = AgendaService::rango($reserva['fecha'], $reserva['hora_inicio'], $reserva['hora_fin'])[1];
+        try {
+            $mercadoPago = new MercadoPago();
+            foreach ($partes as $i => $parteId) {
+                $link = $links->crear($reserva, $montos[$i], $vence, $mercadoPago, $nombres[$i]);
+                $this->vaquita->asignarLink($parteId, (int) $link['id']);
+            }
+        } catch (Throwable $e) {
+            // Se deshace lo que se alcanzó a crear
+            $links->anular($this->vaquita->anularSinPagar($id));
+            throw $e;
+        }
+        responder(201, ['reserva' => $this->publica($this->turnos->buscarReserva($id))]);
+    }
+
+    // DELETE /reservas/:id/vaquita  Anula las partes que no se pagaron (las pagadas quedan)
+    public function deshacerVaquita(int $id): void
+    {
+        $this->reservaDelJugador($id);
+        // Antes se registra lo que se haya pagado recién
+        $this->reservas->verificarLinks([$id]);
+        $links = $this->transaccion(fn () => $this->vaquita->anularSinPagar($id));
+        (new LinksDePago($this->pdo))->anular($links);
+        responder(200, ['reserva' => $this->publica($this->turnos->buscarReserva($id))]);
     }
 
     /**
@@ -302,6 +374,31 @@ final class ReservaController extends Controlador
         responder(200, $respuesta);
     }
 
+    /**
+     * Los nombres de la vaquita: de 2 a 10, el primero es el del jugador. Los vacíos se completan.
+     *
+     * @return list<string>
+     */
+    private function nombresDeLaVaquita(mixed $partes): array
+    {
+        if (!is_array($partes) || !array_is_list($partes)
+            || count($partes) < VaquitaParte::MINIMO_PARTES || count($partes) > VaquitaParte::MAXIMO_PARTES) {
+            responder(400, ['error' => sprintf('La vaquita es de %d a %d personas', VaquitaParte::MINIMO_PARTES, VaquitaParte::MAXIMO_PARTES)]);
+        }
+        $nombres = [];
+        foreach ($partes as $i => $parte) {
+            $nombre = is_array($parte) ? trim(textoDe($parte, 'nombre')) : '';
+            if (mb_strlen($nombre) > 40) {
+                responder(400, ['error' => 'Cada nombre puede tener hasta 40 letras']);
+            }
+            if ($nombre === '') {
+                $nombre = $i === 0 ? strtok($this->usuario()['nombre'], ' ') : 'Amigo ' . ($i + 1);
+            }
+            $nombres[] = $nombre;
+        }
+        return $nombres;
+    }
+
     // La reserva como la ve el jugador
     private function publica(array $r): array
     {
@@ -316,9 +413,12 @@ final class ReservaController extends Controlador
         // Solo el link que paga lo que falta (o la seña pendiente). Uno que ya no corresponde
         // (por ejemplo, la seña se pagó en el complejo) no se ofrece
         $vigentes = [$total - $pagado, $senaPendiente ? (float) $r['sena'] - $pagado : -1];
+        $partes = $this->vaquita->listarDelTurno((int) $r['id']);
+        $deLaVaquita = array_map(fn (array $p) => (int) $p['link_id'], $partes);
         $link = null;
         foreach ($this->links->pendientesDelTurno((int) $r['id']) as $l) {
-            $corresponde = abs((float) $l['monto'] - $vigentes[0]) < 0.01 || abs((float) $l['monto'] - $vigentes[1]) < 0.01;
+            $corresponde = !in_array((int) $l['id'], $deLaVaquita, true)
+                && (abs((float) $l['monto'] - $vigentes[0]) < 0.01 || abs((float) $l['monto'] - $vigentes[1]) < 0.01);
             if ($corresponde && $l['vence_en'] > date('Y-m-d H:i:s') && $l['url'] !== '') {
                 $link = $this->links->publico($l);
             }
@@ -344,6 +444,9 @@ final class ReservaController extends Controlador
             'cancelableHasta' => date('Y-m-d H:i', $cancelableHasta),
             'cancelacionHoras' => (int) $r['cancelacion_horas'],
             'linkPago' => $link,
+            // La vaquita: lo que pone cada uno y si ya pagó
+            'vaquita' => array_map([$this->vaquita, 'publico'], $partes),
+            'vaquitaEnMarcha' => array_filter($partes, fn (array $p) => VaquitaParte::estado($p) === 'pendiente') !== [],
             'complejo' => [
                 'id' => (int) $r['complejo_id'],
                 'nombre' => $r['complejo_nombre'],

@@ -22,16 +22,20 @@ export type Aviso = {
   cuerpo: string;
   // Qué abrir al tocarla
   turnoId: number | null;
+  // Al jugador: la reserva (por ejemplo, un amigo pagó su parte de la vaquita)
+  reservaId: number | null;
   pantalla: string | null;
 };
 
 export function avisoDe(mensaje: RemoteMessage): Aviso {
   const datos = mensaje.data ?? {};
   const turnoId = Number(datos.turnoId);
+  const reservaId = Number(datos.reservaId);
   return {
     titulo: mensaje.notification?.title ?? '',
     cuerpo: mensaje.notification?.body ?? '',
     turnoId: Number.isInteger(turnoId) && turnoId > 0 ? turnoId : null,
+    reservaId: Number.isInteger(reservaId) && reservaId > 0 ? reservaId : null,
     pantalla: typeof datos.pantalla === 'string' ? datos.pantalla : null,
   };
 }

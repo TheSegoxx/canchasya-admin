@@ -14,9 +14,14 @@ final class LinkPago extends Modelo
 
     public const HORAS_VIGENCIA = 24;
 
+    // Con el nombre del amigo si es una parte de la vaquita
     public function listarPorTurno(int $turnoId): array
     {
-        $stmt = $this->pdo->prepare('SELECT * FROM links_pago WHERE turno_id = ? ORDER BY id DESC');
+        $stmt = $this->pdo->prepare(
+            'SELECT l.*, v.nombre AS vaquita_nombre FROM links_pago l
+             LEFT JOIN vaquita_partes v ON v.link_id = l.id
+             WHERE l.turno_id = ? ORDER BY l.id DESC'
+        );
         $stmt->execute([$turnoId]);
         return $stmt->fetchAll();
     }
@@ -85,6 +90,8 @@ final class LinkPago extends Modelo
             'url' => $link['url'],
             'estado' => $link['estado'],
             'venceEn' => substr($link['vence_en'], 0, 16),
+            // De quién es, si es una parte de la vaquita del jugador
+            'vaquita' => $link['vaquita_nombre'] ?? null,
         ];
     }
 }

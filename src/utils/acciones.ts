@@ -22,6 +22,25 @@ export async function abrirWhatsApp(telefono: string, mensaje: string): Promise<
   }
 }
 
+// Abre WhatsApp con el mensaje escrito para elegir a quién mandárselo (un amigo o el grupo).
+// Directo a la app; si no abre, por el link web (que pregunta con qué abrirlo)
+export async function compartirPorWhatsApp(mensaje: string): Promise<void> {
+  const texto = encodeURIComponent(mensaje);
+  try {
+    await Linking.openURL(`whatsapp://send?text=${texto}`);
+  } catch {
+    abrirLinkWeb(`https://wa.me/?text=${texto}`);
+  }
+}
+
+async function abrirLinkWeb(url: string): Promise<void> {
+  try {
+    await Linking.openURL(url);
+  } catch {
+    Alert.alert('No se pudo abrir WhatsApp', 'Revisá que WhatsApp esté instalado en este celular.');
+  }
+}
+
 export async function llamar(telefono: string): Promise<void> {
   try {
     await Linking.openURL(`tel:+${numeroInternacional(telefono)}`);

@@ -50,6 +50,20 @@ final class Notificaciones
         }
     }
 
+    // A los celulares de un usuario (por ejemplo, al jugador que armó la vaquita)
+    public function alUsuario(int $usuarioId, string $titulo, string $cuerpo, array $datos = []): void
+    {
+        try {
+            if (!$this->fcm->configurado()) {
+                return;
+            }
+            $tokens = $this->dispositivos->tokensDelUsuario($usuarioId);
+            $this->dispositivos->borrarTokens($this->fcm->enviar($tokens, $titulo, $cuerpo, array_map('strval', $datos)));
+        } catch (Throwable $e) {
+            error_log('[CanchasYa API] No se pudo mandar la notificación: ' . $e->getMessage());
+        }
+    }
+
     // "hoy a las 20:00", "mañana a las 20:00" o "sábado 14 de octubre a las 20:00"
     public static function cuando(string $fecha, string $hora): string
     {

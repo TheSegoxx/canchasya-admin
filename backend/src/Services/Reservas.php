@@ -113,16 +113,32 @@ final class Reservas
     private function avisarLiberada(int $turnoId): void
     {
         $turno = $this->turnos->buscarDetalle($turnoId);
-        (new Notificaciones($this->pdo))->alComplejo(
+        $pagado = (float) $turno['pagado'];
+        $notificaciones = new Notificaciones($this->pdo);
+        $notificaciones->alComplejo(
             (int) $turno['complejo_id'],
             'Se liberó un horario',
             sprintf(
-                '%s no pagó la seña a tiempo · %s, %s',
+                '%s no completó la seña a tiempo · %s, %s%s',
                 $turno['cliente_nombre'],
                 $turno['cancha_nombre'],
-                Notificaciones::cuando($turno['fecha'], $turno['hora_inicio'])
+                Notificaciones::cuando($turno['fecha'], $turno['hora_inicio']),
+                $pagado > 0 ? '. Había pagado ' . pesos($pagado) . ': hay que devolverlo.' : ''
             ),
             ['turnoId' => $turnoId]
         );
+        if ($turno['jugador_id'] !== null) {
+            $notificaciones->alUsuario(
+                (int) $turno['jugador_id'],
+                'Se canceló tu reserva',
+                sprintf(
+                    'No se completó la seña a tiempo · %s, %s%s',
+                    $turno['cancha_nombre'],
+                    Notificaciones::cuando($turno['fecha'], $turno['hora_inicio']),
+                    $pagado > 0 ? '. El complejo va a devolver lo que se pagó.' : ''
+                ),
+                ['reservaId' => $turnoId]
+            );
+        }
     }
 }

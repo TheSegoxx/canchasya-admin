@@ -30,6 +30,16 @@ export type DatosReserva = {
   telefono?: string; // si la cuenta todavía no tiene celular
 };
 
+// Lo que pone cada uno en la vaquita, con su link de Mercado Pago
+export type ParteVaquita = {
+  id: number;
+  nombre: string;
+  monto: number;
+  esOrganizador: boolean; // la parte del jugador que reservó
+  estado: 'pendiente' | 'pagada' | 'vencida';
+  url: string | null; // solo mientras se puede pagar
+};
+
 // Una reserva como la ve el jugador
 export type Reserva = {
   id: number;
@@ -53,6 +63,9 @@ export type Reserva = {
   cancelacionHoras: number;
   // El link de Mercado Pago que está esperando el pago, si hay uno
   linkPago: LinkPago | null;
+  // La vaquita (las partes que se deshicieron sin pagar no vienen)
+  vaquita: ParteVaquita[];
+  vaquitaEnMarcha: boolean;
   complejo: {
     id: number;
     nombre: string;
@@ -76,4 +89,8 @@ export const reservasApi = {
     api<{ link: LinkPago; reserva: Reserva }>(`/reservas/${id}/pago`, 'POST', { que }),
   verificarPago: (id: number) => api<{ pagado: boolean; reserva: Reserva }>(`/reservas/${id}/verificar-pago`, 'POST'),
   cancelar: (id: number) => api<{ reserva: Reserva; aviso?: string }>(`/reservas/${id}/cancelar`, 'POST'),
+  // nombres[0] es el del jugador (vacío = su nombre); los demás vacíos quedan "Amigo 2", "Amigo 3"...
+  armarVaquita: (id: number, nombres: string[]) =>
+    api<{ reserva: Reserva }>(`/reservas/${id}/vaquita`, 'POST', { partes: nombres.map(nombre => ({ nombre })) }),
+  deshacerVaquita: (id: number) => api<{ reserva: Reserva }>(`/reservas/${id}/vaquita`, 'DELETE'),
 };

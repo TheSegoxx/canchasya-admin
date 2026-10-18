@@ -1,6 +1,7 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { ActivityIndicator, Alert, AppState, Linking, StyleSheet, View } from 'react-native';
 import { Text } from '../../components/Texto';
+import { useFocusEffect } from '@react-navigation/native';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { NOMBRE_DEPORTE } from '../../api/canchas';
 import { Reserva, reservasApi } from '../../api/reservas';
@@ -15,6 +16,7 @@ import { abrirMapa, abrirWhatsApp, llamar } from '../../utils/acciones';
 import { fechaRelativa } from '../../utils/fechas';
 import { formatearPesos } from '../../utils/formato';
 import { estadoReserva, textoDuracion, textoPlazoCancelacion } from '../../utils/reservas';
+import { avance } from '../../utils/vaquita';
 import { colorDeTono } from './TarjetaReserva';
 
 type Props = NativeStackScreenProps<RutasJugador, 'Reserva'>;
@@ -22,7 +24,7 @@ type Props = NativeStackScreenProps<RutasJugador, 'Reserva'>;
 const cifras = (telefono: string) => telefono.replace(/\D/g, '');
 
 // Una reserva del jugador: cómo está, cuánto falta pagar, cómo llegar, pagar por Mercado Pago o cancelar
-export function ReservaScreen({ route }: Props) {
+export function ReservaScreen({ route, navigation }: Props) {
   const { colores } = useTema();
   const { id, nueva } = route.params;
   const [reserva, setReserva] = useState<Reserva | null>(null);
@@ -64,11 +66,17 @@ export function ReservaScreen({ route }: Props) {
     [id],
   );
 
+  // Recién creada con pago por Mercado Pago: la app ya abrió el link
   useEffect(() => {
-    cargar();
-    // Recién creada con pago por Mercado Pago: la app ya abrió el link
     fueAPagar.current = !!nueva;
-  }, [cargar, nueva]);
+  }, [nueva]);
+
+  // También al volver de la vaquita (pudieron pagar partes)
+  useFocusEffect(
+    useCallback(() => {
+      cargar();
+    }, [cargar]),
+  );
 
   useEffect(() => {
     const suscripcion = AppState.addEventListener('change', estado => {
@@ -95,6 +103,9 @@ export function ReservaScreen({ route }: Props) {
   const activa = reserva.estado === 'confirmado' && !reserva.terminada;
   const telefono = reserva.complejo.telefono ? cifras(reserva.complejo.telefono) : null;
   const faltaSena = reserva.sena !== null ? reserva.sena - reserva.pagado : 0;
+  const vaquita = avance(reserva.vaquita);
+  // Con la vaquita en marcha cada uno paga con su link (no se paga aparte)
+  const puedePagar = activa && !reserva.vaquitaEnMarcha;
 
   const pagar = async (que: 'sena' | 'saldo') => {
     setPagando(true);
@@ -180,13 +191,28 @@ export function ReservaScreen({ route }: Props) {
       {reserva.estado !== 'cancelado' && fila('Falta pagar', formatearPesos(reserva.saldo), reserva.saldo > 0 ? colores.texto : colores.primario)}
 
       <View style={estilos.acciones}>
-        {activa && reserva.senaPendiente && (
+        {(reserva.vaquita.length > 0 || (activa && reserva.saldo > 0)) && (
+          <>
+            <Boton
+              titulo={
+                reserva.vaquita.length > 0
+                  ? `Vaquita: pagaron ${vaquita.pagaron} de ${reserva.vaquita.length}`
+                  : 'Dividir con amigos (vaquita)'
+              }
+              icono="clientes"
+              variante={reserva.vaquitaEnMarcha || !reserva.senaPendiente ? 'primario' : 'secundario'}
+              onPress={() => navigation.navigate('Vaquita', { id: reserva.id })}
+            />
+            <View style={estilos.espacio} />
+          </>
+        )}
+        {puedePagar && reserva.senaPendiente && (
           <>
             <Boton titulo={`Pagar la seña: ${formatearPesos(faltaSena)}`} onPress={() => pagar('sena')} cargando={pagando} />
             <View style={estilos.espacio} />
           </>
         )}
-        {activa && reserva.saldo > 0 && (
+        {puedePagar && reserva.saldo > 0 && (
           <>
             <Boton
               titulo={reserva.senaPendiente ? `Pagar todo: ${formatearPesos(reserva.saldo)}` : `Pagar lo que falta: ${formatearPesos(reserva.saldo)}`}
