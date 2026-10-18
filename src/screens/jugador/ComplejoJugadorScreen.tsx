@@ -14,6 +14,7 @@ import type { RutasJugador } from '../../navigation/AppNavigator';
 import { espaciado, radio, useTema } from '../../theme/tema';
 import { abrirMapa, abrirWhatsApp, llamar } from '../../utils/acciones';
 import { formatearPesos } from '../../utils/formato';
+import { textoPlazoCancelacion } from '../../utils/reservas';
 
 type Props = NativeStackScreenProps<RutasJugador, 'ComplejoJugador'>;
 
@@ -73,6 +74,8 @@ export function ComplejoJugadorScreen({ route, navigation }: Props) {
   const lugar = [complejo.direccion, complejo.ciudad].filter(Boolean).join(', ');
   const telefono = complejo.telefono ? cifras(complejo.telefono) : null;
   const cerrar = complejo.horaCierre === '24:00' ? 'medianoche' : `las ${complejo.horaCierre}`;
+  const reglas = complejo.reservas;
+  const reservar = (canchaId?: number) => navigation.navigate('Reservar', { complejoId: complejo.id, canchaId });
 
   const comoLlegar = () =>
     complejo.ubicacion
@@ -166,25 +169,46 @@ export function ComplejoJugadorScreen({ route, navigation }: Props) {
 
         <Text style={[estilos.seccion, { color: colores.texto }]}>Canchas</Text>
         {complejo.canchas.map(c => (
-          <TarjetaCancha key={c.id} cancha={c} />
+          <TarjetaCancha key={c.id} cancha={c} onPress={reglas.aceptaReservas ? () => reservar(c.id) : undefined} />
         ))}
 
         <View style={estilos.reservar}>
-          <Boton titulo="Reservar (muy pronto)" onPress={() => undefined} deshabilitado />
+          {reglas.aceptaReservas ? (
+            <>
+              <Boton titulo="Reservar" icono="agenda" onPress={() => reservar()} />
+              <Text style={[estilos.reglas, { color: colores.textoSecundario }]}>
+                {reglas.senaPorcentaje > 0 ? `Seña del ${reglas.senaPorcentaje} % para reservar` : 'Reservás sin pagar seña'} ·
+                Cancelás sin cargo {textoPlazoCancelacion(reglas.cancelacionHoras)}
+              </Text>
+            </>
+          ) : (
+            <Text style={[estilos.reglas, { color: colores.textoSecundario }]}>
+              Este complejo todavía no toma reservas por la app.{telefono ? ' Escribiles por WhatsApp para reservar.' : ''}
+            </Text>
+          )}
         </View>
       </View>
     </ScrollView>
   );
 }
 
-// Una cancha con sus características y precios (el de siempre y los de cada franja horaria)
-function TarjetaCancha({ cancha }: { cancha: CanchaFicha }) {
+// Una cancha con sus características y precios (el de siempre y los de cada franja horaria).
+// Si el complejo toma reservas, tocarla lleva a reservar esa cancha.
+function TarjetaCancha({ cancha, onPress }: { cancha: CanchaFicha; onPress?: () => void }) {
   const { colores } = useTema();
   const detalles = [NOMBRE_DEPORTE[cancha.deporte], cancha.superficie, cancha.techada ? 'Techada' : 'Al aire libre']
     .filter(Boolean)
     .join(' · ');
   return (
-    <View style={[estilos.cancha, { backgroundColor: colores.superficie, borderColor: colores.borde }]}>
+    <Pressable
+      accessibilityRole={onPress ? 'button' : undefined}
+      accessibilityHint={onPress ? 'Reservar esta cancha' : undefined}
+      disabled={!onPress}
+      onPress={onPress}
+      style={({ pressed }) => [
+        estilos.cancha,
+        { backgroundColor: colores.superficie, borderColor: colores.borde, opacity: pressed ? 0.85 : 1 },
+      ]}>
       <View style={estilos.cabeceraCancha}>
         <Icono nombre={cancha.deporte} color={colores.primario} tamano={22} />
         <View style={estilos.datosCancha}>
@@ -192,6 +216,7 @@ function TarjetaCancha({ cancha }: { cancha: CanchaFicha }) {
           <Text style={[estilos.detalleCancha, { color: colores.textoSecundario }]}>{detalles}</Text>
         </View>
         {cancha.techada && <Icono nombre="techada" color={colores.textoSecundario} acento={colores.acento} tamano={20} />}
+        {onPress && <Icono nombre="siguiente" color={colores.inactivo} tamano={18} />}
       </View>
       <View style={[estilos.precios, { borderTopColor: colores.borde }]}>
         <Text style={[estilos.precio, { color: colores.texto }]}>
@@ -204,7 +229,7 @@ function TarjetaCancha({ cancha }: { cancha: CanchaFicha }) {
           </Text>
         ))}
       </View>
-    </View>
+    </Pressable>
   );
 }
 
@@ -245,4 +270,5 @@ const estilos = StyleSheet.create({
   precio: { fontSize: 14, marginVertical: 2 },
   monto: { fontWeight: '700' },
   reservar: { marginTop: espaciado.l },
+  reglas: { fontSize: 13, lineHeight: 18, textAlign: 'center', marginTop: espaciado.s },
 });

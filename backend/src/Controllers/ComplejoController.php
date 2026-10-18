@@ -98,6 +98,36 @@ final class ComplejoController extends Controlador
     }
 
     /**
+     * PUT /complejo/reservas  {aceptaReservas, senaPorcentaje, senaMinutos, reservaDias, cancelacionHoras}
+     * Las reglas para las reservas que hacen los jugadores desde la app.
+     */
+    public function guardarReglasReservas(): void
+    {
+        $this->soloDueno();
+        $complejo = $this->complejoActual();
+        $datos = leerJson();
+        $entero = function (string $campo, int $minimo, int $maximo, string $error) use ($datos): int {
+            $valor = $datos[$campo] ?? null;
+            if (!is_int($valor) || $valor < $minimo || $valor > $maximo) {
+                responder(400, ['error' => $error]);
+            }
+            return $valor;
+        };
+        if (!is_bool($datos['aceptaReservas'] ?? null)) {
+            responder(400, ['error' => 'Falta indicar si el complejo acepta reservas desde la app']);
+        }
+        $reglas = [
+            'aceptaReservas' => $datos['aceptaReservas'],
+            'senaPorcentaje' => $entero('senaPorcentaje', 0, 100, 'La seña tiene que ser de 0 a 100 % del total'),
+            'senaMinutos' => $entero('senaMinutos', 5, 1440, 'El plazo para pagar la seña tiene que ser de 5 minutos a 24 horas'),
+            'reservaDias' => $entero('reservaDias', 1, 90, 'Se puede reservar con 1 a 90 días de anticipación'),
+            'cancelacionHoras' => $entero('cancelacionHoras', 0, 168, 'El plazo para cancelar tiene que ser de 0 a 168 horas (una semana)'),
+        ];
+        $this->complejos->guardarReglasReservas((int) $complejo['id'], $reglas);
+        responder(200, ['complejo' => $this->complejos->publico($this->complejos->buscarPorId((int) $complejo['id']))]);
+    }
+
+    /**
      * GET /complejo/buscar-ubicacion?direccion=...
      * Las coordenadas de una dirección (para no tener que estar en el complejo con el GPS).
      */

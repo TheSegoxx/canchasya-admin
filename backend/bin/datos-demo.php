@@ -100,7 +100,7 @@ $tokenEncargado = pedir('POST', '/auth/register', [
 // Un jugador para probar la parte de los clientes
 pedir('POST', '/auth/register', [
     'nombre' => 'Sofía Herrera', 'email' => JUGADOR, 'password' => CLAVE, 'rol' => 'jugador',
-    'telefono' => '11 5555 0101', 'ciudad' => 'Almagro', 'deportes' => ['padel', 'futbol5'],
+    'telefono' => '11 3000 0101', 'ciudad' => 'Almagro', 'deportes' => ['padel', 'futbol5'],
 ]);
 
 pedir('PUT', '/complejo', [
@@ -112,6 +112,10 @@ pedir('PUT', '/complejo', [
     'horaApertura' => '08:00',
     'horaCierre' => '24:00',
     'servicios' => ['vestuarios', 'duchas', 'buffet', 'estacionamiento', 'wifi'],
+], $token);
+// Toma reservas desde la app con una seña del 30 % (media hora para pagarla)
+pedir('PUT', '/complejo/reservas', [
+    'aceptaReservas' => true, 'senaPorcentaje' => 30, 'senaMinutos' => 30, 'reservaDias' => 14, 'cancelacionHoras' => 24,
 ], $token);
 
 $canchas = [];

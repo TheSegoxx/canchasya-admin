@@ -163,6 +163,17 @@ function horaCorta(string $hora): string
     return substr($hora, 0, 5);
 }
 
+// 60 -> "1 hora", 90 -> "1 h 30 min", 120 -> "2 horas"
+function duracionVisible(int $minutos): string
+{
+    $horas = intdiv($minutos, 60);
+    $resto = $minutos % 60;
+    if ($resto === 0) {
+        return $horas === 1 ? '1 hora' : "$horas horas";
+    }
+    return $horas === 0 ? "$resto min" : "$horas h $resto min";
+}
+
 /**
  * Deja un celular argentino en 10 cifras (código de área + número, sin 0 ni 15),
  * que es lo que necesita el link de WhatsApp. Acepta lo que escribe la gente:

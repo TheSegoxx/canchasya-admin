@@ -64,7 +64,36 @@ final class Complejo extends Modelo
             'servicios' => json_decode($complejo['servicios'] ?? '[]', true) ?? [],
             // Si aparece en la búsqueda de los jugadores
             'visible' => (bool) $complejo['visible'],
+            'reservas' => self::reglasReservas($complejo),
         ];
+    }
+
+    /**
+     * Cómo toma reservas desde la app: si las acepta, la seña (% del total, 0 = sin seña),
+     * los minutos para pagarla, hasta cuántos días antes se reserva y hasta cuántas horas
+     * antes el jugador puede cancelar.
+     */
+    public static function reglasReservas(array $complejo): array
+    {
+        return [
+            'aceptaReservas' => (bool) $complejo['reservas_online'],
+            'senaPorcentaje' => (int) $complejo['sena_porcentaje'],
+            'senaMinutos' => (int) $complejo['sena_minutos'],
+            'reservaDias' => (int) $complejo['reserva_dias'],
+            'cancelacionHoras' => (int) $complejo['cancelacion_horas'],
+        ];
+    }
+
+    /** @param array{aceptaReservas: bool, senaPorcentaje: int, senaMinutos: int, reservaDias: int, cancelacionHoras: int} $reglas */
+    public function guardarReglasReservas(int $id, array $reglas): void
+    {
+        $this->actualizar($id, [
+            'reservas_online' => $reglas['aceptaReservas'] ? 1 : 0,
+            'sena_porcentaje' => $reglas['senaPorcentaje'],
+            'sena_minutos' => $reglas['senaMinutos'],
+            'reserva_dias' => $reglas['reservaDias'],
+            'cancelacion_horas' => $reglas['cancelacionHoras'],
+        ]);
     }
 
     /**

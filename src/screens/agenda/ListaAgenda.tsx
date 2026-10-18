@@ -77,11 +77,16 @@ export function ListaAgenda({ agenda, onTurno, onBloqueo, onWhatsApp }: Props) {
                 <Icono nombre="repetir" color={colores.textoSecundario} tamano={14} />
               </View>
             )}
+            {t.reservaApp && (
+              <Text style={[estilos.app, { color: colores.primario, borderColor: colores.primario + '66' }]}>App</Text>
+            )}
           </View>
           <Text style={[estilos.detalle, { color: colores.textoSecundario }]} numberOfLines={1}>
             {canchas.get(t.canchaId)?.nombre} ·{' '}
             {cancelado || t.estado === 'jugado' ? (
               NOMBRE_ESTADO[t.estado]
+            ) : t.senaVenceEn ? (
+              <Text style={{ color: colores.senado }}>Seña pendiente hasta las {t.senaVenceEn.slice(11)}</Text>
             ) : (
               <Text style={{ color }}>{NOMBRE_PAGO[t.estadoPago]}</Text>
             )}
@@ -145,6 +150,15 @@ const estilos = StyleSheet.create({
   titulo: { fontSize: 16, fontWeight: '700', flexShrink: 1 },
   conIcono: { marginLeft: espaciado.xs },
   tachado: { textDecorationLine: 'line-through' },
+  app: {
+    fontSize: 10,
+    fontWeight: '700',
+    borderWidth: 1,
+    borderRadius: 4,
+    paddingHorizontal: 4,
+    marginLeft: espaciado.xs,
+    overflow: 'hidden',
+  },
   detalle: { fontSize: 14, marginTop: 2 },
   whatsapp: { width: 56, height: 56, alignItems: 'center', justifyContent: 'center' },
 });

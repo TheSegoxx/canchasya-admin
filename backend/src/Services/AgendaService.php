@@ -78,6 +78,29 @@ final class AgendaService
     }
 
     /**
+     * Precio de una reserva de $inicio a $fin (la duración la elige el jugador). Los precios
+     * de la cancha y de sus franjas son por turno (lo que dura la cancha): cada tramo se
+     * cobra en proporción a los minutos que ocupa, redondeado al peso.
+     * Ej.: cancha de 60 min, de 19 a 21 con franja nocturna desde las 20 = 1 h de día + 1 h de noche.
+     */
+    public function precioPorTramos(array $cancha, string $inicio, string $fin): float
+    {
+        $desde = minutosDe($inicio);
+        $hasta = minutosDe($fin);
+        $total = 0.0;
+        $conFranja = 0;
+        foreach ($this->franjas->listarPorCancha((int) $cancha['id']) as $franja) {
+            $minutos = min($hasta, minutosDe($franja['hora_hasta'])) - max($desde, minutosDe($franja['hora_desde']));
+            if ($minutos > 0) {
+                $total += $minutos * (float) $franja['precio'];
+                $conFranja += $minutos;
+            }
+        }
+        $total += ($hasta - $desde - $conFranja) * (float) $cancha['precio_base'];
+        return round($total / (int) $cancha['duracion_min']);
+    }
+
+    /**
      * Crea los turnos de esa fecha que salen de los turnos fijos.
      * Si ese día el horario está ocupado o bloqueado, ese día se saltea
      * (y se vuelve a intentar si se libera). Va dentro de una transacción.

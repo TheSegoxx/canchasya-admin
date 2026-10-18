@@ -72,6 +72,12 @@ final class Usuario extends Modelo
         $this->actualizar($id, $columnas);
     }
 
+    // El celular que el jugador agrega al reservar
+    public function guardarTelefono(int $id, string $telefono): void
+    {
+        $this->actualizar($id, ['telefono' => $telefono]);
+    }
+
     // Asocia una cuenta creada con email a su cuenta de Google
     public function vincularGoogle(int $id, string $googleId, ?string $fotoUrl): void
     {

@@ -1,6 +1,6 @@
 import { api } from './cliente';
 import type { Deporte, Franja } from './canchas';
-import type { Servicio, Ubicacion } from './complejo';
+import type { ReglasReservas, Servicio, Ubicacion } from './complejo';
 
 // Un complejo en la lista de búsqueda del jugador
 export type ComplejoResumen = {
@@ -46,6 +46,8 @@ export type ComplejoFicha = {
   servicios: Servicio[];
   fotos: string[];
   favorito: boolean;
+  // Si toma reservas por la app, la seña y los plazos
+  reservas: ReglasReservas;
   canchas: CanchaFicha[];
 };
 

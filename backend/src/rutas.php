@@ -22,6 +22,7 @@ use App\Controllers\ExplorarController;
 use App\Controllers\FotoController;
 use App\Controllers\LinkPagoController;
 use App\Controllers\ProductoController;
+use App\Controllers\ReservaController;
 use App\Controllers\TorneoController;
 use App\Controllers\TurnoController;
 
@@ -46,11 +47,21 @@ $router->agregar('GET', '/complejos', fn () => (new ExplorarController())->lista
 $router->agregar('GET', '/complejos/:id', fn (array $p) => (new ExplorarController())->obtener($p['id']));
 $router->agregar('PUT', '/complejos/:id/favorito', fn (array $p) => (new ExplorarController())->agregarFavorito($p['id']));
 $router->agregar('DELETE', '/complejos/:id/favorito', fn (array $p) => (new ExplorarController())->quitarFavorito($p['id']));
+$router->agregar('GET', '/complejos/:id/disponibilidad', fn (array $p) => (new ReservaController())->disponibilidad($p['id']));
+
+// Reservas del jugador
+$router->agregar('POST', '/reservas', fn () => (new ReservaController())->crear());
+$router->agregar('GET', '/reservas', fn () => (new ReservaController())->listar());
+$router->agregar('GET', '/reservas/:id', fn (array $p) => (new ReservaController())->obtener($p['id']));
+$router->agregar('POST', '/reservas/:id/pago', fn (array $p) => (new ReservaController())->pagar($p['id']));
+$router->agregar('POST', '/reservas/:id/verificar-pago', fn (array $p) => (new ReservaController())->verificarPago($p['id']));
+$router->agregar('POST', '/reservas/:id/cancelar', fn (array $p) => (new ReservaController())->cancelar($p['id']));
 
 // Complejo del dueño
 $router->agregar('GET', '/complejo', fn () => (new ComplejoController())->obtener());
 $router->agregar('PUT', '/complejo', fn () => (new ComplejoController())->guardar());
 $router->agregar('GET', '/complejo/buscar-ubicacion', fn () => (new ComplejoController())->buscarUbicacion());
+$router->agregar('PUT', '/complejo/reservas', fn () => (new ComplejoController())->guardarReglasReservas());
 
 // Canchas y precios por franja horaria
 $router->agregar('GET', '/canchas', fn () => (new CanchaController())->listar());

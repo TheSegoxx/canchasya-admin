@@ -24,6 +24,37 @@ final class LinksDePago
     }
 
     /**
+     * Crea un link de Mercado Pago por $monto para el turno ($turno es una fila de
+     * Turno::buscarDetalle o buscarReserva), que vence en $vence ("Y-m-d H:i:s").
+     * Va fuera de las transacciones: llama a Mercado Pago.
+     */
+    public function crear(array $turno, float $monto, string $vence, MercadoPago $mercadoPago): array
+    {
+        // Primero se guarda (para tener el id que identifica al pago) y después se pide el link
+        $id = $this->links->crear((int) $turno['id'], $monto, '', '', $vence);
+        try {
+            $link = $mercadoPago->crearLink(
+                sprintf(
+                    'Turno %s, %s %s - %s',
+                    $turno['cancha_nombre'],
+                    fechaLarga($turno['fecha']),
+                    horaCorta($turno['hora_inicio']),
+                    $turno['complejo_nombre']
+                ),
+                $monto,
+                LinkPago::referencia($id),
+                $vence
+            );
+        } catch (Throwable $e) {
+            $this->links->cambiarEstado($id, 'anulado');
+            throw $e;
+        }
+        $this->pdo->prepare('UPDATE links_pago SET preferencia_id = ?, url = ? WHERE id = ?')
+            ->execute([$link['id'], $link['url'], $id]);
+        return $this->links->buscarPorId($id);
+    }
+
+    /**
      * Si Mercado Pago aprobó el pago del link, lo registra en la cuenta del turno (una sola vez).
      * Si no y ya venció, lo marca vencido. Va dentro de una transacción.
      *

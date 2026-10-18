@@ -12,6 +12,7 @@ use Throwable;
  * Lo que revisa la tarea programada bin/avisos.php (cada minuto):
  * - recordatorio 30 minutos antes de los turnos que todavía deben plata;
  * - pagos de Mercado Pago que entraron (sin webhook, se consulta el estado);
+ * - reservas de la app cuya seña venció sin pagarse (se libera el horario);
  * - resumen de la caja del día al dueño, a la hora de cierre.
  * Cada tarea va por separado: si una falla, las otras siguen.
  */
@@ -32,7 +33,7 @@ final class AvisosAutomaticos
     public function revisar(): array
     {
         $hecho = [];
-        foreach (['recordatorios', 'pagosMercadoPago', 'resumenesDelDia'] as $tarea) {
+        foreach (['recordatorios', 'pagosMercadoPago', 'senasVencidas', 'resumenesDelDia'] as $tarea) {
             try {
                 $hecho[] = "$tarea: " . $this->$tarea();
             } catch (Throwable $e) {
@@ -106,6 +107,11 @@ final class AvisosAutomaticos
             }
         }
         return $pagados;
+    }
+
+    private function senasVencidas(): int
+    {
+        return (new Reservas($this->pdo))->liberarVencidas();
     }
 
     private function resumenesDelDia(): int

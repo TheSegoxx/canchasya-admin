@@ -44,6 +44,27 @@ final class Cliente extends Modelo
         return $stmt->fetch() ?: null;
     }
 
+    /**
+     * Id del cliente con ese teléfono en el complejo; si no hay, lo crea (no se duplica la persona).
+     * Si otro pedido lo creó en ese mismo instante (teléfono único), usa ese.
+     */
+    public function obtenerOCrear(int $complejoId, string $nombre, string $telefono): int
+    {
+        $existente = $this->buscarPorTelefono($complejoId, $telefono);
+        if ($existente !== null) {
+            return (int) $existente['id'];
+        }
+        try {
+            return $this->crear($complejoId, $nombre, $telefono);
+        } catch (\PDOException $e) {
+            $otro = $e->getCode() === '23000' ? $this->buscarPorTelefono($complejoId, $telefono) : null;
+            if ($otro === null) {
+                throw $e;
+            }
+            return (int) $otro['id'];
+        }
+    }
+
     public function crear(int $complejoId, string $nombre, string $telefono): int
     {
         return $this->insertar(['complejo_id' => $complejoId, 'nombre' => $nombre, 'telefono' => $telefono]);

@@ -303,24 +303,6 @@ final class TurnoController extends Controlador
     // Si ya hay un cliente con ese teléfono se usa ese (no se duplica la persona)
     private function clienteId(int $complejoId, array $cliente): int
     {
-        if (isset($cliente['id'])) {
-            return $cliente['id'];
-        }
-        $existente = $this->clientes->buscarPorTelefono($complejoId, $cliente['telefono']);
-        if ($existente !== null) {
-            return (int) $existente['id'];
-        }
-        try {
-            return $this->clientes->crear($complejoId, $cliente['nombre'], $cliente['telefono']);
-        } catch (\PDOException $e) {
-            // Otra reserva creó el mismo cliente en ese instante (teléfono único): se usa ese
-            $otro = $e->getCode() === '23000'
-                ? $this->clientes->buscarPorTelefono($complejoId, $cliente['telefono'])
-                : null;
-            if ($otro === null) {
-                throw $e;
-            }
-            return (int) $otro['id'];
-        }
+        return $cliente['id'] ?? $this->clientes->obtenerOCrear($complejoId, $cliente['nombre'], $cliente['telefono']);
     }
 }

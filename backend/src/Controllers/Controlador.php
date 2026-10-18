@@ -73,6 +73,14 @@ abstract class Controlador
         }
     }
 
+    // Reservar es de los jugadores (el complejo ve y cobra sus turnos desde la agenda)
+    protected function soloJugador(): void
+    {
+        if (!$this->esJugador()) {
+            responder(403, ['error' => 'Para reservar una cancha entrá con tu cuenta de jugador']);
+        }
+    }
+
     // El complejo propio (dueño) o en el que trabaja (empleado); 409 si todavía no tiene
     protected function complejoActual(): array
     {

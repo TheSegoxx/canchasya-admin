@@ -10,6 +10,7 @@ use App\Models\Complejo;
 use App\Models\FranjaPrecio;
 use App\Models\Turno;
 use App\Services\AgendaService;
+use App\Services\Reservas;
 
 /**
  * Endpoint /agenda: todo lo que la app necesita para dibujar un día
@@ -27,7 +28,9 @@ final class AgendaController extends Controlador
             responder(400, ['error' => 'La fecha tiene que tener el formato AAAA-MM-DD']);
         }
 
-        // Antes de leer, se crean los turnos que salen de los turnos fijos de ese día
+        // Antes de leer, se liberan las reservas que no pagaron la seña a tiempo
+        // y se crean los turnos que salen de los turnos fijos de ese día
+        (new Reservas($this->pdo))->liberarVencidas($complejoId);
         $this->transaccion(fn () => (new AgendaService($this->pdo))->materializarFijos($complejoId, $fecha));
 
         $canchas = new Cancha($this->pdo);

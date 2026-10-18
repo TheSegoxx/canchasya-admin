@@ -29,6 +29,7 @@ import { ProductoScreen } from '../screens/cobros/ProductoScreen';
 import { ProductosScreen } from '../screens/cobros/ProductosScreen';
 import { ClientesScreen } from '../screens/clientes/ClientesScreen';
 import { ComplejoScreen } from '../screens/complejo/ComplejoScreen';
+import { ReservasOnlineScreen } from '../screens/complejo/ReservasOnlineScreen';
 import { DashboardScreen } from '../screens/dashboard/DashboardScreen';
 import { EmpleadosScreen } from '../screens/empleados/EmpleadosScreen';
 import { UnirseScreen } from '../screens/empleados/UnirseScreen';
@@ -46,6 +47,8 @@ import { BuscarScreen } from '../screens/jugador/BuscarScreen';
 import { ComplejoJugadorScreen } from '../screens/jugador/ComplejoJugadorScreen';
 import { MisReservasScreen } from '../screens/jugador/MisReservasScreen';
 import { PerfilJugadorScreen } from '../screens/jugador/PerfilJugadorScreen';
+import { ReservaScreen } from '../screens/jugador/ReservaScreen';
+import { ReservarScreen } from '../screens/jugador/ReservarScreen';
 import { useTema } from '../theme/tema';
 
 export type RutasAuth = {
@@ -67,6 +70,8 @@ export type RutasApp = {
   Empleados: undefined;
   Pestanas: undefined;
   Complejo: undefined;
+  // Seña y plazos de las reservas que hacen los jugadores desde la app
+  ReservasOnline: undefined;
   // Sin id: nueva cancha; con id: editar
   Cancha: { id?: number } | undefined;
   // Cancha y hora vienen del casillero tocado en la grilla
@@ -104,6 +109,10 @@ export type RutasJugador = {
   MisDatos: undefined;
   // El nombre se muestra en el título mientras carga la ficha
   ComplejoJugador: { id: number; nombre: string };
+  // Con canchaId, esa cancha ya viene elegida
+  Reservar: { complejoId: number; canchaId?: number };
+  // nueva: recién reservada (si eligió pagar, la app ya abrió Mercado Pago)
+  Reserva: { id: number; nueva?: boolean };
 };
 
 export type RutasPestanasJugador = {
@@ -170,6 +179,7 @@ function Aplicacion({ tieneComplejo }: { tieneComplejo: boolean }) {
         <>
           <PilaApp.Screen name="Pestanas" component={Principal} options={{ headerShown: false }} />
           <PilaApp.Screen name="Complejo" component={ComplejoScreen} options={{ title: 'Datos del complejo' }} />
+          <PilaApp.Screen name="ReservasOnline" component={ReservasOnlineScreen} options={{ title: 'Reservas desde la app' }} />
           <PilaApp.Screen name="Cancha" component={CanchaScreen} />
           <PilaApp.Screen name="Turno" component={TurnoScreen} />
           <PilaApp.Screen name="Bloqueo" component={BloqueoScreen} options={{ title: 'Bloquear horario' }} />
@@ -230,6 +240,8 @@ function AplicacionJugador() {
       <PilaJugador.Screen name="PestanasJugador" component={PrincipalJugador} options={{ headerShown: false }} />
       <PilaJugador.Screen name="MisDatos" component={MisDatosScreen} options={{ title: 'Mis datos' }} />
       <PilaJugador.Screen name="ComplejoJugador" component={ComplejoJugadorScreen} />
+      <PilaJugador.Screen name="Reservar" component={ReservarScreen} options={{ title: 'Reservar' }} />
+      <PilaJugador.Screen name="Reserva" component={ReservaScreen} options={{ title: 'Tu reserva' }} />
     </PilaJugador.Navigator>
   );
 }

@@ -27,12 +27,22 @@ export type DatosComplejo = {
   visible: boolean;
 };
 
-export type Complejo = DatosComplejo & { id: number };
+// Cómo toma reservas desde la app del jugador
+export type ReglasReservas = {
+  aceptaReservas: boolean;
+  senaPorcentaje: number; // 0 = sin seña
+  senaMinutos: number; // para pagar la seña antes de que se libere el horario
+  reservaDias: number; // hasta cuántos días antes se puede reservar
+  cancelacionHoras: number; // el jugador puede cancelar hasta estas horas antes
+};
+
+export type Complejo = DatosComplejo & { id: number; reservas: ReglasReservas };
 
 // Endpoints /complejo de la API
 export const complejoApi = {
   obtener: () => api<{ complejo: Complejo; fotos: Foto[] }>('/complejo'),
   guardar: (datos: DatosComplejo) => api<{ complejo: Complejo }>('/complejo', 'PUT', datos),
+  guardarReglasReservas: (reglas: ReglasReservas) => api<{ complejo: Complejo }>('/complejo/reservas', 'PUT', reglas),
   // Las coordenadas de una dirección (con OpenStreetMap)
   buscarUbicacion: (direccion: string) =>
     api<Ubicacion & { encontrada: string }>(`/complejo/buscar-ubicacion?direccion=${encodeURIComponent(direccion)}`),

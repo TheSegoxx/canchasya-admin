@@ -28,6 +28,9 @@ const turno = (horaInicio: string, horaFin: string, estado: Turno['estado'] = 'c
   total: 20000,
   pagado: 0,
   turnoFijoId: null,
+  reservaApp: false,
+  sena: null,
+  senaVenceEn: null,
   cliente: { id: 1, nombre: 'Juan Pérez', telefono: '1155551234' },
 });
 

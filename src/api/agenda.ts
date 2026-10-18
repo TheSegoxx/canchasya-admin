@@ -21,6 +21,11 @@ export type Turno = {
   total: number;
   pagado: number;
   turnoFijoId: number | null;
+  // Lo reservó un jugador desde la app (si no, lo cargó el complejo)
+  reservaApp: boolean;
+  // La seña que pidió el complejo y, mientras falte pagarla, hasta cuándo hay tiempo ("AAAA-MM-DD HH:MM")
+  sena: number | null;
+  senaVenceEn: string | null;
   cliente: Cliente;
 };
 

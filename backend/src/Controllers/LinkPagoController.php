@@ -50,32 +50,11 @@ final class LinkPagoController extends Controlador
             responder(409, ['error' => 'Este turno ya tiene ' . self::MAXIMO_PENDIENTES . ' links sin pagar. Anulá alguno.']);
         }
 
-        $mercadoPago = new MercadoPago();
         $vence = date('Y-m-d H:i:s', strtotime('+' . LinkPago::HORAS_VIGENCIA . ' hours'));
-        // Primero se guarda (para tener el id que identifica al pago) y después se pide el link
-        $id = $this->links->crear($turnoId, $monto, '', '', $vence);
-        try {
-            $link = $mercadoPago->crearLink(
-                sprintf(
-                    'Turno %s, %s %s - %s',
-                    $turno['cancha_nombre'],
-                    fechaLarga($turno['fecha']),
-                    horaCorta($turno['hora_inicio']),
-                    $turno['complejo_nombre']
-                ),
-                $monto,
-                LinkPago::referencia($id),
-                $vence
-            );
-        } catch (\Throwable $e) {
-            $this->links->cambiarEstado($id, 'anulado');
-            throw $e;
-        }
-        $this->pdo->prepare('UPDATE links_pago SET preferencia_id = ?, url = ? WHERE id = ?')
-            ->execute([$link['id'], $link['url'], $id]);
+        $link = $this->verificador->crear($turno, $monto, $vence, new MercadoPago());
 
         responder(201, [
-            'link' => $this->links->publico($this->links->buscarPorId($id)),
+            'link' => $this->links->publico($link),
             'turno' => (new VistaTurno($this->pdo))->detalle($turnoId),
         ]);
     }

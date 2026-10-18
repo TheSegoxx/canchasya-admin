@@ -130,6 +130,8 @@ final class ExplorarController extends Controlador
                 'servicios' => $publico['servicios'],
                 'fotos' => array_map(fn (array $f) => $fotos->publico($f)['ruta'], $fotos->listar($id)),
                 'favorito' => in_array($id, $this->favoritos->idsDe($usuarioId), true),
+                // Si toma reservas por la app, la seña y los plazos
+                'reservas' => $publico['reservas'],
                 'canchas' => array_map(fn (array $c) => [
                     'id' => (int) $c['id'],
                     'nombre' => $c['nombre'],

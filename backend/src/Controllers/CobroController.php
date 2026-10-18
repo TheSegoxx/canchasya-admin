@@ -11,6 +11,7 @@ use App\Models\Producto;
 use App\Models\Turno;
 use App\Services\AgendaService;
 use App\Services\CobroService;
+use App\Services\Reservas;
 use App\Services\VistaTurno;
 
 /**
@@ -131,7 +132,8 @@ final class CobroController extends Controlador
         if (!is_string($fecha) || !fechaValida($fecha)) {
             responder(400, ['error' => 'La fecha tiene que tener el formato AAAA-MM-DD']);
         }
-        // Los turnos fijos del día también tienen que aparecer como pendientes de cobro
+        // Una reserva cuya seña venció ya no está por cobrar; los turnos fijos del día sí
+        (new Reservas($this->pdo))->liberarVencidas($complejoId);
         $this->transaccion(fn () => (new AgendaService($this->pdo))->materializarFijos($complejoId, $fecha));
 
         $caja = $this->cobros->caja($complejoId, $fecha);

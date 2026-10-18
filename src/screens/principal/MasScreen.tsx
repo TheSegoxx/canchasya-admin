@@ -15,13 +15,14 @@ import { espaciado, radio, useTema } from '../../theme/tema';
 type Opcion = {
   titulo: string;
   icono: NombreIcono;
-  ruta: 'Complejo' | 'Empleados' | 'Torneos' | 'TurnosFijos' | 'Clientes' | 'Productos' | 'MisDatos';
+  ruta: 'Complejo' | 'ReservasOnline' | 'Empleados' | 'Torneos' | 'TurnosFijos' | 'Clientes' | 'Productos' | 'MisDatos';
   soloDueno?: boolean;
 };
 
-// El encargado no ve los datos del complejo, los empleados ni los productos
+// El encargado no ve los datos del complejo, las reglas de reserva, los empleados ni los productos
 const OPCIONES: Opcion[] = [
   { titulo: 'Datos del complejo', icono: 'complejo', ruta: 'Complejo', soloDueno: true },
+  { titulo: 'Reservas desde la app', icono: 'reloj', ruta: 'ReservasOnline', soloDueno: true },
   { titulo: 'Empleados', icono: 'empleados', ruta: 'Empleados', soloDueno: true },
   { titulo: 'Torneos y ligas', icono: 'torneos', ruta: 'Torneos' },
   { titulo: 'Turnos fijos', icono: 'turnosFijos', ruta: 'TurnosFijos' },

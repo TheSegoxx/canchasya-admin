@@ -16,6 +16,7 @@ import { espaciado, radio, useTema } from '../../theme/tema';
 import { abrirWhatsApp, llamar } from '../../utils/acciones';
 import { mensajeDeTurno } from '../../utils/agenda';
 import { diaEnPlural, fechaCorta, fechaRelativa, hoyISO } from '../../utils/fechas';
+import { formatearPesos } from '../../utils/formato';
 import { formatearTelefono } from '../../utils/telefono';
 import { CuentaTurno } from '../cobros/CuentaTurno';
 import { colorDeTurno } from './GrillaAgenda';
@@ -165,6 +166,15 @@ export function TurnoScreen({ route, navigation }: Props) {
       {fila('Cancha', `${turno.cancha.nombre} · ${NOMBRE_DEPORTE[turno.cancha.deporte]}`)}
       {fila('Estado', NOMBRE_ESTADO[turno.estado], cancelado ? colores.error : colores.texto)}
       {fila('Pago', NOMBRE_PAGO[turno.estadoPago], color)}
+      {turno.reservaApp && fila('Reserva', 'Desde la app CanchasYa')}
+      {turno.sena !== null &&
+        fila(
+          'Seña',
+          turno.senaVenceEn
+            ? `${formatearPesos(turno.sena)} · sin pagar, vence a las ${turno.senaVenceEn.slice(11)}`
+            : formatearPesos(turno.sena),
+          turno.senaVenceEn ? colores.senado : colores.texto,
+        )}
       {turno.fijo &&
         fila(
           'Turno fijo',

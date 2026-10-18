@@ -43,11 +43,21 @@ CREATE TABLE complejos (
     hora_cierre   TIME NOT NULL,
     servicios     JSON NULL COMMENT 'Ej.: ["vestuarios","buffet","estacionamiento"]',
     visible       BOOLEAN NOT NULL DEFAULT 1 COMMENT '1 = aparece en la búsqueda de los jugadores',
+    -- Reservas desde la app del jugador
+    reservas_online   BOOLEAN NOT NULL DEFAULT 1 COMMENT '1 = los jugadores pueden reservar desde la app',
+    sena_porcentaje   TINYINT NOT NULL DEFAULT 0 COMMENT 'Seña para reservar: % del total (0 = sin seña)',
+    sena_minutos      SMALLINT NOT NULL DEFAULT 30 COMMENT 'Minutos para pagar la seña antes de que se libere el horario',
+    reserva_dias      SMALLINT NOT NULL DEFAULT 14 COMMENT 'Hasta cuántos días antes se puede reservar',
+    cancelacion_horas SMALLINT NOT NULL DEFAULT 24 COMMENT 'El jugador puede cancelar hasta estas horas antes',
     creado_en     TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     UNIQUE KEY uq_complejos_usuario (usuario_id),
     CONSTRAINT chk_complejos_ubicacion CHECK (
         (latitud IS NULL AND longitud IS NULL)
         OR (latitud BETWEEN -90 AND 90 AND longitud BETWEEN -180 AND 180)
+    ),
+    CONSTRAINT chk_complejos_reservas CHECK (
+        sena_porcentaje BETWEEN 0 AND 100 AND sena_minutos BETWEEN 5 AND 1440
+        AND reserva_dias BETWEEN 1 AND 90 AND cancelacion_horas BETWEEN 0 AND 168
     ),
     CONSTRAINT fk_complejos_usuario FOREIGN KEY (usuario_id) REFERENCES usuarios (id) ON DELETE CASCADE
 ) ENGINE=InnoDB;
@@ -150,26 +160,33 @@ CREATE TABLE turnos_fijos (
     CONSTRAINT fk_fijos_cliente FOREIGN KEY (cliente_id) REFERENCES clientes (id)
 ) ENGINE=InnoDB;
 
--- Turnos cargados por el dueño. La superposición se controla en la API (transacción).
+-- Turnos que cargó el complejo o que reservó un jugador desde la app.
+-- La superposición se controla en la API (transacción).
 CREATE TABLE turnos (
     id            INT AUTO_INCREMENT PRIMARY KEY,
     cancha_id     INT NOT NULL,
     cliente_id    INT NOT NULL,
     turno_fijo_id INT NULL COMMENT 'Si salió de un turno fijo',
+    usuario_id    INT NULL COMMENT 'El jugador que lo reservó desde la app (NULL = lo cargó el complejo)',
     fecha         DATE NOT NULL,
     hora_inicio   TIME NOT NULL,
     hora_fin      TIME NOT NULL,
     precio        DECIMAL(10, 2) NOT NULL COMMENT 'Se copia al crear el turno',
+    sena          DECIMAL(10, 2) NULL COMMENT 'Seña que pide el complejo para confirmar la reserva',
+    sena_vence_en DATETIME NULL COMMENT 'Si a esa hora no se pagó la seña, la reserva se cancela sola',
     estado        ENUM('confirmado', 'cancelado', 'jugado') NOT NULL DEFAULT 'confirmado',
     estado_pago   ENUM('pendiente', 'senado', 'pagado') NOT NULL DEFAULT 'pendiente',
     creado_en     TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     KEY idx_turnos_cancha_fecha (cancha_id, fecha),
+    KEY idx_turnos_usuario (usuario_id, fecha),
+    KEY idx_turnos_sena_vence (sena_vence_en),
     -- Un turno fijo genera un solo turno por fecha
     UNIQUE KEY uq_turnos_fijo_fecha (turno_fijo_id, fecha),
     CONSTRAINT chk_turnos_horas CHECK (hora_inicio < hora_fin),
     CONSTRAINT fk_turnos_cancha FOREIGN KEY (cancha_id) REFERENCES canchas (id) ON DELETE CASCADE,
     CONSTRAINT fk_turnos_cliente FOREIGN KEY (cliente_id) REFERENCES clientes (id),
-    CONSTRAINT fk_turnos_fijo FOREIGN KEY (turno_fijo_id) REFERENCES turnos_fijos (id) ON DELETE SET NULL
+    CONSTRAINT fk_turnos_fijo FOREIGN KEY (turno_fijo_id) REFERENCES turnos_fijos (id) ON DELETE SET NULL,
+    CONSTRAINT fk_turnos_usuario FOREIGN KEY (usuario_id) REFERENCES usuarios (id) ON DELETE SET NULL
 ) ENGINE=InnoDB;
 
 -- Extras que se venden o alquilan en el complejo (paletas, pelotas, bebidas)
