@@ -10,12 +10,15 @@ use App\Models\Cancha;
 use App\Models\Cliente;
 use App\Models\Complejo;
 use App\Models\LinkPago;
+use App\Models\PartidoAbierto;
 use App\Models\Turno;
 use App\Models\Usuario;
 use App\Models\VaquitaParte;
 use App\Services\AgendaService;
 use App\Services\CobroService;
+use App\Services\Fidelidad;
 use App\Services\LinksDePago;
+use App\Services\ListaEspera;
 use App\Services\MercadoPago;
 use App\Services\Notificaciones;
 use App\Services\Reservas;
@@ -99,9 +102,9 @@ final class ReservaController extends Controlador
     }
 
     /**
-     * POST /reservas  {canchaId, fecha, horaInicio, duracionMin, pago: "sena"|"total"|"complejo", telefono?}
+     * POST /reservas  {canchaId, fecha, horaInicio, duracionMin, pago: "sena"|"total"|"complejo", telefono?, usarPremio?}
      * Con seña, la reserva se cancela sola si no se paga a tiempo. Si se elige pagar por
-     * Mercado Pago, la respuesta trae el link.
+     * Mercado Pago, la respuesta trae el link. Con usarPremio se aplica un premio de fidelidad.
      */
     public function crear(): void
     {
@@ -149,6 +152,11 @@ final class ReservaController extends Controlador
                 ? 'Este complejo pide seña: elegí pagar la seña o el total'
                 : 'Elegí pagar en el complejo o pagar el total ahora']);
         }
+        $usarPremio = booleanoOpcional($datos, 'usarPremio', 'usarPremio');
+        $fidelidad = $usarPremio ? (new Fidelidad($this->pdo))->de($usuarioId, $complejo) : null;
+        if ($usarPremio && ($fidelidad === null || $fidelidad['premios'] < 1)) {
+            responder(409, ['error' => 'No tenés un premio de fidelidad para usar en este complejo']);
+        }
         $telefono = $this->telefonoDelJugador($datos);
         if ($this->turnos->reservasSinPagar($usuarioId) >= self::MAXIMO_SIN_PAGAR) {
             responder(409, ['error' => 'Ya tenés ' . self::MAXIMO_SIN_PAGAR . ' reservas sin pagar. Pagá o cancelá alguna antes de hacer otra.']);
@@ -157,10 +165,13 @@ final class ReservaController extends Controlador
         // Si una seña venció, ese horario se libera antes de controlar si está ocupado
         $this->reservas->liberarVencidas($complejoId);
         $precio = $this->agenda->precioPorTramos($cancha, $inicio, $fin);
+        // El premio de fidelidad descuenta un porcentaje (100 = gratis)
+        $descuento = $fidelidad !== null ? round($precio * $fidelidad['descuento'] / 100) : 0.0;
+        $precio -= $descuento;
         $sena = Reservas::montoSena($precio, $reglas['senaPorcentaje']);
         $nombre = $this->usuario()['nombre'];
 
-        $id = $this->transaccion(function () use ($complejoId, $canchaId, $fecha, $inicio, $fin, $precio, $sena, $reglas, $nombre, $telefono, $usuarioId) {
+        $id = $this->transaccion(function () use ($complejoId, $canchaId, $fecha, $inicio, $fin, $precio, $descuento, $sena, $reglas, $nombre, $telefono, $usuarioId) {
             $this->agenda->trabarCancha($canchaId);
             $this->agenda->materializarFijos($complejoId, $fecha, $canchaId);
             // Sin decir de quién es: es el turno de otro cliente
@@ -178,6 +189,7 @@ final class ReservaController extends Controlador
                 'precio' => $precio,
                 'sena' => $sena,
                 'senaVenceEn' => $sena !== null ? Reservas::venceSena($fecha, $inicio, $reglas['senaMinutos']) : null,
+                'descuento' => $descuento,
             ]);
             // Una cancha sin cargo queda pagada desde el principio
             (new CobroService($this->pdo))->actualizarEstadoPago($id);
@@ -191,11 +203,12 @@ final class ReservaController extends Controlador
             $reserva['cancha_nombre'],
             Notificaciones::cuando($fecha, $inicio),
             duracionVisible($duracion),
-            $sena !== null ? ' · Seña de ' . pesos($sena) . ' pendiente' : ''
+            ($sena !== null ? ' · Seña de ' . pesos($sena) . ' pendiente' : '') . ($descuento > 0 ? ' · Usó un premio de fidelidad' : '')
         ));
 
         $respuesta = [];
-        if ($pago !== 'complejo') {
+        // Gratis con el premio: no hay nada que pagar
+        if ($pago !== 'complejo' && $precio > 0) {
             try {
                 $respuesta['link'] = $this->linkDePago($reserva, $pago === 'sena' ? 'sena' : 'saldo');
             } catch (Throwable $e) {
@@ -330,6 +343,46 @@ final class ReservaController extends Controlador
     }
 
     /**
+     * PUT /reservas/:id/me-falta-uno  {faltan, nivel, comentario?}
+     * Publica (o actualiza) que el partido busca jugadores; aparece en "Partidos" para los demás.
+     */
+    public function publicarMeFaltaUno(int $id): void
+    {
+        $reserva = $this->reservaDelJugador($id);
+        if ($reserva['estado'] !== 'confirmado' || strtotime("{$reserva['fecha']} {$reserva['hora_inicio']}") <= time()) {
+            responder(409, ['error' => 'Solo se buscan jugadores para una reserva confirmada que todavía no empezó']);
+        }
+        $datos = leerJson();
+        $faltan = $datos['faltan'] ?? null;
+        if (!is_int($faltan) || $faltan < 1 || $faltan > 9) {
+            responder(400, ['error' => 'Pueden faltar de 1 a 9 jugadores']);
+        }
+        $nivel = textoDe($datos, 'nivel') ?: 'cualquiera';
+        if (!in_array($nivel, PartidoAbierto::NIVELES, true)) {
+            responder(400, ['error' => 'El nivel no es válido']);
+        }
+        $comentario = trim(textoDe($datos, 'comentario'));
+        if (mb_strlen($comentario) > 140) {
+            responder(400, ['error' => 'El comentario puede tener hasta 140 letras']);
+        }
+        $partidos = new PartidoAbierto($this->pdo);
+        $actual = $partidos->buscarPorTurno($id);
+        if ($actual !== null && $faltan < count($partidos->jugadores((int) $actual['id']))) {
+            responder(409, ['error' => 'Ya se sumaron más jugadores que esos']);
+        }
+        $partidos->publicar($id, $faltan, $nivel, $comentario !== '' ? $comentario : null);
+        responder(200, ['reserva' => $this->publica($this->turnos->buscarReserva($id))]);
+    }
+
+    // DELETE /reservas/:id/me-falta-uno  Deja de buscar (los que se sumaron siguen)
+    public function cerrarMeFaltaUno(int $id): void
+    {
+        $this->reservaDelJugador($id);
+        (new PartidoAbierto($this->pdo))->cerrar($id);
+        responder(200, ['reserva' => $this->publica($this->turnos->buscarReserva($id))]);
+    }
+
+    /**
      * POST /reservas/:id/cancelar
      * Hasta las horas antes que fija el complejo; mientras la seña está pendiente, en cualquier momento.
      * Si había pagado algo, se le avisa al complejo para que lo devuelva.
@@ -357,6 +410,8 @@ final class ReservaController extends Controlador
             $this->turnos->cambiarEstado($id, 'cancelado');
         });
         (new LinksDePago($this->pdo))->anularDeTurnosCancelados([$id]);
+        // Si alguien esperaba ese horario, se le avisa
+        (new ListaEspera($this->pdo))->revisar((int) $reserva['cancha_id']);
 
         $pagado = (float) $reserva['pagado'];
         $this->avisarAlComplejo('Reserva cancelada por el jugador', $reserva, sprintf(
@@ -444,6 +499,9 @@ final class ReservaController extends Controlador
             'cancelableHasta' => date('Y-m-d H:i', $cancelableHasta),
             'cancelacionHoras' => (int) $r['cancelacion_horas'],
             'linkPago' => $link,
+            // Premio de fidelidad: lo que se descontó
+            'descuento' => (float) $r['descuento'],
+            'meFaltaUno' => $this->meFaltaUno((int) $r['id']),
             // La vaquita: lo que pone cada uno y si ya pagó
             'vaquita' => array_map([$this->vaquita, 'publico'], $partes),
             'vaquitaEnMarcha' => array_filter($partes, fn (array $p) => VaquitaParte::estado($p) === 'pendiente') !== [],
@@ -455,7 +513,32 @@ final class ReservaController extends Controlador
                 'telefono' => $r['complejo_telefono'],
                 'ubicacion' => Complejo::ubicacion($r, 'complejo_'),
             ],
-            'cancha' => ['id' => (int) $r['cancha_id'], 'nombre' => $r['cancha_nombre'], 'deporte' => $r['cancha_deporte']],
+            'cancha' => [
+                'id' => (int) $r['cancha_id'],
+                'nombre' => $r['cancha_nombre'],
+                'deporte' => $r['cancha_deporte'],
+                'techada' => (bool) $r['cancha_techada'],
+            ],
+        ];
+    }
+
+    // Si busca jugadores: cuántos, de qué nivel y quiénes se sumaron (con su celular, para coordinar)
+    private function meFaltaUno(int $turnoId): ?array
+    {
+        $partidos = new PartidoAbierto($this->pdo);
+        $partido = $partidos->buscarPorTurno($turnoId);
+        if ($partido === null) {
+            return null;
+        }
+        return [
+            'buscan' => (int) $partido['faltan'],
+            'nivel' => $partido['nivel'],
+            'comentario' => $partido['comentario'],
+            'cerrado' => (bool) $partido['cerrado'],
+            'sumados' => array_map(
+                fn (array $j) => ['nombre' => $j['nombre'], 'telefono' => $j['telefono']],
+                $partidos->jugadores((int) $partido['id'])
+            ),
         ];
     }
 

@@ -12,6 +12,7 @@ use App\Models\TurnoFijo;
 use App\Services\AgendaService;
 use App\Services\CobroService;
 use App\Services\LinksDePago;
+use App\Services\ListaEspera;
 use App\Services\Notificaciones;
 use App\Services\VistaTurno;
 
@@ -178,6 +179,7 @@ final class TurnoController extends Controlador
             if ($estado === 'cancelado') {
                 (new LinksDePago($this->pdo))->anularDeTurnosCancelados([$id]);
                 $this->avisar('Turno cancelado', $id, 'lo canceló');
+                (new ListaEspera($this->pdo))->revisar((int) $turno['cancha_id']);
             }
         }
         responder(200, ['turno' => $this->detalle($id)]);
@@ -210,6 +212,7 @@ final class TurnoController extends Controlador
             return $this->turnos->cancelarDelFijo($id, $desde);
         });
         (new LinksDePago($this->pdo))->anularDeTurnosCancelados($this->turnos->idsDelFijoDesde($id, $desde));
+        (new ListaEspera($this->pdo))->revisar((int) $fijo['cancha_id']);
 
         $respuesta = ['ok' => true];
         if ($conPago > 0) {

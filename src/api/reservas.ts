@@ -3,6 +3,7 @@ import type { Deporte } from './canchas';
 import type { LinkPago } from './cobros';
 import type { ReglasReservas, Ubicacion } from './complejo';
 import type { EstadoPago, EstadoTurno } from './agenda';
+import type { Nivel } from './jugador';
 
 // Un horario que el jugador no puede tomar (sin decir de quién es)
 export type Ocupado = { canchaId: number; horaDesde: string; horaHasta: string };
@@ -28,6 +29,16 @@ export type DatosReserva = {
   duracionMin: number;
   pago: FormaDePago;
   telefono?: string; // si la cuenta todavía no tiene celular
+  usarPremio?: boolean; // premio de fidelidad
+};
+
+// "Me falta uno" de la reserva propia: quiénes se sumaron, con su celular para coordinar
+export type MeFaltaUno = {
+  buscan: number;
+  nivel: Nivel;
+  comentario: string | null;
+  cerrado: boolean;
+  sumados: { nombre: string; telefono: string | null }[];
 };
 
 // Lo que pone cada uno en la vaquita, con su link de Mercado Pago
@@ -66,6 +77,9 @@ export type Reserva = {
   // La vaquita (las partes que se deshicieron sin pagar no vienen)
   vaquita: ParteVaquita[];
   vaquitaEnMarcha: boolean;
+  // Premio de fidelidad: lo que se descontó
+  descuento: number;
+  meFaltaUno: MeFaltaUno | null;
   complejo: {
     id: number;
     nombre: string;
@@ -74,7 +88,7 @@ export type Reserva = {
     telefono: string | null;
     ubicacion: Ubicacion | null;
   };
-  cancha: { id: number; nombre: string; deporte: Deporte };
+  cancha: { id: number; nombre: string; deporte: Deporte; techada: boolean };
 };
 
 // Endpoints /reservas de la API (y la disponibilidad de un complejo)
@@ -93,4 +107,7 @@ export const reservasApi = {
   armarVaquita: (id: number, nombres: string[]) =>
     api<{ reserva: Reserva }>(`/reservas/${id}/vaquita`, 'POST', { partes: nombres.map(nombre => ({ nombre })) }),
   deshacerVaquita: (id: number) => api<{ reserva: Reserva }>(`/reservas/${id}/vaquita`, 'DELETE'),
+  publicarMeFaltaUno: (id: number, datos: { faltan: number; nivel: Nivel; comentario: string }) =>
+    api<{ reserva: Reserva }>(`/reservas/${id}/me-falta-uno`, 'PUT', datos),
+  cerrarMeFaltaUno: (id: number) => api<{ reserva: Reserva }>(`/reservas/${id}/me-falta-uno`, 'DELETE'),
 };

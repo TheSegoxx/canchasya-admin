@@ -110,7 +110,7 @@ final class BloqueoController extends Controlador
     // DELETE /bloqueos/:id
     public function borrar(int $id): void
     {
-        $this->verificarDelComplejo($this->bloqueos->buscarConDueno($id), 'El bloqueo');
+        $bloqueo = $this->verificarDelComplejo($this->bloqueos->buscarConDueno($id), 'El bloqueo');
         // Si reserva la cancha para un partido, se cambia desde el torneo (si no, el partido
         // seguiría figurando programado con la cancha libre para otro turno)
         $torneo = $this->bloqueos->torneoQueLoUsa($id);
@@ -118,6 +118,8 @@ final class BloqueoController extends Controlador
             responder(409, ['error' => "Es un partido de \"$torneo\": cambialo o quitalo de la agenda desde el torneo"]);
         }
         $this->bloqueos->borrar($id);
+        // Se liberó la cancha: si alguien esperaba ese horario, se le avisa
+        (new \App\Services\ListaEspera($this->pdo))->revisar((int) $bloqueo['cancha_id']);
         responder(204);
     }
 }

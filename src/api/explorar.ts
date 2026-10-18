@@ -1,6 +1,7 @@
 import { api } from './cliente';
 import type { Deporte, Franja } from './canchas';
 import type { ReglasReservas, Servicio, Ubicacion } from './complejo';
+import type { Fidelidad } from './jugador';
 
 // Un complejo en la lista de búsqueda del jugador
 export type ComplejoResumen = {
@@ -48,6 +49,8 @@ export type ComplejoFicha = {
   favorito: boolean;
   // Si toma reservas por la app, la seña y los plazos
   reservas: ReglasReservas;
+  // Los sellos del jugador (null si el complejo no tiene programa de fidelidad)
+  fidelidad: Fidelidad | null;
   canchas: CanchaFicha[];
 };
 

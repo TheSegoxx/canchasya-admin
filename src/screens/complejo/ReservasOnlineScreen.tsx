@@ -37,6 +37,18 @@ const CANCELACION: Opcion[] = [0, 2, 12, 24, 48].map(h => ({
   texto: h === 0 ? 'Hasta que empiece' : `${h} h antes`,
 }));
 
+const FIDELIDAD: Opcion[] = [
+  { valor: 0, texto: 'Sin programa' },
+  { valor: 5, texto: 'Cada 5' },
+  { valor: 8, texto: 'Cada 8' },
+  { valor: 10, texto: 'Cada 10' },
+];
+const PREMIOS: Opcion[] = [
+  { valor: 100, texto: 'Turno gratis' },
+  { valor: 50, texto: '50 % off' },
+  { valor: 25, texto: '25 % off' },
+];
+
 // Un turno de ejemplo para que el dueño vea cuánto pide de seña
 const PRECIO_EJEMPLO = 36000;
 
@@ -104,6 +116,9 @@ export function ReservasOnlineScreen({ navigation }: Props) {
       : 'Se reserva sin pagar nada: el jugador paga en el complejo (o todo por Mercado Pago, si quiere).',
     `Pueden reservar con hasta ${ANTICIPACION.find(a => a.valor === reglas.reservaDias)?.texto ?? `${reglas.reservaDias} días`} de anticipación ` +
       `y cancelar ${textoPlazoCancelacion(reglas.cancelacionHoras)}.`,
+    reglas.fidelidadTurnos > 0
+      ? `Cada ${reglas.fidelidadTurnos} turnos jugados, ${reglas.fidelidadDescuento >= 100 ? 'uno gratis' : `uno con ${reglas.fidelidadDescuento} % de descuento`}.`
+      : 'Sin programa de fidelidad.',
   ];
 
   return (
@@ -128,6 +143,16 @@ export function ReservasOnlineScreen({ navigation }: Props) {
             v => cambiar({ cancelacionHoras: v }),
             'Hasta cuándo el jugador puede cancelar desde la app. Si había pagado, te avisamos para que le devuelvas la plata.',
           )}
+
+          {grupo(
+            'Programa de fidelidad',
+            FIDELIDAD,
+            reglas.fidelidadTurnos,
+            v => cambiar({ fidelidadTurnos: v }),
+            'Cada tantos turnos jugados reservando por la app, el jugador gana un premio. Lo ve como una tarjeta de sellos.',
+          )}
+          {reglas.fidelidadTurnos > 0 &&
+            grupo('Premio', PREMIOS, reglas.fidelidadDescuento, v => cambiar({ fidelidadDescuento: v }))}
 
           <View style={[estilos.resumen, { backgroundColor: colores.primario + '14', borderColor: colores.primario + '55' }]}>
             {resumen.map(linea => (

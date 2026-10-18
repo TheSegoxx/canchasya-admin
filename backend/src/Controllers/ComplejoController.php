@@ -98,8 +98,10 @@ final class ComplejoController extends Controlador
     }
 
     /**
-     * PUT /complejo/reservas  {aceptaReservas, senaPorcentaje, senaMinutos, reservaDias, cancelacionHoras}
-     * Las reglas para las reservas que hacen los jugadores desde la app.
+     * PUT /complejo/reservas  {aceptaReservas, senaPorcentaje, senaMinutos, reservaDias, cancelacionHoras,
+     *                         fidelidadTurnos?, fidelidadDescuento?}
+     * Las reglas para las reservas que hacen los jugadores desde la app y el programa de fidelidad
+     * (fidelidadTurnos 0 = sin programa; si no vienen, quedan como estaban).
      */
     public function guardarReglasReservas(): void
     {
@@ -122,7 +124,16 @@ final class ComplejoController extends Controlador
             'senaMinutos' => $entero('senaMinutos', 5, 1440, 'El plazo para pagar la seña tiene que ser de 5 minutos a 24 horas'),
             'reservaDias' => $entero('reservaDias', 1, 90, 'Se puede reservar con 1 a 90 días de anticipación'),
             'cancelacionHoras' => $entero('cancelacionHoras', 0, 168, 'El plazo para cancelar tiene que ser de 0 a 168 horas (una semana)'),
+            'fidelidadTurnos' => array_key_exists('fidelidadTurnos', $datos)
+                ? $entero('fidelidadTurnos', 0, 30, 'El premio es cada 3 a 30 turnos (0 = sin programa de fidelidad)')
+                : (int) $complejo['fidelidad_turnos'],
+            'fidelidadDescuento' => array_key_exists('fidelidadDescuento', $datos)
+                ? $entero('fidelidadDescuento', 10, 100, 'El premio tiene que ser de 10 a 100 % de descuento')
+                : (int) $complejo['fidelidad_descuento'],
         ];
+        if ($reglas['fidelidadTurnos'] > 0 && $reglas['fidelidadTurnos'] < 3) {
+            responder(400, ['error' => 'El premio es cada 3 a 30 turnos (0 = sin programa de fidelidad)']);
+        }
         $this->complejos->guardarReglasReservas((int) $complejo['id'], $reglas);
         responder(200, ['complejo' => $this->complejos->publico($this->complejos->buscarPorId((int) $complejo['id']))]);
     }

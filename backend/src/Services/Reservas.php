@@ -65,6 +65,10 @@ final class Reservas
         }
         // Normalmente el link ya venció junto con la seña; si quedó alguno abierto, se anula
         (new LinksDePago($this->pdo))->anularDeTurnosCancelados($canceladas);
+        // Y el horario que se liberó puede ser el que alguien esperaba
+        if ($canceladas !== []) {
+            (new ListaEspera($this->pdo))->revisar();
+        }
         return count($canceladas);
     }
 

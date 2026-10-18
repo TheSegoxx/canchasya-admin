@@ -4,6 +4,7 @@ import { Text } from '../../components/Texto';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { ErrorApi } from '../../api/cliente';
 import { ComplejoFicha, explorarApi } from '../../api/explorar';
+import { jugadorApi } from '../../api/jugador';
 import { Disponibilidad, FormaDePago, reservasApi } from '../../api/reservas';
 import { Boton } from '../../components/Boton';
 import { CampoTexto } from '../../components/CampoTexto';
@@ -18,12 +19,15 @@ import { formatearPesos } from '../../utils/formato';
 import { sumarMinutos } from '../../utils/horas';
 import {
   duracionesPosibles,
+  horariosOcupados,
   horariosParaReservar,
   montoSena,
   precioReserva,
   textoDuracion,
   textoPlazoCancelacion,
 } from '../../utils/reservas';
+import { TarjetaClima } from './TarjetaClima';
+import { textoPremio } from './TarjetaSellos';
 
 type Props = NativeStackScreenProps<RutasJugador, 'Reservar'>;
 
@@ -55,6 +59,8 @@ export function ReservarScreen({ route, navigation }: Props) {
   const [pago, setPago] = useState<FormaDePago | null>(null);
   const [telefono, setTelefono] = useState('');
   const [enviando, setEnviando] = useState(false);
+  const [usarPremio, setUsarPremio] = useState(false);
+  const [verEspera, setVerEspera] = useState(false);
 
   const cargarComplejo = useCallback(async () => {
     setErrorCarga('');
@@ -125,8 +131,15 @@ export function ReservarScreen({ route, navigation }: Props) {
   const reglas = dia?.reservas ?? complejo.reservas;
   const dias = Array.from({ length: reglas.reservaDias + 1 }, (_, i) => sumarDias(hoy, i));
   const fin = hora && duracion ? sumarMinutos(hora, duracion) : null;
-  const precio = cancha && hora && fin ? precioReserva(cancha, hora, fin) : null;
+  const precioLista = cancha && hora && fin ? precioReserva(cancha, hora, fin) : null;
+  // El premio de fidelidad descuenta un porcentaje (100 = gratis)
+  const fidelidad = complejo.fidelidad;
+  const tienePremio = !!fidelidad && fidelidad.premios > 0;
+  const descuento = precioLista !== null && usarPremio && fidelidad ? Math.round((precioLista * fidelidad.descuento) / 100) : 0;
+  const precio = precioLista !== null ? precioLista - descuento : null;
+  const gratis = precio === 0;
   const sena = precio !== null ? montoSena(precio, reglas.senaPorcentaje) : null;
+  const ocupados = cancha && duracion && dia ? horariosOcupados(cancha.id, duracion, dia) : [];
   const pideSena = reglas.senaPorcentaje > 0;
   // Por defecto, la seña (si la pide) o pagar en el complejo
   const formaDePago: FormaDePago = pago ?? (pideSena ? 'sena' : 'complejo');
@@ -148,6 +161,7 @@ export function ReservarScreen({ route, navigation }: Props) {
         horaInicio: hora,
         duracionMin: duracion,
         pago: formaDePago,
+        usarPremio,
         ...(sinTelefono ? { telefono } : {}),
       });
       if (sinTelefono && usuario) {
@@ -170,6 +184,28 @@ export function ReservarScreen({ route, navigation }: Props) {
     } finally {
       setEnviando(false);
     }
+  };
+
+  // Lista de espera: se le avisa si se libera ese horario
+  const anotarEnEspera = (h: string) => {
+    if (!cancha || !duracion) {
+      return;
+    }
+    Alert.alert('Lista de espera', `${cancha.nombre}, ${fechaLarga(fecha)} a las ${h}. Si se libera, te mandamos una notificación.`, [
+      { text: 'Cancelar', style: 'cancel' },
+      {
+        text: 'Avisame',
+        onPress: async () => {
+          try {
+            await jugadorApi.crearEspera({ canchaId: cancha.id, fecha, horaInicio: h, duracionMin: duracion });
+            Alert.alert('¡Listo!', 'Te avisamos si se libera. Lo ves en Mis reservas.');
+            setVerEspera(false);
+          } catch (e) {
+            Alert.alert('No se pudo anotar', mensajeDeError(e));
+          }
+        },
+      },
+    ]);
   };
 
   if (!reglas.aceptaReservas) {
@@ -227,6 +263,28 @@ export function ReservarScreen({ route, navigation }: Props) {
         </View>
       )}
 
+      {dia && ocupados.length > 0 && (
+        <>
+          <Boton
+            titulo={verEspera ? 'Ocultar horarios ocupados' : '¿Querés un horario ocupado? Anotate en la lista de espera'}
+            variante="texto"
+            onPress={() => setVerEspera(!verEspera)}
+          />
+          {verEspera && (
+            <>
+              <Text style={[estilos.ayuda, { color: colores.textoSecundario }]}>
+                Tocá el horario que querés: si se libera, te avisamos al toque.
+              </Text>
+              <View style={estilos.chips}>
+                {ocupados.map(h => (
+                  <Chip key={h} texto={`${h} 🔔`} seleccionado={false} onPress={() => anotarEnEspera(h)} />
+                ))}
+              </View>
+            </>
+          )}
+        </>
+      )}
+
       {cancha && hora && fin && precio !== null && duracion && (
         <>
           <View style={[estilos.resumen, { backgroundColor: colores.superficie, borderColor: colores.borde }]}>
@@ -238,8 +296,15 @@ export function ReservarScreen({ route, navigation }: Props) {
             </Text>
             <View style={[estilos.filaTotal, { borderTopColor: colores.borde }]}>
               <Text style={[estilos.textoTotal, { color: colores.texto }]}>Total</Text>
-              <Text style={[estilos.montoTotal, { color: colores.primario }]}>{formatearPesos(precio)}</Text>
+              <Text style={[estilos.montoTotal, { color: colores.primario }]}>{gratis ? '¡Gratis!' : formatearPesos(precio)}</Text>
             </View>
+            {descuento > 0 && (
+              <Text style={[estilos.resumenDetalle, { color: colores.primario }]}>
+                {gratis
+                  ? `Premio de fidelidad: turno gratis (vale ${formatearPesos(descuento)})`
+                  : `Premio de fidelidad: −${formatearPesos(descuento)} (antes ${formatearPesos(precioLista ?? 0)})`}
+              </Text>
+            )}
             {sena !== null && (
               <Text style={[estilos.resumenDetalle, { color: colores.texto }]}>
                 Seña para confirmar: <Text style={estilos.negrita}>{formatearPesos(sena)}</Text> ({reglas.senaPorcentaje} %).
@@ -251,8 +316,31 @@ export function ReservarScreen({ route, navigation }: Props) {
             </Text>
           </View>
 
-          <Text style={[estilos.seccion, { color: colores.texto }]}>¿Cómo pagás?</Text>
-          {pideSena && sena !== null ? (
+          <TarjetaClima complejoId={complejo.id} fecha={fecha} inicio={hora} fin={fin} techada={cancha.techada} />
+
+          {tienePremio && fidelidad && (
+            <Pressable
+              accessibilityRole="checkbox"
+              accessibilityState={{ checked: usarPremio }}
+              onPress={() => setUsarPremio(!usarPremio)}
+              style={[
+                estilos.opcion,
+                { backgroundColor: usarPremio ? colores.primario + '14' : colores.superficie, borderColor: colores.primario },
+              ]}>
+              <Text style={estilos.regalo}>🎁</Text>
+              <View style={estilos.textosOpcion}>
+                <Text style={[estilos.tituloOpcion, { color: colores.texto }]}>
+                  {usarPremio ? 'Usando tu premio' : 'Usar mi premio de fidelidad'}
+                </Text>
+                <Text style={[estilos.detalleOpcion, { color: colores.textoSecundario }]}>
+                  Tenés {textoPremio(fidelidad.descuento)} por tus turnos jugados acá.
+                </Text>
+              </View>
+            </Pressable>
+          )}
+
+          {!gratis && <Text style={[estilos.seccion, { color: colores.texto }]}>¿Cómo pagás?</Text>}
+          {gratis ? null : pideSena && sena !== null ? (
             <>
               <OpcionPago
                 titulo={`Pagar la seña: ${formatearPesos(sena)}`}
@@ -295,7 +383,7 @@ export function ReservarScreen({ route, navigation }: Props) {
           )}
 
           <Boton
-            titulo={formaDePago === 'complejo' ? 'Reservar' : 'Reservar e ir a pagar'}
+            titulo={gratis ? 'Reservar gratis' : formaDePago === 'complejo' ? 'Reservar' : 'Reservar e ir a pagar'}
             onPress={reservar}
             cargando={enviando}
           />
@@ -354,6 +442,7 @@ const estilos = StyleSheet.create({
   textoTotal: { fontSize: 16, fontWeight: '600' },
   montoTotal: { fontSize: 20, fontWeight: '700' },
   negrita: { fontWeight: '700' },
+  regalo: { fontSize: 24 },
   opcion: {
     flexDirection: 'row',
     alignItems: 'center',

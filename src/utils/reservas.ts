@@ -45,6 +45,19 @@ export function horariosParaReservar(canchaId: number, duracion: number, dia: Di
   return libres;
 }
 
+// Las horas que están ocupadas (para anotarse en la lista de espera): las que no están libres y no empezaron
+export function horariosOcupados(canchaId: number, duracion: number, dia: Dia): string[] {
+  const libres = new Set(horariosParaReservar(canchaId, duracion, dia));
+  const ahora = dia.ahora !== null ? aMinutos(dia.ahora) : -1;
+  const ocupados: string[] = [];
+  for (let m = aMinutos(dia.horaApertura); m + duracion <= aMinutos(dia.horaCierre); m += PASO_MINUTOS) {
+    if (m > ahora && !libres.has(aHora(m))) {
+      ocupados.push(aHora(m));
+    }
+  }
+  return ocupados;
+}
+
 /**
  * Precio de jugar de $inicio a $fin. Los precios de la cancha y de sus franjas son por turno
  * (lo que dura la cancha): cada tramo se cobra en proporción a los minutos que ocupa, redondeado al peso.

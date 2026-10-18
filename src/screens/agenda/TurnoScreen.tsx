@@ -167,6 +167,7 @@ export function TurnoScreen({ route, navigation }: Props) {
       {fila('Estado', NOMBRE_ESTADO[turno.estado], cancelado ? colores.error : colores.texto)}
       {fila('Pago', NOMBRE_PAGO[turno.estadoPago], color)}
       {turno.reservaApp && fila('Reserva', 'Desde la app CanchasYa')}
+      {turno.descuento > 0 && fila('Premio de fidelidad', `−${formatearPesos(turno.descuento)}`, colores.primario)}
       {turno.sena !== null &&
         fila(
           'Seña',

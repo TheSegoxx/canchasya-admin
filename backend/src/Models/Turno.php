@@ -24,7 +24,7 @@ final class Turno extends Modelo
         'SELECT t.*, t.usuario_id AS jugador_id, cl.nombre AS cliente_nombre, cl.telefono AS cliente_telefono,
                 (SELECT COALESCE(SUM(co.cantidad * co.precio_unitario), 0) FROM consumos co WHERE co.turno_id = t.id) AS extras,
                 (SELECT COALESCE(SUM(p.monto), 0) FROM pagos p WHERE p.turno_id = t.id) AS pagado,
-                c.nombre AS cancha_nombre, c.deporte AS cancha_deporte, c.complejo_id,
+                c.nombre AS cancha_nombre, c.deporte AS cancha_deporte, c.techada AS cancha_techada, c.complejo_id,
                 x.nombre AS complejo_nombre, x.direccion AS complejo_direccion, x.ciudad AS complejo_ciudad,
                 x.telefono AS complejo_telefono, x.latitud AS complejo_latitud, x.longitud AS complejo_longitud,
                 x.cancelacion_horas
@@ -225,9 +225,10 @@ final class Turno extends Modelo
     }
 
     /**
-     * Las reservas de la app traen además usuarioId, sena y senaVenceEn.
+     * Las reservas de la app traen además usuarioId, sena, senaVenceEn y, si usó un premio
+     * de fidelidad, descuento.
      *
-     * @param array{canchaId: int, clienteId: int, turnoFijoId: ?int, fecha: string, horaInicio: string, horaFin: string, precio: float, usuarioId?: int, sena?: ?float, senaVenceEn?: ?string} $datos
+     * @param array{canchaId: int, clienteId: int, turnoFijoId: ?int, fecha: string, horaInicio: string, horaFin: string, precio: float, usuarioId?: int, sena?: ?float, senaVenceEn?: ?string, descuento?: float} $datos
      */
     public function crear(array $datos): int
     {
@@ -242,6 +243,8 @@ final class Turno extends Modelo
             'precio' => $datos['precio'],
             'sena' => $datos['sena'] ?? null,
             'sena_vence_en' => $datos['senaVenceEn'] ?? null,
+            'premio' => ($datos['descuento'] ?? 0) > 0 ? 1 : 0,
+            'descuento' => $datos['descuento'] ?? 0,
         ]);
     }
 
@@ -313,6 +316,8 @@ final class Turno extends Modelo
             // La seña que pidió el complejo y, mientras falte pagarla, hasta cuándo hay tiempo
             'sena' => $turno['sena'] !== null ? (float) $turno['sena'] : null,
             'senaVenceEn' => self::senaPendiente($turno) ? substr($turno['sena_vence_en'], 0, 16) : null,
+            // Premio de fidelidad: lo que se descontó del precio
+            'descuento' => (float) $turno['descuento'],
             'cliente' => [
                 'id' => (int) $turno['cliente_id'],
                 'nombre' => $turno['cliente_nombre'],

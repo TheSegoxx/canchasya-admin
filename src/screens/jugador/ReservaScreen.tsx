@@ -12,12 +12,14 @@ import { Pantalla } from '../../components/Pantalla';
 import { mensajeDeError } from '../../context/SesionContext';
 import type { RutasJugador } from '../../navigation/AppNavigator';
 import { espaciado, radio, useTema } from '../../theme/tema';
+import { NOMBRE_NIVEL } from '../../api/jugador';
 import { abrirMapa, abrirWhatsApp, llamar } from '../../utils/acciones';
 import { fechaRelativa } from '../../utils/fechas';
 import { formatearPesos } from '../../utils/formato';
 import { estadoReserva, textoDuracion, textoPlazoCancelacion } from '../../utils/reservas';
 import { avance } from '../../utils/vaquita';
 import { colorDeTono } from './TarjetaReserva';
+import { TarjetaClima } from './TarjetaClima';
 
 type Props = NativeStackScreenProps<RutasJugador, 'Reserva'>;
 
@@ -122,6 +124,15 @@ export function ReservaScreen({ route, navigation }: Props) {
     }
   };
 
+  // Dejar de buscar jugadores (los que se sumaron siguen)
+  const cerrarMeFaltaUno = async () => {
+    try {
+      setReserva((await reservasApi.cerrarMeFaltaUno(reserva.id)).reserva);
+    } catch (e) {
+      Alert.alert('No se pudo cerrar', mensajeDeError(e));
+    }
+  };
+
   const confirmarCancelacion = () => {
     const devolucion = reserva.pagado > 0 ? `\n\nLe avisamos al complejo para que te devuelva ${formatearPesos(reserva.pagado)}.` : '';
     Alert.alert('Cancelar reserva', `${reserva.cancha.nombre}, ${fechaRelativa(reserva.fecha).toLowerCase()} a las ${reserva.horaInicio}.${devolucion}`, [
@@ -187,8 +198,21 @@ export function ReservaScreen({ route, navigation }: Props) {
       {fila('Horario', `${reserva.horaInicio} a ${reserva.horaFin === '24:00' ? '00:00' : reserva.horaFin} (${textoDuracion(reserva.duracionMin)})`)}
       {fila('Total', formatearPesos(reserva.total))}
       {reserva.sena !== null && fila('Seña', formatearPesos(reserva.sena))}
+      {reserva.descuento > 0 && fila('Premio de fidelidad', `−${formatearPesos(reserva.descuento)}`, colores.primario)}
       {fila('Pagado', formatearPesos(reserva.pagado), reserva.pagado > 0 ? colores.primario : colores.texto)}
       {reserva.estado !== 'cancelado' && fila('Falta pagar', formatearPesos(reserva.saldo), reserva.saldo > 0 ? colores.texto : colores.primario)}
+
+      {activa && (
+        <View style={estilos.clima}>
+          <TarjetaClima
+            complejoId={reserva.complejo.id}
+            fecha={reserva.fecha}
+            inicio={reserva.horaInicio}
+            fin={reserva.horaFin}
+            techada={reserva.cancha.techada}
+          />
+        </View>
+      )}
 
       <View style={estilos.acciones}>
         {(reserva.vaquita.length > 0 || (activa && reserva.saldo > 0)) && (
@@ -225,6 +249,59 @@ export function ReservaScreen({ route, navigation }: Props) {
         )}
         {reserva.linkPago && (
           <Boton titulo="Ya pagué: verificar el pago" variante="texto" onPress={() => verificar(true)} cargando={verificando} />
+        )}
+
+        {activa && (
+          <>
+            <Text style={[estilos.seccion, { color: colores.texto }]}>¿Les falta gente?</Text>
+            {reserva.meFaltaUno && !reserva.meFaltaUno.cerrado ? (
+              <View style={[estilos.tarjeta, { backgroundColor: colores.superficie, borderColor: colores.borde }]}>
+                <Text style={[estilos.textoCancha, estilos.sinMargen, { color: colores.texto }]}>
+                  Buscando {reserva.meFaltaUno.buscan === 1 ? '1 jugador' : `${reserva.meFaltaUno.buscan} jugadores`} ·{' '}
+                  {NOMBRE_NIVEL[reserva.meFaltaUno.nivel]}
+                </Text>
+                <Text style={[estilos.direccion, { color: colores.textoSecundario }]}>
+                  {reserva.meFaltaUno.sumados.length === 0
+                    ? 'Todavía no se sumó nadie. Aparece en "Partidos" para los demás jugadores.'
+                    : `Se ${reserva.meFaltaUno.sumados.length === 1 ? 'sumó' : 'sumaron'}:`}
+                </Text>
+                {reserva.meFaltaUno.sumados.map(s => (
+                  <View key={s.nombre + s.telefono} style={estilos.sumado}>
+                    <Text style={[estilos.nombreSumado, { color: colores.texto }]}>{s.nombre}</Text>
+                    {s.telefono && (
+                      <Boton
+                        titulo="WhatsApp"
+                        icono="whatsapp"
+                        variante="texto"
+                        color={colores.whatsapp}
+                        onPress={() =>
+                          abrirWhatsApp(
+                            s.telefono ?? '',
+                            `¡Hola ${s.nombre.split(' ')[0]}! Te sumaste a mi partido en ${reserva.complejo.nombre}, ${fechaRelativa(reserva.fecha).toLowerCase()} a las ${reserva.horaInicio}.`,
+                          )
+                        }
+                      />
+                    )}
+                  </View>
+                ))}
+                <View style={[estilos.contacto, estilos.sinMargenAbajo]}>
+                  <View style={estilos.boton}>
+                    <Boton titulo="Editar" variante="secundario" onPress={() => navigation.navigate('MeFaltaUno', { id: reserva.id })} />
+                  </View>
+                  <View style={estilos.boton}>
+                    <Boton titulo="Ya estamos" variante="secundario" onPress={cerrarMeFaltaUno} />
+                  </View>
+                </View>
+              </View>
+            ) : (
+              <Boton
+                titulo="Me falta uno: buscar jugadores"
+                icono="clientes"
+                variante="secundario"
+                onPress={() => navigation.navigate('MeFaltaUno', { id: reserva.id })}
+              />
+            )}
+          </>
         )}
 
         <Text style={[estilos.seccion, { color: colores.texto }]}>El complejo</Text>
@@ -295,10 +372,15 @@ const estilos = StyleSheet.create({
   },
   etiqueta: { fontSize: 15 },
   valor: { fontSize: 15, fontWeight: '600', flexShrink: 1, textAlign: 'right', marginLeft: espaciado.m },
-  acciones: { marginTop: espaciado.l },
+  acciones: { marginTop: espaciado.s },
   espacio: { height: espaciado.s },
   seccion: { fontSize: 16, fontWeight: '700', marginTop: espaciado.l, marginBottom: espaciado.s },
   contacto: { flexDirection: 'row', marginTop: espaciado.s, marginHorizontal: -4, marginBottom: espaciado.m },
   boton: { flex: 1, marginHorizontal: 4 },
   ayuda: { fontSize: 13, lineHeight: 18, textAlign: 'center', marginTop: espaciado.m },
+  clima: { marginTop: espaciado.m },
+  sinMargen: { marginLeft: 0 },
+  sinMargenAbajo: { marginBottom: 0 },
+  sumado: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
+  nombreSumado: { fontSize: 15, fontWeight: '600' },
 });

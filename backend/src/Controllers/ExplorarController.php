@@ -9,6 +9,8 @@ use App\Models\Complejo;
 use App\Models\Favorito;
 use App\Models\Foto;
 use App\Models\FranjaPrecio;
+use App\Services\Clima;
+use App\Services\Fidelidad;
 use PDO;
 
 /**
@@ -132,6 +134,8 @@ final class ExplorarController extends Controlador
                 'favorito' => in_array($id, $this->favoritos->idsDe($usuarioId), true),
                 // Si toma reservas por la app, la seña y los plazos
                 'reservas' => $publico['reservas'],
+                // Los sellos del jugador (null si el complejo no tiene programa de fidelidad)
+                'fidelidad' => (new Fidelidad($this->pdo))->de($usuarioId, $complejo),
                 'canchas' => array_map(fn (array $c) => [
                     'id' => (int) $c['id'],
                     'nombre' => $c['nombre'],
@@ -145,6 +149,24 @@ final class ExplorarController extends Controlador
                 ], $canchas),
             ],
         ]);
+    }
+
+    /**
+     * GET /complejos/:id/clima?fecha=AAAA-MM-DD
+     * El pronóstico por hora de ese día (vacío si el complejo no cargó su ubicación o falta mucho).
+     */
+    public function clima(int $id): void
+    {
+        $this->usuarioActual();
+        $complejo = $this->complejos->buscarPorId($id);
+        if ($complejo === null || !$complejo['visible']) {
+            responder(404, ['error' => 'Ese complejo no existe o ya no está en CanchasYa']);
+        }
+        $fecha = $_GET['fecha'] ?? hoy();
+        if (!is_string($fecha) || !fechaValida($fecha)) {
+            responder(400, ['error' => 'La fecha tiene que tener el formato AAAA-MM-DD']);
+        }
+        responder(200, ['fecha' => $fecha, 'horas' => (new Clima($this->pdo))->delDia($complejo, $fecha)]);
     }
 
     // PUT /complejos/:id/favorito

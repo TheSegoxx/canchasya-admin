@@ -114,8 +114,10 @@ pedir('PUT', '/complejo', [
     'servicios' => ['vestuarios', 'duchas', 'buffet', 'estacionamiento', 'wifi'],
 ], $token);
 // Toma reservas desde la app con una seña del 30 % (media hora para pagarla)
+// y tiene programa de fidelidad: cada 10 turnos jugados, uno gratis
 pedir('PUT', '/complejo/reservas', [
     'aceptaReservas' => true, 'senaPorcentaje' => 30, 'senaMinutos' => 30, 'reservaDias' => 14, 'cancelacionHoras' => 24,
+    'fidelidadTurnos' => 10, 'fidelidadDescuento' => 100,
 ], $token);
 
 $canchas = [];

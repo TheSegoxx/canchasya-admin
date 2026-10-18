@@ -26,6 +26,8 @@ export type Turno = {
   // La seña que pidió el complejo y, mientras falte pagarla, hasta cuándo hay tiempo ("AAAA-MM-DD HH:MM")
   sena: number | null;
   senaVenceEn: string | null;
+  // Premio de fidelidad: lo que se descontó del precio
+  descuento: number;
   cliente: Cliente;
 };
 

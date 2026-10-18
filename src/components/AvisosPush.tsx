@@ -34,6 +34,8 @@ export function AvisosPush() {
     pendiente.current = null;
     if (destino.reservaId !== null) {
       navegacion.navigate('Reserva', { id: destino.reservaId });
+    } else if (destino.pantalla === 'reservar' && destino.complejoId !== null) {
+      navegacion.navigate('Reservar', { complejoId: destino.complejoId, canchaId: destino.canchaId ?? undefined });
     } else if (destino.turnoId !== null) {
       navegacion.navigate('Turno', { id: destino.turnoId });
     } else if (destino.pantalla === 'caja') {

@@ -1,9 +1,10 @@
-import React from 'react';
+import React, { useCallback, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 import { Text } from '../../components/Texto';
-import { useNavigation } from '@react-navigation/native';
+import { useFocusEffect, useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { NOMBRE_DEPORTE } from '../../api/canchas';
+import { jugadorApi, TarjetaFidelidad } from '../../api/jugador';
 import { Pantalla } from '../../components/Pantalla';
 import { SelectorTema } from '../../components/SelectorTema';
 import { TarjetaCuenta } from '../../components/TarjetaCuenta';
@@ -12,12 +13,25 @@ import type { RutasJugador } from '../../navigation/AppNavigator';
 import { espaciado, radio, useTema } from '../../theme/tema';
 import { formatearTelefono } from '../../utils/telefono';
 import { BotonCerrarSesion, ListaOpciones } from '../principal/MasScreen';
+import { TarjetaSellos } from './TarjetaSellos';
 
 // Pestaña "Perfil" del jugador: sus datos, el tema y cerrar sesión
 export function PerfilJugadorScreen() {
   const { colores } = useTema();
   const navigation = useNavigation<NativeStackNavigationProp<RutasJugador>>();
   const { usuario } = useSesion();
+  const [tarjetas, setTarjetas] = useState<TarjetaFidelidad[]>([]);
+
+  // Los sellos se actualizan al volver a la pestaña (pudo haber jugado un turno)
+  useFocusEffect(
+    useCallback(() => {
+      jugadorApi
+        .tarjetas()
+        .then(r => setTarjetas(r.tarjetas))
+        .catch(() => undefined);
+    }, []),
+  );
+
   if (!usuario) {
     return null;
   }
@@ -37,6 +51,15 @@ export function PerfilJugadorScreen() {
         {fila('Celular', usuario.telefono ? formatearTelefono(usuario.telefono) : 'Sin cargar')}
         {fila('Juega', usuario.deportes.length > 0 ? usuario.deportes.map(d => NOMBRE_DEPORTE[d]).join(' y ') : 'Sin elegir', true)}
       </View>
+
+      {tarjetas.length > 0 && (
+        <>
+          <Text style={[estilos.seccion, { color: colores.textoSecundario }]}>Mis sellos</Text>
+          {tarjetas.map(t => (
+            <TarjetaSellos key={t.complejoId} fidelidad={t} titulo={t.complejo} />
+          ))}
+        </>
+      )}
 
       <Text style={[estilos.seccion, { color: colores.textoSecundario }]}>Cuenta</Text>
       <ListaOpciones

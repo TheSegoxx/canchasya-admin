@@ -81,10 +81,13 @@ final class Complejo extends Modelo
             'senaMinutos' => (int) $complejo['sena_minutos'],
             'reservaDias' => (int) $complejo['reserva_dias'],
             'cancelacionHoras' => (int) $complejo['cancelacion_horas'],
+            // Fidelidad: cada cuántos turnos jugados hay premio (0 = sin programa) y de cuánto es
+            'fidelidadTurnos' => (int) $complejo['fidelidad_turnos'],
+            'fidelidadDescuento' => (int) $complejo['fidelidad_descuento'],
         ];
     }
 
-    /** @param array{aceptaReservas: bool, senaPorcentaje: int, senaMinutos: int, reservaDias: int, cancelacionHoras: int} $reglas */
+    /** @param array{aceptaReservas: bool, senaPorcentaje: int, senaMinutos: int, reservaDias: int, cancelacionHoras: int, fidelidadTurnos: int, fidelidadDescuento: int} $reglas */
     public function guardarReglasReservas(int $id, array $reglas): void
     {
         $this->actualizar($id, [
@@ -93,6 +96,8 @@ final class Complejo extends Modelo
             'sena_minutos' => $reglas['senaMinutos'],
             'reserva_dias' => $reglas['reservaDias'],
             'cancelacion_horas' => $reglas['cancelacionHoras'],
+            'fidelidad_turnos' => $reglas['fidelidadTurnos'],
+            'fidelidad_descuento' => $reglas['fidelidadDescuento'],
         ]);
     }
 

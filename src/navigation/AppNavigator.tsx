@@ -50,6 +50,8 @@ import { PerfilJugadorScreen } from '../screens/jugador/PerfilJugadorScreen';
 import { ReservaScreen } from '../screens/jugador/ReservaScreen';
 import { ReservarScreen } from '../screens/jugador/ReservarScreen';
 import { VaquitaScreen } from '../screens/jugador/VaquitaScreen';
+import { MeFaltaUnoScreen } from '../screens/jugador/MeFaltaUnoScreen';
+import { PartidosScreen } from '../screens/jugador/PartidosScreen';
 import { useTema } from '../theme/tema';
 
 export type RutasAuth = {
@@ -116,10 +118,13 @@ export type RutasJugador = {
   Reserva: { id: number; nueva?: boolean };
   // Dividir lo que falta pagar de la reserva entre los amigos
   Vaquita: { id: number };
+  // Publicar (o cambiar) que la reserva busca jugadores
+  MeFaltaUno: { id: number };
 };
 
 export type RutasPestanasJugador = {
   Buscar: undefined;
+  Partidos: undefined;
   MisReservas: undefined;
   Perfil: undefined;
 };
@@ -138,6 +143,7 @@ const iconos: Record<keyof RutasPestanas | keyof RutasPestanasJugador, NombreIco
   Dashboard: 'grafico',
   Mas: 'mas',
   Buscar: 'buscar',
+  Partidos: 'clientes',
   MisReservas: 'agenda',
   Perfil: 'persona',
 };
@@ -218,7 +224,7 @@ function Aplicacion({ tieneComplejo }: { tieneComplejo: boolean }) {
   );
 }
 
-// Las pestañas del jugador: buscar dónde jugar, sus reservas y su perfil
+// Las pestañas del jugador: buscar dónde jugar, partidos que buscan jugadores, sus reservas y su perfil
 function PrincipalJugador() {
   const { colores } = useTema();
   return (
@@ -231,6 +237,7 @@ function PrincipalJugador() {
         tabBarStyle: { borderTopColor: colores.borde, elevation: 0 },
       })}>
       <PestanasJugador.Screen name="Buscar" component={BuscarScreen} options={{ headerShown: false }} />
+      <PestanasJugador.Screen name="Partidos" component={PartidosScreen} options={{ headerShown: false }} />
       <PestanasJugador.Screen name="MisReservas" component={MisReservasScreen} options={{ title: 'Mis reservas' }} />
       <PestanasJugador.Screen name="Perfil" component={PerfilJugadorScreen} />
     </PestanasJugador.Navigator>
@@ -246,6 +253,7 @@ function AplicacionJugador() {
       <PilaJugador.Screen name="Reservar" component={ReservarScreen} options={{ title: 'Reservar' }} />
       <PilaJugador.Screen name="Reserva" component={ReservaScreen} options={{ title: 'Tu reserva' }} />
       <PilaJugador.Screen name="Vaquita" component={VaquitaScreen} options={{ title: 'La vaquita' }} />
+      <PilaJugador.Screen name="MeFaltaUno" component={MeFaltaUnoScreen} options={{ title: 'Me falta uno' }} />
     </PilaJugador.Navigator>
   );
 }

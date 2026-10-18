@@ -24,6 +24,9 @@ export type Aviso = {
   turnoId: number | null;
   // Al jugador: la reserva (por ejemplo, un amigo pagó su parte de la vaquita)
   reservaId: number | null;
+  // Se liberó un horario de la lista de espera: abre Reservar en esa cancha
+  complejoId: number | null;
+  canchaId: number | null;
   pantalla: string | null;
 };
 
@@ -31,11 +34,15 @@ export function avisoDe(mensaje: RemoteMessage): Aviso {
   const datos = mensaje.data ?? {};
   const turnoId = Number(datos.turnoId);
   const reservaId = Number(datos.reservaId);
+  const complejoId = Number(datos.complejoId);
+  const canchaId = Number(datos.canchaId);
   return {
     titulo: mensaje.notification?.title ?? '',
     cuerpo: mensaje.notification?.body ?? '',
     turnoId: Number.isInteger(turnoId) && turnoId > 0 ? turnoId : null,
     reservaId: Number.isInteger(reservaId) && reservaId > 0 ? reservaId : null,
+    complejoId: Number.isInteger(complejoId) && complejoId > 0 ? complejoId : null,
+    canchaId: Number.isInteger(canchaId) && canchaId > 0 ? canchaId : null,
     pantalla: typeof datos.pantalla === 'string' ? datos.pantalla : null,
   };
 }

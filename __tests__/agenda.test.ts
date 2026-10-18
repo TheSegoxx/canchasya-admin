@@ -31,6 +31,7 @@ const turno = (horaInicio: string, horaFin: string, estado: Turno['estado'] = 'c
   reservaApp: false,
   sena: null,
   senaVenceEn: null,
+  descuento: 0,
   cliente: { id: 1, nombre: 'Juan Pérez', telefono: '1155551234' },
 });
 

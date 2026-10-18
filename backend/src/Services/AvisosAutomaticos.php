@@ -13,6 +13,7 @@ use Throwable;
  * - recordatorio 30 minutos antes de los turnos que todavía deben plata;
  * - pagos de Mercado Pago que entraron (sin webhook, se consulta el estado);
  * - reservas de la app cuya seña venció sin pagarse (se libera el horario);
+ * - lista de espera: avisar a los jugadores si se liberó el horario que querían;
  * - resumen de la caja del día al dueño, a la hora de cierre.
  * Cada tarea va por separado: si una falla, las otras siguen.
  */
@@ -33,7 +34,7 @@ final class AvisosAutomaticos
     public function revisar(): array
     {
         $hecho = [];
-        foreach (['recordatorios', 'pagosMercadoPago', 'senasVencidas', 'resumenesDelDia'] as $tarea) {
+        foreach (['recordatorios', 'pagosMercadoPago', 'senasVencidas', 'listaDeEspera', 'resumenesDelDia'] as $tarea) {
             try {
                 $hecho[] = "$tarea: " . $this->$tarea();
             } catch (Throwable $e) {
@@ -112,6 +113,11 @@ final class AvisosAutomaticos
     private function senasVencidas(): int
     {
         return (new Reservas($this->pdo))->liberarVencidas();
+    }
+
+    private function listaDeEspera(): int
+    {
+        return (new ListaEspera($this->pdo))->revisar();
     }
 
     private function resumenesDelDia(): int

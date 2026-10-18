@@ -20,6 +20,7 @@ use App\Controllers\DispositivoController;
 use App\Controllers\EmpleadoController;
 use App\Controllers\ExplorarController;
 use App\Controllers\FotoController;
+use App\Controllers\JugadorController;
 use App\Controllers\LinkPagoController;
 use App\Controllers\ProductoController;
 use App\Controllers\ReservaController;
@@ -48,6 +49,7 @@ $router->agregar('GET', '/complejos/:id', fn (array $p) => (new ExplorarControll
 $router->agregar('PUT', '/complejos/:id/favorito', fn (array $p) => (new ExplorarController())->agregarFavorito($p['id']));
 $router->agregar('DELETE', '/complejos/:id/favorito', fn (array $p) => (new ExplorarController())->quitarFavorito($p['id']));
 $router->agregar('GET', '/complejos/:id/disponibilidad', fn (array $p) => (new ReservaController())->disponibilidad($p['id']));
+$router->agregar('GET', '/complejos/:id/clima', fn (array $p) => (new ExplorarController())->clima($p['id']));
 
 // Reservas del jugador
 $router->agregar('POST', '/reservas', fn () => (new ReservaController())->crear());
@@ -58,6 +60,17 @@ $router->agregar('POST', '/reservas/:id/verificar-pago', fn (array $p) => (new R
 $router->agregar('POST', '/reservas/:id/cancelar', fn (array $p) => (new ReservaController())->cancelar($p['id']));
 $router->agregar('POST', '/reservas/:id/vaquita', fn (array $p) => (new ReservaController())->armarVaquita($p['id']));
 $router->agregar('DELETE', '/reservas/:id/vaquita', fn (array $p) => (new ReservaController())->deshacerVaquita($p['id']));
+$router->agregar('PUT', '/reservas/:id/me-falta-uno', fn (array $p) => (new ReservaController())->publicarMeFaltaUno($p['id']));
+$router->agregar('DELETE', '/reservas/:id/me-falta-uno', fn (array $p) => (new ReservaController())->cerrarMeFaltaUno($p['id']));
+
+// Lista de espera, partidos que buscan jugadores ("me falta uno") y fidelidad
+$router->agregar('GET', '/esperas', fn () => (new JugadorController())->listarEsperas());
+$router->agregar('POST', '/esperas', fn () => (new JugadorController())->crearEspera());
+$router->agregar('DELETE', '/esperas/:id', fn (array $p) => (new JugadorController())->borrarEspera($p['id']));
+$router->agregar('GET', '/partidos', fn () => (new JugadorController())->listarPartidos());
+$router->agregar('POST', '/partidos/:id/jugadores', fn (array $p) => (new JugadorController())->sumarme($p['id']));
+$router->agregar('DELETE', '/partidos/:id/jugadores', fn (array $p) => (new JugadorController())->bajarme($p['id']));
+$router->agregar('GET', '/fidelidad', fn () => (new JugadorController())->tarjetas());
 
 // Complejo del dueño
 $router->agregar('GET', '/complejo', fn () => (new ComplejoController())->obtener());

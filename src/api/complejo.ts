@@ -34,6 +34,9 @@ export type ReglasReservas = {
   senaMinutos: number; // para pagar la seña antes de que se libere el horario
   reservaDias: number; // hasta cuántos días antes se puede reservar
   cancelacionHoras: number; // el jugador puede cancelar hasta estas horas antes
+  // Fidelidad: cada cuántos turnos jugados hay premio (0 = sin programa) y el % de descuento
+  fidelidadTurnos: number;
+  fidelidadDescuento: number;
 };
 
 export type Complejo = DatosComplejo & { id: number; reservas: ReglasReservas };

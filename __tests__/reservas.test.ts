@@ -134,8 +134,10 @@ describe('estado de la reserva', () => {
     linkPago: null,
     vaquita: [],
     vaquitaEnMarcha: false,
+    descuento: 0,
+    meFaltaUno: null,
     complejo: { id: 1, nombre: 'Complejo', direccion: 'Calle 1', ciudad: null, telefono: null, ubicacion: null },
-    cancha: { id: 1, nombre: 'Fútbol 5', deporte: 'futbol5' },
+    cancha: { id: 1, nombre: 'Fútbol 5', deporte: 'futbol5', techada: false },
   };
 
   test('seña pendiente', () => {

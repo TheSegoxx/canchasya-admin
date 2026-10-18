@@ -15,6 +15,7 @@ import { espaciado, radio, useTema } from '../../theme/tema';
 import { abrirMapa, abrirWhatsApp, llamar } from '../../utils/acciones';
 import { formatearPesos } from '../../utils/formato';
 import { textoPlazoCancelacion } from '../../utils/reservas';
+import { TarjetaSellos } from './TarjetaSellos';
 
 type Props = NativeStackScreenProps<RutasJugador, 'ComplejoJugador'>;
 
@@ -167,6 +168,12 @@ export function ComplejoJugadorScreen({ route, navigation }: Props) {
           </>
         )}
 
+        {complejo.fidelidad && (
+          <View style={estilos.fidelidad}>
+            <TarjetaSellos fidelidad={complejo.fidelidad} />
+          </View>
+        )}
+
         <Text style={[estilos.seccion, { color: colores.texto }]}>Canchas</Text>
         {complejo.canchas.map(c => (
           <TarjetaCancha key={c.id} cancha={c} onPress={reglas.aceptaReservas ? () => reservar(c.id) : undefined} />
@@ -270,5 +277,6 @@ const estilos = StyleSheet.create({
   precio: { fontSize: 14, marginVertical: 2 },
   monto: { fontWeight: '700' },
   reservar: { marginTop: espaciado.l },
+  fidelidad: { marginTop: espaciado.l },
   reglas: { fontSize: 13, lineHeight: 18, textAlign: 'center', marginTop: espaciado.s },
 });
