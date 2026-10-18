@@ -37,6 +37,7 @@ final class Complejo extends Modelo
             'hora_apertura' => $datos['horaApertura'],
             'hora_cierre' => $datos['horaCierre'],
             'servicios' => json_encode($datos['servicios']),
+            'visible' => $datos['visible'] ? 1 : 0,
         ];
 
         $existente = $this->buscarPorUsuario($usuarioId);
@@ -61,6 +62,8 @@ final class Complejo extends Modelo
             'horaApertura' => substr($complejo['hora_apertura'], 0, 5),
             'horaCierre' => substr($complejo['hora_cierre'], 0, 5),
             'servicios' => json_decode($complejo['servicios'] ?? '[]', true) ?? [],
+            // Si aparece en la búsqueda de los jugadores
+            'visible' => (bool) $complejo['visible'],
         ];
     }
 

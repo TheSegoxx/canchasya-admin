@@ -23,6 +23,8 @@ export type DatosComplejo = {
   horaApertura: string; // "HH:MM"
   horaCierre: string; // "HH:MM", puede ser "24:00"
   servicios: Servicio[];
+  // Si aparece en la búsqueda de los jugadores
+  visible: boolean;
 };
 
 export type Complejo = DatosComplejo & { id: number };

@@ -31,6 +31,7 @@ Dotenv::createImmutable($raiz)->load();
 
 const DUENO = 'demo@canchasya.test';
 const ENCARGADO = 'encargado@canchasya.test';
+const JUGADOR = 'jugador@canchasya.test';
 const CLAVE = 'demo1234';
 
 $api = rtrim($argv[1] ?? 'http://localhost/canchasya/api', '/');
@@ -74,8 +75,8 @@ function fecha(int $dias): string
 }
 
 // 1) Si ya estaba la demo, se borra (en orden, por las claves foráneas sin borrado en cascada)
-$stmt = $pdo->prepare('SELECT id FROM usuarios WHERE email IN (?, ?)');
-$stmt->execute([DUENO, ENCARGADO]);
+$stmt = $pdo->prepare('SELECT id FROM usuarios WHERE email IN (?, ?, ?)');
+$stmt->execute([DUENO, ENCARGADO, JUGADOR]);
 $anteriores = $stmt->fetchAll(PDO::FETCH_COLUMN);
 if ($anteriores !== []) {
     $marcas = implode(', ', array_fill(0, count($anteriores), '?'));
@@ -90,12 +91,23 @@ if ($anteriores !== []) {
 $pdo->exec("DELETE FROM intentos_login WHERE ip IN ('127.0.0.1', '::1')");
 
 // 2) Cuentas, complejo, canchas y productos
-$token = pedir('POST', '/auth/register', ['nombre' => 'Martín Gómez', 'email' => DUENO, 'password' => CLAVE])['token'];
-$tokenEncargado = pedir('POST', '/auth/register', ['nombre' => 'Lucía Fernández', 'email' => ENCARGADO, 'password' => CLAVE])['token'];
+$token = pedir('POST', '/auth/register', [
+    'nombre' => 'Martín Gómez', 'email' => DUENO, 'password' => CLAVE, 'rol' => 'dueno', 'telefono' => '11 4000 1234',
+])['token'];
+$tokenEncargado = pedir('POST', '/auth/register', [
+    'nombre' => 'Lucía Fernández', 'email' => ENCARGADO, 'password' => CLAVE, 'rol' => 'dueno', 'telefono' => '11 4000 5678',
+])['token'];
+// Un jugador para probar la parte de los clientes
+pedir('POST', '/auth/register', [
+    'nombre' => 'Sofía Herrera', 'email' => JUGADOR, 'password' => CLAVE, 'rol' => 'jugador',
+    'telefono' => '11 5555 0101', 'ciudad' => 'Almagro', 'deportes' => ['padel', 'futbol5'],
+]);
 
 pedir('PUT', '/complejo', [
     'nombre' => 'Complejo Demo CanchasYa',
     'direccion' => 'Av. Rivadavia 4500, CABA',
+    'ciudad' => 'Almagro',
+    'ubicacion' => ['latitud' => -34.610745, 'longitud' => -58.424378],
     'telefono' => '11 4000 1234',
     'horaApertura' => '08:00',
     'horaCierre' => '24:00',
@@ -246,3 +258,4 @@ $pdo->commit();
 echo "Demo lista: $cargados turnos de historial.\n";
 echo 'Dueño: ' . DUENO . ' / ' . CLAVE . "\n";
 echo 'Encargado: ' . ENCARGADO . ' / ' . CLAVE . "\n";
+echo 'Jugador: ' . JUGADOR . ' / ' . CLAVE . "\n";

@@ -18,6 +18,7 @@ use App\Controllers\ComplejoController;
 use App\Controllers\DashboardController;
 use App\Controllers\DispositivoController;
 use App\Controllers\EmpleadoController;
+use App\Controllers\ExplorarController;
 use App\Controllers\FotoController;
 use App\Controllers\LinkPagoController;
 use App\Controllers\ProductoController;
@@ -39,6 +40,12 @@ $router->agregar('PUT', '/auth/perfil', fn () => (new AuthController())->guardar
 // Notificaciones push: el celular registra su token de Firebase (y lo da de baja al cerrar sesión)
 $router->agregar('POST', '/dispositivos', fn () => (new DispositivoController())->registrar());
 $router->agregar('POST', '/dispositivos/baja', fn () => (new DispositivoController())->quitar());
+
+// Jugadores: buscar complejos, ver su ficha y guardar favoritos
+$router->agregar('GET', '/complejos', fn () => (new ExplorarController())->listar());
+$router->agregar('GET', '/complejos/:id', fn (array $p) => (new ExplorarController())->obtener($p['id']));
+$router->agregar('PUT', '/complejos/:id/favorito', fn (array $p) => (new ExplorarController())->agregarFavorito($p['id']));
+$router->agregar('DELETE', '/complejos/:id/favorito', fn (array $p) => (new ExplorarController())->quitarFavorito($p['id']));
 
 // Complejo del dueño
 $router->agregar('GET', '/complejo', fn () => (new ComplejoController())->obtener());

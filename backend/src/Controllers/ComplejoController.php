@@ -39,7 +39,7 @@ final class ComplejoController extends Controlador
         ]);
     }
 
-    // PUT /complejo  {nombre, direccion, ciudad?, ubicacion?: {latitud, longitud} | null, telefono, horaApertura, horaCierre, servicios[]}
+    // PUT /complejo  {nombre, direccion, ciudad?, ubicacion?: {latitud, longitud} | null, telefono, horaApertura, horaCierre, servicios[], visible?}
     public function guardar(): void
     {
         $this->soloDueno();
@@ -76,6 +76,9 @@ final class ComplejoController extends Controlador
         $ubicacion = array_key_exists('ubicacion', $datos)
             ? $this->ubicacionDeLaPeticion($datos['ubicacion'])
             : Complejo::ubicacion($existente);
+        $visible = array_key_exists('visible', $datos)
+            ? booleanoOpcional($datos, 'visible', 'visible')
+            : (bool) ($existente['visible'] ?? true);
 
         $creado = $this->complejos->guardar($usuarioId, [
             'nombre' => textoRequerido($datos, 'nombre', 150, 'el nombre del complejo'),
@@ -87,6 +90,7 @@ final class ComplejoController extends Controlador
             'horaApertura' => $apertura,
             'horaCierre' => $cierre,
             'servicios' => array_values(array_unique($servicios)),
+            'visible' => $visible,
         ]);
 
         $complejo = $this->complejos->buscarPorUsuario($usuarioId);

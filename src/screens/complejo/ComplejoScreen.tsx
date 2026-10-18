@@ -9,6 +9,7 @@ import { Boton } from '../../components/Boton';
 import { CampoTexto } from '../../components/CampoTexto';
 import { Chip } from '../../components/Chip';
 import { ErrorCarga } from '../../components/ErrorCarga';
+import { FilaInterruptor } from '../../components/FilaInterruptor';
 import { GaleriaFotos } from '../../components/GaleriaFotos';
 import { Icono } from '../../components/Icono';
 import { Pantalla } from '../../components/Pantalla';
@@ -41,6 +42,7 @@ export function ComplejoScreen() {
   const [apertura, setApertura] = useState('08:00');
   const [cierre, setCierre] = useState('24:00');
   const [servicios, setServicios] = useState<Servicio[]>([]);
+  const [visible, setVisible] = useState(true);
   const [fotos, setFotos] = useState<Foto[]>([]);
   const [cargando, setCargando] = useState(editando);
   const [errorCarga, setErrorCarga] = useState('');
@@ -62,6 +64,7 @@ export function ComplejoScreen() {
       setApertura(complejo.horaApertura);
       setCierre(complejo.horaCierre);
       setServicios(complejo.servicios);
+      setVisible(complejo.visible);
     } catch (e) {
       setErrorCarga(mensajeDeError(e));
     } finally {
@@ -130,6 +133,7 @@ export function ComplejoScreen() {
         horaApertura: apertura,
         horaCierre: cierre,
         servicios,
+        visible,
       });
       if (editando) {
         setGuardando(false);
@@ -275,6 +279,13 @@ export function ComplejoScreen() {
           />
         ))}
       </View>
+
+      <FilaInterruptor
+        titulo="Mostrar mi complejo en CanchasYa"
+        descripcion={visible ? 'Los jugadores lo encuentran al buscar dónde jugar' : 'Los jugadores no lo ven en la búsqueda'}
+        valor={visible}
+        onCambiar={setVisible}
+      />
 
       {!!error && (
         <Text accessibilityLiveRegion="polite" style={[estilos.error, { color: colores.error }]}>

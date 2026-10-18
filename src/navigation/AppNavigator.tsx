@@ -43,6 +43,7 @@ import { MasScreen } from '../screens/principal/MasScreen';
 import { MisDatosScreen } from '../screens/cuenta/MisDatosScreen';
 import { PerfilInicialScreen } from '../screens/cuenta/PerfilInicialScreen';
 import { BuscarScreen } from '../screens/jugador/BuscarScreen';
+import { ComplejoJugadorScreen } from '../screens/jugador/ComplejoJugadorScreen';
 import { MisReservasScreen } from '../screens/jugador/MisReservasScreen';
 import { PerfilJugadorScreen } from '../screens/jugador/PerfilJugadorScreen';
 import { useTema } from '../theme/tema';
@@ -101,6 +102,8 @@ export type RutasPestanas = {
 export type RutasJugador = {
   PestanasJugador: undefined;
   MisDatos: undefined;
+  // El nombre se muestra en el título mientras carga la ficha
+  ComplejoJugador: { id: number; nombre: string };
 };
 
 export type RutasPestanasJugador = {
@@ -214,7 +217,7 @@ function PrincipalJugador() {
         tabBarLabelStyle: estilos.etiquetaPestana,
         tabBarStyle: { borderTopColor: colores.borde, elevation: 0 },
       })}>
-      <PestanasJugador.Screen name="Buscar" component={BuscarScreen} options={{ title: 'CanchasYa', tabBarLabel: 'Buscar' }} />
+      <PestanasJugador.Screen name="Buscar" component={BuscarScreen} options={{ headerShown: false }} />
       <PestanasJugador.Screen name="MisReservas" component={MisReservasScreen} options={{ title: 'Mis reservas' }} />
       <PestanasJugador.Screen name="Perfil" component={PerfilJugadorScreen} />
     </PestanasJugador.Navigator>
@@ -226,6 +229,7 @@ function AplicacionJugador() {
     <PilaJugador.Navigator>
       <PilaJugador.Screen name="PestanasJugador" component={PrincipalJugador} options={{ headerShown: false }} />
       <PilaJugador.Screen name="MisDatos" component={MisDatosScreen} options={{ title: 'Mis datos' }} />
+      <PilaJugador.Screen name="ComplejoJugador" component={ComplejoJugadorScreen} />
     </PilaJugador.Navigator>
   );
 }

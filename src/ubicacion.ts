@@ -3,14 +3,16 @@ import Geolocation from '@react-native-community/geolocation';
 import type { Ubicacion } from './api/complejo';
 
 /**
- * Ubicación actual del celular (para cargar dónde queda el complejo estando ahí).
- * Pide el permiso la primera vez. Rechaza con un mensaje para mostrar.
+ * Ubicación actual del celular (el dueño, para cargar dónde queda su complejo; el jugador,
+ * para ver los complejos cerca). Pide el permiso la primera vez. Rechaza con un mensaje para mostrar.
  */
-export async function ubicacionActual(): Promise<Ubicacion> {
+export async function ubicacionActual(
+  motivo = 'Para guardar dónde queda tu complejo, CanchasYa necesita la ubicación de este celular (solo ahora).',
+): Promise<Ubicacion> {
   if (Platform.OS === 'android') {
     const respuesta = await PermissionsAndroid.request(PermissionsAndroid.PERMISSIONS.ACCESS_FINE_LOCATION, {
-      title: 'Ubicación del complejo',
-      message: 'Para guardar dónde queda tu complejo, CanchasYa necesita la ubicación de este celular (solo ahora).',
+      title: 'Tu ubicación',
+      message: motivo,
       buttonPositive: 'Permitir',
       buttonNegative: 'Ahora no',
     });

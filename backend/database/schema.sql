@@ -42,6 +42,7 @@ CREATE TABLE complejos (
     hora_apertura TIME NOT NULL,
     hora_cierre   TIME NOT NULL,
     servicios     JSON NULL COMMENT 'Ej.: ["vestuarios","buffet","estacionamiento"]',
+    visible       BOOLEAN NOT NULL DEFAULT 1 COMMENT '1 = aparece en la búsqueda de los jugadores',
     creado_en     TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     UNIQUE KEY uq_complejos_usuario (usuario_id),
     CONSTRAINT chk_complejos_ubicacion CHECK (
@@ -54,6 +55,16 @@ CREATE TABLE complejos (
 -- La FK de usuarios.complejo_id va acá porque complejos se crea después que usuarios
 ALTER TABLE usuarios
     ADD CONSTRAINT fk_usuarios_complejo FOREIGN KEY (complejo_id) REFERENCES complejos (id) ON DELETE SET NULL;
+
+-- Complejos que un jugador guardó como favoritos
+CREATE TABLE favoritos (
+    usuario_id  INT NOT NULL,
+    complejo_id INT NOT NULL,
+    creado_en   TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    PRIMARY KEY (usuario_id, complejo_id),
+    CONSTRAINT fk_favoritos_usuario FOREIGN KEY (usuario_id) REFERENCES usuarios (id) ON DELETE CASCADE,
+    CONSTRAINT fk_favoritos_complejo FOREIGN KEY (complejo_id) REFERENCES complejos (id) ON DELETE CASCADE
+) ENGINE=InnoDB;
 
 -- Código para que un empleado se una a un complejo (se guarda solo su hash)
 CREATE TABLE invitaciones (

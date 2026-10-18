@@ -31,7 +31,11 @@ export type NombreIcono =
   | 'temaDispositivo'
   | 'ubicacion'
   | 'miUbicacion'
-  | 'buscar';
+  | 'buscar'
+  | 'favorito'
+  | 'favoritoLleno'
+  | 'techada'
+  | 'reloj';
 
 type Props = {
   nombre: NombreIcono;
@@ -193,6 +197,26 @@ export function Icono({ nombre, color, acento = color, tamano = 24 }: Props) {
             <Path d="M3 11v-1a4 4 0 0 1 4-4h14" />
             <Path d="M7 22l-4-4 4-4" />
             <Path d="M21 13v1a4 4 0 0 1-4 4H3" />
+          </>
+        )}
+        {(nombre === 'favorito' || nombre === 'favoritoLleno') && (
+          // Corazón: lleno (en el color de acento) si es favorito
+          <Path
+            d="M12 20.3s-7.8-4.6-7.8-10.2A4.4 4.4 0 0 1 12 7.4a4.4 4.4 0 0 1 7.8 2.7c0 5.6-7.8 10.2-7.8 10.2Z"
+            {...(nombre === 'favoritoLleno' ? relleno : {})}
+          />
+        )}
+        {nombre === 'techada' && (
+          <>
+            {/* Techo sobre la cancha */}
+            <Path d="M3 10.5 12 4l9 6.5" />
+            <Rect x={6} y={12.5} width={12} height={7} rx={1} {...trazo} />
+          </>
+        )}
+        {nombre === 'reloj' && (
+          <>
+            <Circle cx={12} cy={12} r={8.5} />
+            <Path d="M12 7.5V12l3 2" {...trazo} />
           </>
         )}
         {nombre === 'buscar' && (
