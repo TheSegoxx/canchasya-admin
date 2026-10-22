@@ -12,6 +12,12 @@ import { servidorActual } from '../../servidor';
 import type { RutasAuth } from '../../navigation/AppNavigator';
 import { espaciado, useTema } from '../../theme/tema';
 
+// El logo de los diseños de la pantalla de carga, con el fondo transparente (uno para cada modo)
+const LOGO = {
+  oscuro: require('../../../assets/app/logo-oscuro.png'),
+  claro: require('../../../assets/app/logo-claro.png'),
+};
+
 type Props = NativeStackScreenProps<RutasAuth, 'Login'>;
 
 export function LoginScreen({ navigation }: Props) {
@@ -57,8 +63,9 @@ export function LoginScreen({ navigation }: Props) {
   return (
     <Pantalla conMargenSuperior centrado>
       <Image
-        source={require('../../../assets/app/simbolo.png')}
-        style={estilos.simbolo}
+        source={oscuro ? LOGO.oscuro : LOGO.claro}
+        style={estilos.logo}
+        resizeMode="contain"
         fadeDuration={0}
         accessibilityIgnoresInvertColors
       />
@@ -148,7 +155,7 @@ export function LoginScreen({ navigation }: Props) {
 }
 
 const estilos = StyleSheet.create({
-  simbolo: { width: 112, height: 112 * (468 / 596), alignSelf: 'center' },
+  logo: { width: 150, height: 112, alignSelf: 'center' },
   marca: { flexDirection: 'row', alignSelf: 'center', marginTop: espaciado.s },
   textoMarca: { fontSize: 34, fontWeight: '800', letterSpacing: -0.5 },
   // Android le deja aire al final del primer texto: se compensa para que quede como una sola palabra
