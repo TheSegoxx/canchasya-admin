@@ -2,7 +2,7 @@
 <!-- Fondo de la ventana: el mismo logo y en el mismo lugar que la pantalla de carga del sistema,
      así no "parpadea" mientras arranca la de la app -->
 <layer-list xmlns:android="http://schemas.android.com/apk/res/android">
-    <item android:drawable="@color/fondo_marca" />
+    <item android:drawable="@color/fondo_splash" />
     <item>
         <bitmap android:gravity="center" android:src="@drawable/splash_icono" />
     </item>

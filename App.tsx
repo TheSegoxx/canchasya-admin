@@ -5,7 +5,7 @@
  */
 
 import React, { useCallback, useEffect, useState } from 'react';
-import { StatusBar } from 'react-native';
+import { Appearance, StatusBar } from 'react-native';
 import { DarkTheme, DefaultTheme, NavigationContainer, Theme } from '@react-navigation/native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { AvisosPush } from './src/components/AvisosPush';
@@ -33,6 +33,8 @@ function Contenido() {
   const [temaListo, setTemaListo] = useState(false);
   // La pantalla de carga queda encima hasta que la sesión y el tema están listos
   const [cargaVisible, setCargaVisible] = useState(true);
+  // La pantalla de carga sigue el modo del celular al abrir (como la del sistema), no el tema guardado
+  const [cargaOscura] = useState(() => Appearance.getColorScheme() === 'dark');
   const ocultarCarga = useCallback(() => setCargaVisible(false), []);
 
   useEffect(() => {
@@ -65,8 +67,8 @@ function Contenido() {
 
   return (
     <>
-      {/* Sobre la pantalla de carga (azul) los íconos de la barra de estado van claros */}
-      <StatusBar barStyle={cargaVisible || oscuro ? 'light-content' : 'dark-content'} />
+      {/* Los íconos de la barra de estado van claros sobre fondo oscuro y oscuros sobre fondo claro */}
+      <StatusBar barStyle={(cargaVisible ? cargaOscura : oscuro) ? 'light-content' : 'dark-content'} />
       {temaListo && (
         <>
           <NavigationContainer ref={navegacion} theme={temaNavegacion}>
@@ -76,7 +78,7 @@ function Contenido() {
           <AvisosPush />
         </>
       )}
-      {cargaVisible && <PantallaDeCarga listo={temaListo && !cargando} alTerminar={ocultarCarga} />}
+      {cargaVisible && <PantallaDeCarga oscuro={cargaOscura} listo={temaListo && !cargando} alTerminar={ocultarCarga} />}
     </>
   );
 }

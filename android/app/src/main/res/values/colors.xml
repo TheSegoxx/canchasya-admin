@@ -1,7 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <!-- Azul del logo: fondo del ícono y de la pantalla de carga -->
-    <color name="fondo_marca">#071928</color>
+    <!-- Fondo del ícono: el azul oscuro del recuadro del logo -->
+    <color name="fondo_icono">#021825</color>
+    <!-- Fondo de la pantalla de carga en modo claro (en values-night está el del modo oscuro) -->
+    <color name="fondo_splash">#F5FBFE</color>
     <!-- Verde de la marca: tiñe el ícono de las notificaciones -->
     <color name="verde_canchasya">#18B982</color>
 </resources>
